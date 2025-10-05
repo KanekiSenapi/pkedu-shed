@@ -1,0 +1,98 @@
+import { NextResponse } from 'next/server';
+import { downloadSchedule } from '@/lib/scraper';
+import { parseExcelSchedule } from '@/lib/excel-parser';
+import { calculateHash } from '@/lib/cache-manager';
+import {
+  saveScheduleToDB,
+  loadScheduleFromDB,
+  getLatestScheduleHash,
+} from '@/lib/schedule-db';
+
+/**
+ * GET /api/schedule/fetch
+ * Downloads the schedule file from PK website, parses it, and saves to database
+ */
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const filter = searchParams.get('filter') || 'niestacjonarne';
+    const force = searchParams.get('force') === 'true';
+
+    // Check if we have data in database
+    if (!force) {
+      const cachedSchedule = await loadScheduleFromDB();
+      if (cachedSchedule) {
+        return NextResponse.json({
+          success: true,
+          data: cachedSchedule,
+          cached: true,
+          timestamp: cachedSchedule.lastUpdated,
+        });
+      }
+    }
+
+    // Download the schedule file
+    console.log('Downloading schedule file from PK website...');
+    const downloadResult = await downloadSchedule(filter);
+
+    // Calculate hash
+    const fileHash = calculateHash(downloadResult.buffer);
+
+    // Check if file has changed
+    if (!force) {
+      const storedHash = await getLatestScheduleHash();
+      if (storedHash && storedHash === fileHash) {
+        console.log('File has not changed, using cached data');
+        const cachedSchedule = await loadScheduleFromDB();
+        if (cachedSchedule) {
+          return NextResponse.json({
+            success: true,
+            data: cachedSchedule,
+            cached: true,
+            timestamp: cachedSchedule.lastUpdated,
+          });
+        }
+      }
+    }
+
+    // Parse the Excel file
+    console.log('Parsing Excel file...');
+    const schedule = parseExcelSchedule(downloadResult.buffer);
+    schedule.fileHash = fileHash;
+
+    // Save to database
+    await saveScheduleToDB(schedule);
+
+    console.log(`Successfully parsed and saved schedule with ${schedule.sections.length} sections`);
+
+    return NextResponse.json({
+      success: true,
+      data: schedule,
+      cached: false,
+      timestamp: schedule.lastUpdated,
+      sections: schedule.sections.length,
+    });
+  } catch (error) {
+    console.error('Error fetching schedule:', error);
+
+    // Try to load from database on error
+    const cachedSchedule = await loadScheduleFromDB();
+    if (cachedSchedule) {
+      return NextResponse.json({
+        success: true,
+        data: cachedSchedule,
+        cached: true,
+        timestamp: cachedSchedule.lastUpdated,
+        warning: 'Using cached data due to fetch error',
+      });
+    }
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
+  }
+}

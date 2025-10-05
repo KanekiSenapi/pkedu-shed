@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --color-lecture: #8b5cf6;
+  --color-laboratory: #f59e0b;
+  --color-project: #ec4899;
+  --color-remote: #3b82f6;
+  --color-stationary: #10b981;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* React Big Calendar custom styles */
+.rbc-calendar {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.rbc-event {
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+.rbc-event.lecture {
+  background-color: #8b5cf6;
+}
+
+.rbc-event.laboratory {
+  background-color: #f59e0b;
+}
+
+.rbc-event.project {
+  background-color: #ec4899;
+}
+
+.rbc-event.remote {
+  border: 2px dashed #3b82f6;
+}
+
+.rbc-event.stationary {
+  border: 2px solid #10b981;
+}
