@@ -149,64 +149,33 @@ export function ScheduleCalendar() {
   }, [weekendsOnly]);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Kalendarz zajęć
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
+        <h2 className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+          Kalendarz
         </h2>
 
-        <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
           {/* Export to Calendar */}
           <button
             onClick={() => exportAllEntries(filteredEntries)}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Eksportuj (.ics)
+            Eksportuj .ics
           </button>
 
           {/* Weekend Toggle */}
-          <label className="relative inline-flex items-center cursor-pointer">
+          <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={weekendsOnly}
               onChange={(e) => handleWeekendsOnlyChange(e.target.checked)}
-              className="sr-only peer"
+              className="w-3.5 h-3.5 border-gray-300 dark:border-gray-600 rounded"
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            <span className="ms-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-xs text-gray-600 dark:text-gray-400">
               Tylko weekendy
             </span>
           </label>
-        </div>
-
-        {/* Legend */}
-        <div className="flex items-center gap-3 text-xs text-gray-700 dark:text-gray-300 flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <span>💻 Zdalne</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span>🏫 Stacjonarne</span>
-          </div>
-          <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-purple-500"></div>
-            <span>Wykład</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-orange-500"></div>
-            <span>Laboratoria</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-pink-500"></div>
-            <span>Projekt</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-cyan-500"></div>
-            <span>Ćwiczenia</span>
-          </div>
         </div>
       </div>
 
@@ -281,13 +250,10 @@ export function ScheduleCalendar() {
                   )}
                   <button
                     onClick={() => exportSingleEntry(selectedEvent)}
-                    className="flex items-center gap-1 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                    className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     title="Dodaj do kalendarza"
                   >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    .ics
+                    Pobierz .ics
                   </button>
                 </div>
               </div>

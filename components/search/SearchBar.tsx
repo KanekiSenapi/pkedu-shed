@@ -49,11 +49,11 @@ export function SearchBar() {
           value={query}
           onChange={(e) => handleSearch(e.target.value)}
           onFocus={() => query && setShowResults(results.length > 0)}
-          placeholder="Szukaj przedmiotu, wykładowcy, sali..."
-          className="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Szukaj..."
+          className="w-full px-3 py-2 pl-9 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500"
         />
         <svg
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+          className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -73,17 +73,17 @@ export function SearchBar() {
             className="fixed inset-0 z-10"
             onClick={() => setShowResults(false)}
           />
-          <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto">
+          <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm max-h-80 overflow-y-auto">
             {results.map((entry) => (
               <div
                 key={entry.id}
-                className="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-0 cursor-pointer transition-colors"
+                className="p-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 last:border-0 cursor-pointer"
                 onClick={() => setShowResults(false)}
               >
-                <div className="font-medium text-gray-900 dark:text-white">
+                <div className="text-sm text-gray-900 dark:text-white">
                   {entry.class_info.subject}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                   {entry.class_info.type && (
                     <span className="mr-2">
                       {entry.class_info.type}
@@ -93,8 +93,8 @@ export function SearchBar() {
                     <span className="mr-2">• {entry.class_info.instructor}</span>
                   )}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {entry.date} • {entry.time} • Grupa {entry.group}
+                <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                  {entry.date} • {entry.time} • {entry.group}
                   {entry.class_info.room && ` • ${entry.class_info.room}`}
                 </div>
               </div>
