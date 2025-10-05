@@ -317,9 +317,9 @@ function parseEntries(
               const groupLabel = mergedGroups.join(', ');
 
               const entry: ScheduleEntry = {
-                id: generateEntryId(currentDate, `${timeRange.start}-${timeRange.end}`, groupLabel, classInfo.subject),
-                date: currentDate,
-                day: currentDay as DayOfWeek,
+                id: generateEntryId(currentDate!, `${timeRange.start}-${timeRange.end}`, groupLabel, classInfo.subject),
+                date: currentDate!,
+                day: currentDay! as DayOfWeek,
                 time: `${timeRange.start}-${timeRange.end}`,
                 start_time: timeRange.start,
                 end_time: timeRange.end,
@@ -342,9 +342,9 @@ function parseEntries(
 
             if (classInfo) {
               const entry: ScheduleEntry = {
-                id: generateEntryId(currentDate, `${timeRange.start}-${timeRange.end}`, group, classInfo.subject),
-                date: currentDate,
-                day: currentDay as DayOfWeek,
+                id: generateEntryId(currentDate!, `${timeRange.start}-${timeRange.end}`, group, classInfo.subject),
+                date: currentDate!,
+                day: currentDay! as DayOfWeek,
                 time: `${timeRange.start}-${timeRange.end}`,
                 start_time: timeRange.start,
                 end_time: timeRange.end,
