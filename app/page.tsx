@@ -2,6 +2,7 @@
 
 import { useSchedule } from '@/lib/use-schedule';
 import { Navbar } from '@/components/layout/Navbar';
+import { SearchBar } from '@/components/search/SearchBar';
 import { Filters } from '@/components/filters/Filters';
 import { ScheduleCalendar } from '@/components/calendar/ScheduleCalendar';
 import { ScheduleStats } from '@/components/stats/ScheduleStats';
@@ -38,6 +39,9 @@ export default function Home() {
         {/* Main Content */}
         {!loading && (
           <div className="space-y-6">
+            {/* Search */}
+            <SearchBar />
+
             {/* Filters */}
             <Filters />
 
