@@ -1,12 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
-import { PrismaAdapter } from '@auth/prisma-adapter';
 import AzureADProvider from 'next-auth/providers/azure-ad';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as any,
   providers: [
     AzureADProvider({
       clientId: process.env.AZURE_AD_CLIENT_ID!,
@@ -15,28 +10,27 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, user }) {
+    async jwt({ token, account, profile }) {
+      if (account && profile) {
+        token.id = profile.sub;
+        token.email = profile.email;
+        token.name = profile.name;
+      }
+      return token;
+    },
+    async session({ session, token }) {
       if (session?.user) {
-        session.user.id = user.id;
+        session.user.id = token.id as string;
+        session.user.email = token.email as string;
+        session.user.name = token.name as string;
       }
       return session;
     },
-    async signIn({ user, account, profile }) {
-      // Store Microsoft ID if available
-      if (account?.provider === 'azure-ad' && profile?.sub) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { microsoftId: profile.sub },
-        });
-      }
-      return true;
-    },
   },
   session: {
-    strategy: 'database',
+    strategy: 'jwt',
   },
   pages: {
     signIn: '/auth/signin',
-    error: '/auth/error',
   },
 };

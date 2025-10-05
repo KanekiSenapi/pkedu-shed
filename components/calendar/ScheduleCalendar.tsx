@@ -8,6 +8,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '@/app/calendar.css';
 import { useScheduleStore } from '@/lib/store';
 import { ScheduleEntry } from '@/types/schedule';
+import { exportSingleEntry, exportAllEntries } from '@/lib/ics-export';
 
 // Configure moment locale
 moment.locale('pl');
@@ -154,8 +155,19 @@ export function ScheduleCalendar() {
           Kalendarz zajęć
         </h2>
 
-        {/* Weekend Toggle */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4 flex-wrap">
+          {/* Export to Calendar */}
+          <button
+            onClick={() => exportAllEntries(filteredEntries)}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Eksportuj (.ics)
+          </button>
+
+          {/* Weekend Toggle */}
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
@@ -250,7 +262,7 @@ export function ScheduleCalendar() {
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
                   {selectedEvent.class_info.subject}
                 </h3>
-                <div className="mt-2 flex items-center gap-2">
+                <div className="mt-2 flex items-center gap-2 flex-wrap">
                   <span className={`px-2 py-1 rounded text-xs font-medium ${
                     selectedEvent.class_info.type === 'wykład'
                       ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
@@ -267,6 +279,16 @@ export function ScheduleCalendar() {
                       ZDALNIE
                     </span>
                   )}
+                  <button
+                    onClick={() => exportSingleEntry(selectedEvent)}
+                    className="flex items-center gap-1 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                    title="Dodaj do kalendarza"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    .ics
+                  </button>
                 </div>
               </div>
               <button

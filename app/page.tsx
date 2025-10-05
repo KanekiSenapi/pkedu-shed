@@ -41,11 +41,11 @@ export default function Home() {
             {/* Filters */}
             <Filters />
 
-            {/* Stats */}
-            <ScheduleStats />
-
             {/* Calendar */}
             <ScheduleCalendar />
+
+            {/* Stats */}
+            <ScheduleStats />
           </div>
         )}
       </main>
