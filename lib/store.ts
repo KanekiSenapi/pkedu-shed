@@ -37,6 +37,7 @@ interface ScheduleStore {
     lata: number[];
     semestry: number[];
     grupy: string[];
+    subjects: string[];
   };
 
   // Internal
@@ -131,6 +132,10 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
       });
     }
 
+    if (filters.subject) {
+      entries = entries.filter((e) => e.class_info.subject === filters.subject);
+    }
+
     set({ filteredEntries: entries });
   },
 
@@ -172,6 +177,7 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
         lata: [],
         semestry: [],
         grupy: [],
+        subjects: [],
       };
     }
 
@@ -180,6 +186,7 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
     const lata = new Set<number>();
     const semestry = new Set<number>();
     const grupy = new Set<string>();
+    const subjects = new Set<string>();
 
     schedule.sections.forEach((section) => {
       kierunki.add(section.kierunek);
@@ -187,6 +194,7 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
       lata.add(section.rok);
       semestry.add(section.semestr);
       section.groups.forEach((group) => grupy.add(group));
+      section.entries.forEach((entry) => subjects.add(entry.class_info.subject));
     });
 
     return {
@@ -195,6 +203,7 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
       lata: Array.from(lata).sort((a, b) => a - b),
       semestry: Array.from(semestry).sort((a, b) => a - b),
       grupy: Array.from(grupy).sort(),
+      subjects: Array.from(subjects).sort(),
     };
   },
 }));

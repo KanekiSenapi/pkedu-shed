@@ -56,6 +56,7 @@ export interface FilterOptions {
   semestr?: number;
   tryb?: StudyMode;
   groups?: string[];
+  subject?: string;
 }
 
 export interface ScheduleStats {
