@@ -154,10 +154,10 @@ function extractInstructor(content: string): string | null {
     .replace(/\$?[Gg][wpkWPK]\d+/g, '')
     .trim();
 
-  // Usuń typ zajęć
-  const typeKeywords = ['wykład', 'laboratorium', 'lab.', 'ćwiczenia', 'cwiczenia', 'projekt', ' P '];
+  // Usuń typ zajęć (z word boundaries żeby nie usuwać fragmentów słów)
+  const typeKeywords = ['wykład', 'laboratorium', 'lab\\.', 'ćwiczenia', 'cwiczenia', '\\sP\\s'];
   for (const keyword of typeKeywords) {
-    cleanContent = cleanContent.replace(new RegExp(keyword, 'gi'), ' ');
+    cleanContent = cleanContent.replace(new RegExp(`\\b${keyword}\\b`, 'gi'), ' ');
   }
 
   // Usuń nazwy przedmiotów (sprawdzaj skróty i pełne nazwy)
@@ -252,10 +252,10 @@ function extractSubject(
 
   // Jeśli nie znaleziono skrótu, wyczyść nazwę z metadanych
 
-  // Usuń typ zajęć
-  const typeKeywords = ['wykład', 'laboratorium', 'lab.', 'ćwiczenia', 'cwiczenia', 'projekt', ' P '];
+  // Usuń typ zajęć (z word boundaries żeby nie usuwać fragmentów słów)
+  const typeKeywords = ['wykład', 'laboratorium', 'lab\\.', 'ćwiczenia', 'cwiczenia', '\\sP\\s'];
   for (const keyword of typeKeywords) {
-    subject = subject.replace(new RegExp(keyword, 'gi'), ' ');
+    subject = subject.replace(new RegExp(`\\b${keyword}\\b`, 'gi'), ' ');
   }
 
   // Usuń kody zajęć (Gw01, Gp02, GK02, $p02, $w01 itp.)

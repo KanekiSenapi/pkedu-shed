@@ -29,7 +29,9 @@ export function Filters() {
       if (filters.rok !== undefined && section.rok !== filters.rok) return false;
       return true;
     })
-    .flatMap((section) => section.groups)
+    .flatMap((section) =>
+      section.groups.flatMap(g => g.split(',').map(item => item.trim()))
+    )
     .filter((group, index, self) => self.indexOf(group) === index)
     .sort() || [];
 
