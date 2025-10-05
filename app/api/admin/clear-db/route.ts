@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { clearDatabase } from '@/lib/schedule-db';
 
 export async function POST() {
   try {
-    await prisma.schedule.deleteMany();
+    await clearDatabase();
     return NextResponse.json({ success: true, message: 'Database cleared' });
   } catch (error) {
     return NextResponse.json(

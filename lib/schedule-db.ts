@@ -1,145 +1,177 @@
-import { prisma } from './prisma';
-import { ParsedSchedule, ScheduleSection as ScheduleSectionType } from '@/types/schedule';
+import { turso, initDatabase } from './turso';
+import { ParsedSchedule, ScheduleEntry } from '@/types/schedule';
 
 /**
- * Saves parsed schedule to database
+ * Save schedule to Turso database
  */
 export async function saveScheduleToDB(schedule: ParsedSchedule): Promise<void> {
-  // Check if schedule with this hash already exists
-  const existing = await prisma.schedule.findUnique({
-    where: { fileHash: schedule.fileHash },
+  // Ensure tables exist
+  await initDatabase();
+
+  // Delete old schedule with same hash
+  await turso.execute({
+    sql: 'DELETE FROM schedules WHERE file_hash = ?',
+    args: [schedule.fileHash],
   });
 
-  if (existing) {
-    console.log('Schedule with this hash already exists');
-    return;
+  // Insert new schedule
+  const scheduleId = `schedule_${Date.now()}`;
+  await turso.execute({
+    sql: 'INSERT INTO schedules (id, file_hash, last_updated) VALUES (?, ?, ?)',
+    args: [scheduleId, schedule.fileHash, schedule.lastUpdated],
+  });
+
+  // Insert all entries
+  for (const section of schedule.sections) {
+    for (const entry of section.entries) {
+      await turso.execute({
+        sql: `INSERT INTO schedule_entries (
+          id, schedule_id, date, day, time, start_time, end_time, "group",
+          subject, type, instructor, room, is_remote, raw_content,
+          kierunek, stopien, rok, semestr, tryb
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [
+          entry.id,
+          scheduleId,
+          entry.date,
+          entry.day,
+          entry.time,
+          entry.start_time,
+          entry.end_time,
+          entry.group,
+          entry.class_info.subject,
+          entry.class_info.type || null,
+          entry.class_info.instructor || null,
+          entry.class_info.room || null,
+          entry.class_info.is_remote ? 1 : 0,
+          entry.class_info.raw,
+          entry.kierunek,
+          entry.stopien,
+          entry.rok,
+          entry.semestr,
+          entry.tryb,
+        ],
+      });
+    }
   }
-
-  // Delete old schedules (keep only latest)
-  await prisma.schedule.deleteMany();
-
-  // Create new schedule with sections and entries
-  await prisma.schedule.create({
-    data: {
-      fileHash: schedule.fileHash,
-      lastUpdated: new Date(schedule.lastUpdated),
-      sections: {
-        create: schedule.sections.map((section) => ({
-          kierunek: section.kierunek,
-          stopien: section.stopien,
-          rok: section.rok,
-          semestr: section.semestr,
-          tryb: section.tryb,
-          groups: JSON.stringify(section.groups),
-          entries: {
-            create: section.entries.map((entry) => ({
-              date: entry.date,
-              day: entry.day,
-              time: entry.time,
-              startTime: entry.start_time,
-              endTime: entry.end_time,
-              group: entry.group,
-              subject: entry.class_info.subject,
-              type: entry.class_info.type,
-              instructor: entry.class_info.instructor,
-              room: entry.class_info.room,
-              isRemote: entry.class_info.is_remote,
-              rawContent: entry.class_info.raw,
-            })),
-          },
-        })),
-      },
-    },
-  });
-
-  console.log('Schedule saved to database successfully');
 }
 
 /**
- * Loads schedule from database
+ * Load schedule from database
  */
 export async function loadScheduleFromDB(): Promise<ParsedSchedule | null> {
-  const schedule = await prisma.schedule.findFirst({
-    include: {
-      sections: {
-        include: {
-          entries: true,
-        },
-      },
-    },
-    orderBy: {
-      lastUpdated: 'desc',
-    },
-  });
+  try {
+    await initDatabase();
 
-  if (!schedule) {
+    // Get latest schedule
+    const scheduleResult = await turso.execute({
+      sql: 'SELECT * FROM schedules ORDER BY created_at DESC LIMIT 1',
+      args: [],
+    });
+
+    if (scheduleResult.rows.length === 0) {
+      return null;
+    }
+
+    const scheduleRow = scheduleResult.rows[0];
+    const scheduleId = scheduleRow.id as string;
+
+    // Get all entries
+    const entriesResult = await turso.execute({
+      sql: 'SELECT * FROM schedule_entries WHERE schedule_id = ?',
+      args: [scheduleId],
+    });
+
+    // Group entries by section
+    const sectionsMap = new Map<string, ScheduleEntry[]>();
+
+    for (const row of entriesResult.rows) {
+      const entry: ScheduleEntry = {
+        id: row.id as string,
+        date: row.date as string,
+        day: row.day as any,
+        time: row.time as string,
+        start_time: row.start_time as string,
+        end_time: row.end_time as string,
+        group: row.group as string,
+        class_info: {
+          subject: row.subject as string,
+          type: row.type as any,
+          instructor: row.instructor as string | null,
+          room: row.room as string | null,
+          is_remote: row.is_remote === 1,
+          raw: row.raw_content as string,
+        },
+        kierunek: row.kierunek as string,
+        stopien: row.stopien as string,
+        rok: row.rok as number,
+        semestr: row.semestr as number,
+        tryb: row.tryb as any,
+      };
+
+      const sectionKey = `${row.kierunek}_${row.stopien}_${row.rok}_${row.semestr}_${row.tryb}`;
+
+      if (!sectionsMap.has(sectionKey)) {
+        sectionsMap.set(sectionKey, []);
+      }
+      sectionsMap.get(sectionKey)!.push(entry);
+    }
+
+    // Build sections
+    const sections = Array.from(sectionsMap.entries()).map(([key, entries]) => {
+      const first = entries[0];
+      const groups = Array.from(new Set(entries.map(e => e.group))).sort();
+
+      return {
+        kierunek: first.kierunek,
+        stopien: first.stopien,
+        rok: first.rok,
+        semestr: first.semestr,
+        tryb: first.tryb,
+        groups,
+        entries,
+      };
+    });
+
+    return {
+      sections,
+      lastUpdated: scheduleRow.last_updated as string,
+      fileHash: scheduleRow.file_hash as string,
+    };
+  } catch (error) {
+    console.error('Error loading schedule from DB:', error);
     return null;
   }
-
-  // Convert database format back to ParsedSchedule format
-  const sections: ScheduleSectionType[] = schedule.sections.map((section) => ({
-    kierunek: section.kierunek,
-    stopien: section.stopien,
-    rok: section.rok,
-    semestr: section.semestr,
-    tryb: section.tryb as 'stacjonarne' | 'niestacjonarne',
-    groups: JSON.parse(section.groups),
-    entries: section.entries.map((entry) => ({
-      id: entry.id,
-      date: entry.date,
-      day: entry.day as any,
-      time: entry.time,
-      start_time: entry.startTime,
-      end_time: entry.endTime,
-      group: entry.group,
-      class_info: {
-        subject: entry.subject,
-        type: entry.type as any,
-        instructor: entry.instructor,
-        room: entry.room,
-        is_remote: entry.isRemote,
-        raw: entry.rawContent,
-      },
-      kierunek: section.kierunek,
-      stopien: section.stopien,
-      rok: section.rok,
-      semestr: section.semestr,
-      tryb: section.tryb as 'stacjonarne' | 'niestacjonarne',
-    })),
-  }));
-
-  return {
-    sections,
-    lastUpdated: schedule.lastUpdated.toISOString(),
-    fileHash: schedule.fileHash,
-  };
 }
 
 /**
- * Gets the latest schedule hash from database
+ * Get latest schedule hash
  */
 export async function getLatestScheduleHash(): Promise<string | null> {
-  const schedule = await prisma.schedule.findFirst({
-    orderBy: {
-      lastUpdated: 'desc',
-    },
-    select: {
-      fileHash: true,
-    },
-  });
+  try {
+    await initDatabase();
 
-  return schedule?.fileHash || null;
+    const result = await turso.execute({
+      sql: 'SELECT file_hash FROM schedules ORDER BY created_at DESC LIMIT 1',
+      args: [],
+    });
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return result.rows[0].file_hash as string;
+  } catch (error) {
+    console.error('Error getting latest hash:', error);
+    return null;
+  }
 }
 
 /**
- * Checks if schedule exists for a given hash
+ * Clear all data from database
  */
-export async function scheduleExistsForHash(hash: string): Promise<boolean> {
-  const count = await prisma.schedule.count({
-    where: {
-      fileHash: hash,
-    },
-  });
-
-  return count > 0;
+export async function clearDatabase(): Promise<void> {
+  await initDatabase();
+  await turso.execute('DELETE FROM schedule_entries');
+  await turso.execute('DELETE FROM schedules');
 }
