@@ -98,35 +98,23 @@ export function ScheduleCalendar() {
     return day === 0 || day === 6;
   };
 
-  // Event style getter - color based on type and mode
+  // Event style getter - clean minimal style
   const eventStyleGetter = useCallback((event: CalendarEvent) => {
     const { entry } = event;
-    let backgroundColor = '#3b82f6'; // default blue
 
-    // Color by type
-    if (entry.class_info.type === 'wykład') {
-      backgroundColor = '#8b5cf6'; // purple
-    } else if (entry.class_info.type === 'laboratorium') {
-      backgroundColor = '#f59e0b'; // orange
-    } else if (entry.class_info.type === 'projekt') {
-      backgroundColor = '#ec4899'; // pink
-    } else if (entry.class_info.type === 'ćwiczenia') {
-      backgroundColor = '#06b6d4'; // cyan
-    }
-
-    // Dodaj gradientową ramkę dla zdalnych
-    const borderLeft = entry.class_info.is_remote ? '4px solid #3b82f6' : '4px solid #10b981';
+    // Clean minimal styling with subtle border
+    const borderLeft = entry.class_info.is_remote ? '3px solid #60a5fa' : '3px solid #10b981';
 
     return {
       style: {
-        backgroundColor,
+        backgroundColor: '#ffffff',
         borderLeft,
-        borderRadius: '6px',
-        color: 'white',
+        border: '1px solid #e5e7eb',
+        borderRadius: '4px',
+        color: '#111827',
         fontSize: '0.75rem',
-        padding: '2px 6px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-        border: 'none',
+        padding: '4px 6px',
+        boxShadow: 'none',
       },
     };
   }, []);
@@ -154,12 +142,19 @@ export function ScheduleCalendar() {
                       type === 'ćwiczenia' ? 'ćw.' :
                       type === 'projekt' ? 'proj.' : type;
     const modeLabel = event.entry.class_info.is_remote ? 'zdalne' : 'stacj.';
+    const modeBgColor = event.entry.class_info.is_remote ? 'bg-blue-50' : 'bg-green-50';
+    const modeTextColor = event.entry.class_info.is_remote ? 'text-blue-700' : 'text-green-700';
+    const modeBorderColor = event.entry.class_info.is_remote ? 'border-blue-200' : 'border-green-200';
 
     return (
-      <div className="custom-event-full">
-        <span className="event-tag event-tag-type">{typeLabel}</span>
-        <span className="event-tag event-tag-mode">{modeLabel}</span>
-        <span className="event-subject" title={event.entry.class_info.subject}>
+      <div className="flex items-center gap-1 flex-wrap">
+        <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 border border-gray-200 rounded">
+          {typeLabel}
+        </span>
+        <span className={`text-[10px] px-1.5 py-0.5 ${modeBgColor} ${modeTextColor} border ${modeBorderColor} rounded`}>
+          {modeLabel}
+        </span>
+        <span className="text-xs text-gray-900 truncate" title={event.entry.class_info.subject}>
           {event.entry.class_info.subject}
         </span>
       </div>
@@ -281,21 +276,13 @@ export function ScheduleCalendar() {
                   {selectedEvent.class_info.subject}
                 </h3>
                 <div className="mt-2 flex items-center gap-2 flex-wrap">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    selectedEvent.class_info.type === 'wykład'
-                      ? 'bg-purple-100 text-purple-800'
-                      : selectedEvent.class_info.type === 'laboratorium'
-                      ? 'bg-orange-100 text-orange-800'
-                      : selectedEvent.class_info.type === 'projekt'
-                      ? 'bg-pink-100 text-pink-800'
-                      : 'bg-blue-100 text-blue-800'
-                  }`}>
+                  <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
                     {selectedEvent.class_info.type || 'Inne'}
                   </span>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                  <span className={`px-2 py-1 rounded text-xs font-medium border ${
                     selectedEvent.class_info.is_remote
-                      ? 'bg-blue-100 text-blue-800'
-                      : 'bg-green-100 text-green-800'
+                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                      : 'bg-green-50 text-green-700 border-green-200'
                   }`}>
                     {selectedEvent.class_info.is_remote ? 'ZDALNIE' : 'STACJONARNE'}
                   </span>
