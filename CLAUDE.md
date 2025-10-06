@@ -1,1 +1,2 @@
 - Always push after commit
+- At end of work alwayes commit and push changes
