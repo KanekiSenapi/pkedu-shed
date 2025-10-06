@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { UserPreferences } from '@/lib/user-preferences';
 
@@ -11,6 +11,7 @@ interface DashboardNavbarProps {
 
 export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -48,18 +49,20 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
     return preferences.fullName;
   };
 
+  const getPageTitle = (): string => {
+    if (pathname === '/browse') return 'Widok ogólny';
+    return 'Moje zajęcia';
+  };
+
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14">
           {/* Left Section */}
           <div className="flex items-center space-x-4">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="text-lg font-bold text-gray-900 hover:text-gray-700"
-            >
-              Moje zajęcia
-            </button>
+            <h1 className="text-lg font-bold text-gray-900">
+              {getPageTitle()}
+            </h1>
             <div className="hidden md:flex items-center space-x-3">
               <div className="h-3 w-px bg-gray-300"></div>
               <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 border border-gray-200">
@@ -87,6 +90,15 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
                     <div className="text-xs text-gray-500 mb-1">Niezalogowany</div>
                     <div className="text-sm text-gray-900">{getUserInfo()}</div>
                   </div>
+                  <button
+                    onClick={() => {
+                      setShowDropdown(false);
+                      router.push('/dashboard');
+                    }}
+                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-200"
+                  >
+                    Moje zajęcia
+                  </button>
                   <button
                     onClick={() => {
                       setShowDropdown(false);
