@@ -68,8 +68,9 @@ export function NotificationBell() {
   };
 
   const formatTimestamp = (dateStr: string) => {
-    // Parse UTC timestamp and convert to local time
-    const date = new Date(dateStr);
+    // Ensure UTC parsing by adding 'Z' if not present
+    const utcDateStr = dateStr.endsWith('Z') ? dateStr : dateStr.replace(' ', 'T') + 'Z';
+    const date = new Date(utcDateStr);
     const now = new Date();
 
     // Calculate difference in milliseconds
