@@ -103,7 +103,6 @@ export function UpcomingDaysCalendar({ entries }: UpcomingDaysCalendarProps) {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm font-medium text-gray-900">{formatDate(day.date)}</span>
                 <span className="text-xs text-gray-500">{getTimeRange(day.entries)}</span>
-                <span className="text-xs text-gray-500">({day.dayName})</span>
                 <span className="text-xs text-blue-600">• {getTimeUntil(day.date)}</span>
               </div>
               <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 border border-blue-200">
