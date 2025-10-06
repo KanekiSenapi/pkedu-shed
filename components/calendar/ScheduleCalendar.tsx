@@ -110,10 +110,10 @@ export function ScheduleCalendar() {
         backgroundColor: '#ffffff',
         borderLeft,
         border: '1px solid #e5e7eb',
-        borderRadius: '4px',
+        borderRadius: '0',
         color: '#111827',
         fontSize: '0.75rem',
-        padding: '4px 6px',
+        padding: '2px 4px',
         boxShadow: 'none',
       },
     };
@@ -147,14 +147,14 @@ export function ScheduleCalendar() {
     const modeBorderColor = event.entry.class_info.is_remote ? 'border-blue-200' : 'border-green-200';
 
     return (
-      <div className="flex items-center gap-1 flex-wrap">
-        <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 border border-gray-200 rounded">
+      <div className="flex items-center gap-1">
+        <span className="text-[10px] px-1 py-0.5 bg-gray-100 text-gray-600 border border-gray-200">
           {typeLabel}
         </span>
-        <span className={`text-[10px] px-1.5 py-0.5 ${modeBgColor} ${modeTextColor} border ${modeBorderColor} rounded`}>
+        <span className={`text-[10px] px-1 py-0.5 ${modeBgColor} ${modeTextColor} border ${modeBorderColor}`}>
           {modeLabel}
         </span>
-        <span className="text-xs text-gray-900 truncate" title={event.entry.class_info.subject}>
+        <span className="text-[11px] text-gray-900 truncate" title={event.entry.class_info.subject}>
           {event.entry.class_info.subject}
         </span>
       </div>
@@ -181,7 +181,7 @@ export function ScheduleCalendar() {
       <div className="rbc-day-bg-wrapper">
         {children}
         {hasStationaryClasses && (
-          <div className="absolute top-0 left-0 right-0 text-center text-[8px] font-semibold px-1 py-0.5 bg-green-600 text-white uppercase tracking-wider">
+          <div className="absolute top-0 left-0 text-[8px] font-semibold px-1 py-0.5 bg-green-600 text-white uppercase tracking-wider">
             ZJAZD
           </div>
         )}
@@ -277,10 +277,10 @@ export function ScheduleCalendar() {
                   {selectedEvent.class_info.subject}
                 </h3>
                 <div className="mt-2 flex items-center gap-2 flex-wrap">
-                  <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
+                  <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
                     {selectedEvent.class_info.type || 'Inne'}
                   </span>
-                  <span className={`px-2 py-1 rounded text-xs font-medium border ${
+                  <span className={`px-2 py-1 text-xs font-medium border ${
                     selectedEvent.class_info.is_remote
                       ? 'bg-blue-50 text-blue-700 border-blue-200'
                       : 'bg-green-50 text-green-700 border-green-200'
