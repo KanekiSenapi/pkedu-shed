@@ -10,6 +10,8 @@ const SUBJECT_MAP: Record<string, string> = {
   'ZPI': 'Zarządzanie projektem informatycznym',
   'ZTKiK': 'Zaawansowane technologie komunikacji i komputerów',
   'BD': 'Big Data',
+  'BwST': 'Bezpieczeństwo w sieciach telekomunikacyjnych',
+  'BAM': 'Bezpieczeństwo aplikacji mobilnych',
 };
 
 // Mapa skrótów prowadzących do pełnych nazwisk
@@ -44,7 +46,8 @@ const INSTRUCTOR_MAP: Record<string, string> = {
   'ML': 'mgr inż. Maryna Łukaczyk',
   'AM': 'dr Adam Marszałek',
   'MNaw': 'mgr inż. Mateusz Nawrocki',
-  'MNied': 'mgr inż.Michał Niedźwiecki',
+  'MNied': 'mgr inż. Michał Niedźwiecki',
+  'MNiedz': 'mgr inż. Michał Niedźwiecki',
   'ANiem': 'dr Agnieszka Niemczynowicz',
   'AN': 'dr inż. Artur Niewiarowski',
   'MN': 'mgr inż. Mateusz Nytko',
@@ -94,7 +97,8 @@ export function parseClassInfo(cellContent: string): ClassInfo | null {
     return null;
   }
 
-  const raw = cellContent.trim();
+  // Normalizacja: usuń ": - :" jeśli występuje
+  let raw = cellContent.trim().replace(/:\s*-\s*:/g, '');
 
   // Try tab-separated format first
   if (raw.includes('\t')) {
