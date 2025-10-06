@@ -36,7 +36,8 @@ export default function BeginPage() {
     ...new Set(
       schedule?.sections
         .filter(s => s.stopien === stopien && s.rok === rok)
-        .flatMap(s => s.groups) || []
+        .flatMap(s => s.groups)
+        .filter(g => !g.includes(',')) || [] // Only single groups, not merged ones
     ),
   ].sort();
 
