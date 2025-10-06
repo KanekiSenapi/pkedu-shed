@@ -118,7 +118,7 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
                     }}
                     className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-200"
                   >
-                    Zgłoś błąd
+                    Zgłoś błąd lub sugestię
                   </button>
                   <button
                     onClick={() => {
