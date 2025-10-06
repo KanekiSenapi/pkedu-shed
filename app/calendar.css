@@ -50,13 +50,6 @@
   width: 100%;
 }
 
-.custom-event-content .rbc-event-label {
-  font-size: 0.65rem;
-  font-weight: 500;
-  opacity: 0.9;
-  white-space: nowrap;
-}
-
 .custom-event-content .event-tags {
   display: flex;
   gap: 3px;
@@ -77,12 +70,13 @@
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-.custom-event-content .rbc-event-content {
+.custom-event-content .event-subject {
   font-size: 0.7rem;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-top: 1px;
 }
 
 /* Show more button styling */

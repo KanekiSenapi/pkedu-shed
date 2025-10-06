@@ -147,19 +147,13 @@ export function ScheduleCalendar() {
     const typeLabel = event.entry.class_info.type || 'inne';
     const modeLabel = event.entry.class_info.is_remote ? 'zdalne' : 'stacj.';
 
-    // Format time from event.start and event.end
-    const startTime = moment(event.start).format('HH:mm');
-    const endTime = moment(event.end).format('HH:mm');
-    const timeLabel = `${startTime} – ${endTime}`;
-
     return (
       <div className="custom-event-content">
-        <div className="rbc-event-label">{timeLabel}</div>
         <div className="event-tags">
           <span className="event-tag event-tag-type">{typeLabel}</span>
           <span className="event-tag event-tag-mode">{modeLabel}</span>
         </div>
-        <div className="rbc-event-content" title={event.entry.class_info.subject}>
+        <div className="event-subject" title={event.entry.class_info.subject}>
           {event.entry.class_info.subject}
         </div>
       </div>
