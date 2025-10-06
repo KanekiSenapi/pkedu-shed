@@ -120,7 +120,7 @@ export function ScheduleCalendar() {
     };
   }, []);
 
-  // Day style getter - highlight weekends or hide weekdays
+  // Day style getter - hide weekdays if needed
   const dayPropGetter = useCallback((date: Date) => {
     const weekend = isWeekend(date);
 
@@ -132,13 +132,6 @@ export function ScheduleCalendar() {
       };
     }
 
-    if (weekend) {
-      return {
-        style: {
-          backgroundColor: '#fef3c7', // light yellow for weekends
-        },
-      };
-    }
     return {};
   }, [weekendsOnly]);
 

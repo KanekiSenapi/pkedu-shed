@@ -12,13 +12,13 @@ export function ScheduleStats() {
         Statystyki
       </h2>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+      <div className="grid grid-cols-3 gap-3 text-sm">
         <div>
           <div className="text-xl font-medium text-gray-900 dark:text-white">
             {stats.totalClasses}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            Wszystkie
+            Wszystkie zajęcia
           </div>
         </div>
 
@@ -36,13 +36,6 @@ export function ScheduleStats() {
             {stats.remoteClasses}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">Zdalne</div>
-        </div>
-
-        <div>
-          <div className="text-xl font-medium text-gray-900 dark:text-white">
-            {stats.totalWeekends}
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">Zjazdów</div>
         </div>
       </div>
     </div>
