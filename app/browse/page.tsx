@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import { useSchedule } from '@/lib/use-schedule';
-import { Navbar } from '@/components/layout/Navbar';
+import { DashboardNavbar } from '@/components/dashboard/DashboardNavbar';
+import { loadUserPreferences, type UserPreferences } from '@/lib/user-preferences';
 import { SearchBar } from '@/components/search/SearchBar';
 import { Filters } from '@/components/filters/Filters';
 import { ScheduleCalendar } from '@/components/calendar/ScheduleCalendar';
@@ -11,10 +13,16 @@ import { StationaryDaysCalendar } from '@/components/stats/StationaryDaysCalenda
 
 export default function BrowsePage() {
   const { loading, error } = useSchedule();
+  const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+
+  useEffect(() => {
+    const prefs = loadUserPreferences();
+    setPreferences(prefs);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      <DashboardNavbar preferences={preferences} />
 
       <main className="container mx-auto px-4 py-8">
         {/* Loading State */}

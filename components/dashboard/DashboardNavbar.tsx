@@ -6,7 +6,7 @@ import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { UserPreferences } from '@/lib/user-preferences';
 
 interface DashboardNavbarProps {
-  preferences: UserPreferences;
+  preferences: UserPreferences | null;
 }
 
 export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
@@ -27,6 +27,7 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
   }, []);
 
   const getUserInitials = (): string => {
+    if (!preferences) return 'GU';
     if (preferences.role === 'student') {
       return preferences.groups[0]?.substring(0, 2).toUpperCase() || 'ST';
     }
@@ -40,6 +41,7 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
   };
 
   const getUserInfo = (): string => {
+    if (!preferences) return 'Gość';
     if (preferences.role === 'student') {
       return `Stopień ${preferences.stopien}, Rok ${preferences.rok}, Grupa ${preferences.groups.join(', ')}`;
     }
