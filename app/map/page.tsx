@@ -325,6 +325,7 @@ export default function MapPage() {
                   selectedBuilding={selectedBuilding}
                   onBuildingClick={handleBuildingClick}
                   userLocation={userLocation}
+                  disableAutoCenter={mappingMode}
                 >
                   {mappingMode && (
                     <MapClickLayer

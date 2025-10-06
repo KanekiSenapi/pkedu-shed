@@ -20,14 +20,17 @@ interface InteractiveMapProps {
   userLocation?: { lat: number; lng: number } | null;
   onBuildingClick?: (building: Building) => void;
   children?: ReactNode;
+  disableAutoCenter?: boolean; // Wyłącz auto-centrowanie (np. podczas rysowania)
 }
 
-// Komponent do centrowania mapy
-function MapController({ center }: { center: [number, number] }) {
+// Komponent do centrowania mapy - tylko przy wyraźnej zmianie lokalizacji
+function MapController({ center, shouldUpdate }: { center: [number, number]; shouldUpdate: boolean }) {
   const map = useMap();
   useEffect(() => {
-    map.setView(center, 17);
-  }, [center, map]);
+    if (shouldUpdate) {
+      map.setView(center, 17);
+    }
+  }, [center, map, shouldUpdate]);
   return null;
 }
 
@@ -37,6 +40,7 @@ export function InteractiveMap({
   userLocation,
   onBuildingClick,
   children,
+  disableAutoCenter = false,
 }: InteractiveMapProps) {
   // Ikona dla budynków z salami
   const buildingIcon = new L.Icon({
@@ -84,6 +88,10 @@ export function InteractiveMap({
     ? [userLocation.lat, userLocation.lng]
     : [50.0682, 19.9187];
 
+  // Tylko aktualizuj widok gdy wyraźnie zmienia się selectedBuilding lub userLocation
+  // I NIE jesteśmy w trybie rysowania (disableAutoCenter)
+  const shouldUpdateView = !disableAutoCenter && !!(selectedBuilding || userLocation);
+
   return (
     <MapContainer
       center={center}
@@ -96,7 +104,7 @@ export function InteractiveMap({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      <MapController center={center} />
+      {!disableAutoCenter && <MapController center={center} shouldUpdate={shouldUpdateView} />}
 
       {/* Markery budynków */}
       {buildings.map((building) => {
