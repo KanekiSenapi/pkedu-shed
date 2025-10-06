@@ -166,6 +166,23 @@ export function ScheduleCalendar() {
     );
   };
 
+  // Custom date cell wrapper to add "ZJAZD" label to weekends in month view
+  const CustomDateCellWrapper = ({ children, value }: { children: React.ReactNode; value: Date }) => {
+    const weekend = isWeekend(value);
+    const showLabel = view === 'month' && weekend;
+
+    return (
+      <div className="rbc-day-bg-wrapper">
+        {children}
+        {showLabel && (
+          <div className="absolute top-1 right-1 text-[9px] font-bold px-1.5 py-0.5 bg-orange-500 text-white uppercase tracking-wide">
+            ZJAZD
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white border border-gray-200 p-4">
       <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
@@ -213,6 +230,7 @@ export function ScheduleCalendar() {
           views={['month', 'week', 'day', 'agenda']}
           components={{
             event: CustomEvent,
+            dateCellWrapper: CustomDateCellWrapper,
           }}
           popup
           popupOffset={{ x: 0, y: 20 }}
