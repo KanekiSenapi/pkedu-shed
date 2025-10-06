@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      id: result.lastInsertRowid,
+      id: Number(result.lastInsertRowid),
       message: 'Zgłoszenie zostało wysłane. Dziękujemy!',
     });
   } catch (error) {
