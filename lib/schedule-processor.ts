@@ -326,6 +326,24 @@ function extractSubject(
     subject = subject.substring(0, firstTitleIndex).trim();
   }
 
+  // Usuń imiona i nazwiska prowadzących (bez tytułów) z INSTRUCTOR_MAP
+  // Np. "Big Data Tomasz Ligocki" -> "Big Data"
+  const instructorFullNames = Object.values(INSTRUCTOR_MAP);
+  for (const fullName of instructorFullNames) {
+    // Usuń tytuły i zostaw samo imię i nazwisko
+    let nameOnly = fullName;
+    for (const title of titles) {
+      nameOnly = nameOnly.replace(title, '').trim();
+    }
+    // Usuń też ", prof. PK" i podobne
+    nameOnly = nameOnly.replace(/,?\s*prof\.\s*PK\s*$/i, '').trim();
+
+    if (nameOnly && nameOnly.length > 3) {
+      const nameRegex = new RegExp(`\\b${nameOnly.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+      subject = subject.replace(nameRegex, ' ');
+    }
+  }
+
   // Usuń "ZDALNIE"
   subject = subject.replace(/ZDALNIE?/gi, ' ');
 
