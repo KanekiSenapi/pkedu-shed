@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 
 interface AttendanceStats {
   total_classes: number;
@@ -12,6 +13,7 @@ interface AttendanceStats {
 }
 
 export function AttendanceStats() {
+  const { data: session, status } = useSession();
   const [stats, setStats] = useState<AttendanceStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -36,13 +38,34 @@ export function AttendanceStats() {
     }
   };
 
-  if (loading) {
+  if (status === 'loading' || loading) {
     return (
       <div className="bg-white border border-gray-200 p-6">
         <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-4">
           Statystyki obecności
         </h2>
         <div className="text-center text-gray-500 py-4">Ładowanie...</div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="bg-white border border-gray-200 p-6">
+        <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-4">
+          Statystyki obecności
+        </h2>
+        <div className="bg-blue-50 border border-blue-200 p-4">
+          <p className="text-sm text-blue-900">
+            <strong>Zaloguj się</strong>, aby zobaczyć swoje statystyki obecności.
+          </p>
+          <a
+            href="/login"
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium mt-2 inline-block"
+          >
+            Przejdź do logowania →
+          </a>
+        </div>
       </div>
     );
   }

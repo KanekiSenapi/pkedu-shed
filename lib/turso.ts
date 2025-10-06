@@ -293,4 +293,31 @@ export async function initDatabase() {
   await turso.execute(`
     CREATE INDEX IF NOT EXISTS idx_attendance_user ON class_attendance(user_id)
   `);
+
+  // Class homework table
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS class_homework (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      entry_date TEXT NOT NULL,
+      entry_time TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT,
+      due_date TEXT,
+      priority TEXT DEFAULT 'medium',
+      completed INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_homework_user_date ON class_homework(user_id, due_date)
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_homework_user_completed ON class_homework(user_id, completed)
+  `);
 }

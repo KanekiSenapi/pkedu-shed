@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 
 interface ClassActionsProps {
   date: string;
@@ -9,11 +10,34 @@ interface ClassActionsProps {
 }
 
 export function ClassActions({ date, time, subject }: ClassActionsProps) {
+  const { data: session, status } = useSession();
   const [attended, setAttended] = useState<boolean | null>(null);
   const [note, setNote] = useState('');
   const [existingNote, setExistingNote] = useState('');
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
+
+  if (status === 'loading') {
+    return (
+      <div className="text-center text-gray-500 py-4">Ładowanie...</div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="bg-blue-50 border border-blue-200 p-4">
+        <p className="text-sm text-blue-900">
+          <strong>Zaloguj się</strong>, aby korzystać z notatek i śledzenia obecności.
+        </p>
+        <a
+          href="/login"
+          className="text-blue-600 hover:text-blue-700 text-sm font-medium mt-2 inline-block"
+        >
+          Przejdź do logowania →
+        </a>
+      </div>
+    );
+  }
 
   useEffect(() => {
     fetchData();
