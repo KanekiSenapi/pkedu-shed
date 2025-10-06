@@ -20,7 +20,7 @@ import { NextClassCountdown } from '@/components/dashboard/NextClassCountdown';
 import { TodaysTimeline } from '@/components/dashboard/TodaysTimeline';
 import { SubjectProgress } from '@/components/dashboard/SubjectProgress';
 import { ScheduleCalendar } from '@/components/calendar/ScheduleCalendar';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { DashboardNavbar } from '@/components/dashboard/DashboardNavbar';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -75,30 +75,8 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600 mt-1">
-                {preferences.role === 'student'
-                  ? `${preferences.stopien} stopień, Rok ${preferences.rok}, Grupa ${preferences.groups.join(', ')}`
-                  : preferences.fullName}
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <NotificationBell />
-              <button
-                onClick={() => router.push('/begin')}
-                className="text-sm text-blue-600 hover:text-blue-700"
-              >
-                Zmień ustawienia
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Navbar */}
+      <DashboardNavbar preferences={preferences} />
 
       <div className="container mx-auto px-4 py-8">
         {/* Weekend Notice */}
