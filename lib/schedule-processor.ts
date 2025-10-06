@@ -226,6 +226,31 @@ function extractInstructor(content: string): string | null {
     }
   }
 
+  // Fallback 2: szukaj pełnego imienia i nazwiska z mapy (bez tytułu)
+  // Stwórz mapę: nazwisko -> pełne dane
+  const nameMap: Record<string, string> = {};
+  Object.values(INSTRUCTOR_MAP).forEach(fullName => {
+    // Wyciągnij samo imię i nazwisko (usuń tytuł)
+    let nameOnly = fullName;
+    for (const title of titles) {
+      nameOnly = nameOnly.replace(title, '').trim();
+    }
+    // Usuń "prof. PK" z końca jeśli jest
+    nameOnly = nameOnly.replace(/,?\s*prof\.\s*PK\s*$/i, '').trim();
+
+    if (nameOnly) {
+      nameMap[nameOnly.toLowerCase()] = fullName;
+    }
+  });
+
+  // Sprawdź czy czysty content zawiera któreś z imion i nazwisk
+  const cleanLower = cleanContent.toLowerCase();
+  for (const [nameOnly, fullName] of Object.entries(nameMap)) {
+    if (cleanLower.includes(nameOnly)) {
+      return fullName;
+    }
+  }
+
   return null;
 }
 
