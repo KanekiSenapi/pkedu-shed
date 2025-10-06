@@ -8,7 +8,7 @@ const SUBJECT_MAP: Record<string, string> = {
   'SNiDP': 'Sieci neuronowe i deep learning',
   'SR': 'Systemy rekomendacyjne',
   'ZPI': 'Zarządzanie projektem informatycznym',
-  'ZTKiK': 'Zaawansowane technologie komunikacji i komputerów',
+  'ZTKiK': 'Zaawansowane techniki kryptografii i kryptoanalizy',
   'BD': 'Big Data',
   'BwST': 'Bezpieczeństwo w sieciach telekomunikacyjnych',
   'BAM': 'Bezpieczeństwo aplikacji mobilnych',
