@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 10; // Short timeout - just triggers background job
+export const maxDuration = 60; // Max timeout for schedule update
 
 /**
  * GET /api/cron
- * Cron job endpoint - triggers schedule update from PK Excel file
+ * Cron job endpoint - updates schedule from PK Excel file
  * Should be called by Vercel Cron once per day
- *
- * Returns 202 Accepted immediately and processes update in background
- * This prevents timeout issues as the actual update can take 60+ seconds
  *
  * To clear old data before updating:
  * 1. Call POST /api/admin/clear-all (optional)
@@ -35,38 +32,31 @@ export async function GET(request: Request) {
       );
     }
 
-    console.log('[Cron] Starting schedule update (fire and forget)...');
+    console.log('[Cron] Starting schedule update...');
 
     // Call internal fetch endpoint with force=true and token
     const fetchUrl = new URL('/api/schedule/fetch', request.url);
     fetchUrl.searchParams.set('force', 'true');
     fetchUrl.searchParams.set('token', process.env.CRON_SECRET || '');
 
-    // Fire and forget - don't wait for response
-    fetch(fetchUrl.toString())
-      .then(async (response) => {
-        const result = await response.json();
-        if (result.success) {
-          console.log('[Cron] Schedule updated successfully in background');
-        } else {
-          console.error('[Cron] Background update failed:', result.error);
-        }
-      })
-      .catch((error) => {
-        console.error('[Cron] Background update error:', error);
-      });
+    // Make the request and wait for it
+    const response = await fetch(fetchUrl.toString());
+    const result = await response.json();
 
-    // Return immediately with 202 Accepted
-    return NextResponse.json(
-      {
+    if (result.success) {
+      console.log('[Cron] Schedule updated successfully');
+      return NextResponse.json({
         success: true,
-        message: 'Schedule update started in background',
-        status: 'processing',
-      },
-      { status: 202 }
-    );
+        message: 'Schedule updated successfully',
+        sections: result.sections,
+        timestamp: result.timestamp,
+      });
+    } else {
+      console.error('[Cron] Update failed:', result.error);
+      throw new Error(result.error || 'Failed to update schedule');
+    }
   } catch (error) {
-    console.error('[Cron] Error starting update:', error);
+    console.error('[Cron] Error updating schedule:', error);
     return NextResponse.json(
       {
         success: false,
