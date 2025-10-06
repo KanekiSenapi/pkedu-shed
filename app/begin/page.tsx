@@ -90,8 +90,8 @@ export default function BeginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl w-full">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 max-w-2xl w-full">
         {/* Role selection */}
         {step === 'role' && (
           <div className="space-y-6">
