@@ -87,6 +87,35 @@ export function UpcomingDaysCalendar({ entries }: UpcomingDaysCalendarProps) {
     return `(${firstStart}-${lastEnd})`;
   };
 
+  const timeToMinutes = (time: string): number => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const hasFreeTimeGap = (entries: ScheduleEntry[], currentIndex: number): boolean => {
+    if (currentIndex === 0) return false;
+
+    const previousEntry = entries[currentIndex - 1];
+    const currentEntry = entries[currentIndex];
+
+    const gapStart = timeToMinutes(previousEntry.end_time);
+    const gapEnd = timeToMinutes(currentEntry.start_time);
+    const gapDuration = gapEnd - gapStart;
+
+    const MIN_FREE_TIME_MINUTES = 45;
+    const LUNCH_START = 13 * 60 + 15; // 13:15
+    const LUNCH_END = 14 * 60; // 14:00
+
+    if (gapDuration >= MIN_FREE_TIME_MINUTES) {
+      const isLunchBreak = gapStart === LUNCH_START && gapEnd === LUNCH_END;
+      if (!isLunchBreak) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
   return (
     <div className="bg-white border border-gray-200 p-4">
       <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-3">
@@ -116,20 +145,27 @@ export function UpcomingDaysCalendar({ entries }: UpcomingDaysCalendarProps) {
             </div>
 
             <div className="space-y-1">
-              {day.entries.map((entry, idx) => (
-                <div key={idx} className="text-xs text-gray-600 flex items-center gap-2">
-                  <span className="font-mono text-gray-500">{entry.start_time}</span>
-                  <span className="text-gray-900">{entry.class_info.subject}</span>
-                  {entry.class_info.type && (
-                    <span className="text-gray-500">({entry.class_info.type})</span>
-                  )}
-                  {entry.class_info.is_remote ? (
-                    <span className="text-purple-600">• Zdalne</span>
-                  ) : entry.class_info.room ? (
-                    <span className="text-gray-500">• {entry.class_info.room}</span>
-                  ) : null}
-                </div>
-              ))}
+              {[...day.entries]
+                .sort((a, b) => a.start_time.localeCompare(b.start_time))
+                .map((entry, idx, sortedEntries) => (
+                  <div key={idx} className="text-xs text-gray-600 flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-gray-500">{entry.start_time}</span>
+                    <span className="text-gray-900">{entry.class_info.subject}</span>
+                    {entry.class_info.type && (
+                      <span className="text-gray-500">({entry.class_info.type})</span>
+                    )}
+                    {entry.class_info.is_remote ? (
+                      <span className="text-purple-600">• Zdalne</span>
+                    ) : entry.class_info.room ? (
+                      <span className="text-gray-500">• {entry.class_info.room}</span>
+                    ) : null}
+                    {hasFreeTimeGap(sortedEntries, idx) && (
+                      <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium border border-orange-300">
+                        okienko
+                      </span>
+                    )}
+                  </div>
+                ))}
             </div>
           </div>
         ))}
