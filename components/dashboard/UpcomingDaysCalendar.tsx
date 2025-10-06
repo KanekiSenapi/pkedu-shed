@@ -106,7 +106,12 @@ export function UpcomingDaysCalendar({ entries }: UpcomingDaysCalendarProps) {
                 <span className="text-xs text-blue-600">• {getTimeUntil(day.date)}</span>
               </div>
               <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 border border-blue-200">
-                {day.entries.length} {day.entries.length === 1 ? 'zajęcia' : 'zajęć'}
+                {day.entries.length}{' '}
+                {day.entries.length === 1
+                  ? 'blok zajęć'
+                  : day.entries.length < 5
+                    ? 'bloki zajęć'
+                    : 'bloków zajęć'}
               </span>
             </div>
 
