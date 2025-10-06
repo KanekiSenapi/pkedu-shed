@@ -90,62 +90,65 @@ export default function BeginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 max-w-2xl w-full">
-        {/* Role selection */}
-        {step === 'role' && (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Witaj w Plan Zajęć PK
-              </h1>
-              <p className="text-gray-600">
-                Wybierz swoją rolę aby dostosować widok kalendarza
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-              <button
-                onClick={() => handleRoleSelect('student')}
-                className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group"
-              >
-                <div className="text-4xl mb-3">🎓</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-1">Student</h3>
-                <p className="text-sm text-gray-600">
-                  Zobacz plan dla swojej grupy i roku
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          {/* Role selection */}
+          {step === 'role' && (
+            <div className="space-y-6">
+              <div className="bg-white border border-gray-200 p-6">
+                <h1 className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-2">
+                  Plan Zajęć PK
+                </h1>
+                <p className="text-gray-900">
+                  Wybierz swoją rolę aby dostosować widok kalendarza
                 </p>
-              </button>
+              </div>
 
-              <button
-                onClick={() => handleRoleSelect('instructor')}
-                className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group"
-              >
-                <div className="text-4xl mb-3">👨‍🏫</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-1">Prowadzący</h3>
-                <p className="text-sm text-gray-600">
-                  Zobacz swoje zajęcia i harmonogram
-                </p>
-              </button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
+                  onClick={() => handleRoleSelect('student')}
+                  className="bg-white border border-gray-200 p-6 hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                >
+                  <div className="text-4xl mb-3">🎓</div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">Student</h3>
+                  <p className="text-sm text-gray-600">
+                    Zobacz plan dla swojej grupy i roku
+                  </p>
+                </button>
+
+                <button
+                  onClick={() => handleRoleSelect('instructor')}
+                  className="bg-white border border-gray-200 p-6 hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                >
+                  <div className="text-4xl mb-3">👨‍🏫</div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">Prowadzący</h3>
+                  <p className="text-sm text-gray-600">
+                    Zobacz swoje zajęcia i harmonogram
+                  </p>
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Student flow */}
         {step === 'student' && (
           <div className="space-y-6">
-            <div>
+            <div className="bg-white border border-gray-200 p-6">
               <button
                 onClick={() => setStep('role')}
                 className="text-blue-600 hover:text-blue-700 text-sm mb-4"
               >
                 ← Zmień rolę
               </button>
-              <h2 className="text-2xl font-bold text-gray-900">Wybierz swoją grupę</h2>
+              <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                Wybierz swoją grupę
+              </h2>
             </div>
 
             {/* Stopień selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="bg-white border border-gray-200 p-6">
+              <label className="block text-sm font-medium text-gray-600 uppercase tracking-wide mb-3">
                 Stopień studiów
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -157,7 +160,7 @@ export default function BeginPage() {
                       setRok(null);
                       setSelectedGroups([]);
                     }}
-                    className={`p-3 rounded-lg border-2 transition-all ${
+                    className={`p-3 border transition-colors ${
                       stopien === s
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
                         : 'border-gray-200 hover:border-gray-300'
@@ -171,8 +174,8 @@ export default function BeginPage() {
 
             {/* Rok selection */}
             {stopien && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="bg-white border border-gray-200 p-6">
+                <label className="block text-sm font-medium text-gray-600 uppercase tracking-wide mb-3">
                   Rok studiów
                 </label>
                 <div className="grid grid-cols-4 gap-3">
@@ -183,7 +186,7 @@ export default function BeginPage() {
                         setRok(r);
                         setSelectedGroups([]);
                       }}
-                      className={`p-3 rounded-lg border-2 transition-all ${
+                      className={`p-3 border transition-colors ${
                         rok === r
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
                           : 'border-gray-200 hover:border-gray-300'
@@ -198,8 +201,8 @@ export default function BeginPage() {
 
             {/* Group selection */}
             {rok && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="bg-white border border-gray-200 p-6">
+                <label className="block text-sm font-medium text-gray-600 uppercase tracking-wide mb-3">
                   Grupa (możesz wybrać kilka)
                 </label>
                 <div className="grid grid-cols-3 gap-3">
@@ -207,7 +210,7 @@ export default function BeginPage() {
                     <button
                       key={group}
                       onClick={() => handleGroupToggle(group)}
-                      className={`p-3 rounded-lg border-2 transition-all ${
+                      className={`p-3 border transition-colors ${
                         selectedGroups.includes(group)
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
                           : 'border-gray-200 hover:border-gray-300'
@@ -224,7 +227,7 @@ export default function BeginPage() {
             <button
               onClick={handleStudentComplete}
               disabled={!stopien || !rok || selectedGroups.length === 0}
-              className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
+              className="w-full py-3 px-4 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
             >
               Kontynuuj do dashboard
             </button>
@@ -234,24 +237,26 @@ export default function BeginPage() {
         {/* Instructor flow */}
         {step === 'instructor' && (
           <div className="space-y-6">
-            <div>
+            <div className="bg-white border border-gray-200 p-6">
               <button
                 onClick={() => setStep('role')}
                 className="text-blue-600 hover:text-blue-700 text-sm mb-4"
               >
                 ← Zmień rolę
               </button>
-              <h2 className="text-2xl font-bold text-gray-900">Wybierz swoje dane</h2>
+              <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                Wybierz swoje dane
+              </h2>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="bg-white border border-gray-200 p-6">
+              <label className="block text-sm font-medium text-gray-600 uppercase tracking-wide mb-3">
                 Imię i nazwisko
               </label>
               <select
                 value={selectedInstructor}
                 onChange={(e) => setSelectedInstructor(e.target.value)}
-                className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
+                className="w-full p-3 border border-gray-200 focus:border-blue-500 focus:outline-none bg-white"
               >
                 <option value="">Wybierz prowadzącego...</option>
                 {instructors.map(instructor => (
@@ -265,12 +270,13 @@ export default function BeginPage() {
             <button
               onClick={handleInstructorComplete}
               disabled={!selectedInstructor}
-              className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
+              className="w-full py-3 px-4 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
             >
               Kontynuuj do dashboard
             </button>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

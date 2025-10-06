@@ -93,25 +93,25 @@ export default function DashboardPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="bg-white border border-gray-200 p-6">
             <div className="text-sm text-gray-600 mb-1">Dziś</div>
             <div className="text-3xl font-bold text-blue-600">{stats.todayCount}</div>
             <div className="text-xs text-gray-500 mt-1">zajęć</div>
           </div>
 
-          <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="bg-white border border-gray-200 p-6">
             <div className="text-sm text-gray-600 mb-1">Ten tydzień</div>
             <div className="text-3xl font-bold text-gray-900">{stats.thisWeekCount}</div>
             <div className="text-xs text-gray-500 mt-1">zajęć</div>
           </div>
 
-          <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="bg-white border border-gray-200 p-6">
             <div className="text-sm text-gray-600 mb-1">Stacjonarne</div>
             <div className="text-3xl font-bold text-green-600">{stats.stationaryCount}</div>
             <div className="text-xs text-gray-500 mt-1">w tym tygodniu</div>
           </div>
 
-          <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="bg-white border border-gray-200 p-6">
             <div className="text-sm text-gray-600 mb-1">Zdalne</div>
             <div className="text-3xl font-bold text-purple-600">{stats.remoteCount}</div>
             <div className="text-xs text-gray-500 mt-1">w tym tygodniu</div>
@@ -120,13 +120,15 @@ export default function DashboardPage() {
 
         {/* Today's classes */}
         {todayClasses.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Dzisiejsze zajęcia</h2>
+          <div className="bg-white border border-gray-200 p-6 mb-8">
+            <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-4">
+              Dzisiejsze zajęcia
+            </h2>
             <div className="space-y-3">
               {todayClasses.map(entry => (
                 <div
                   key={entry.id}
-                  className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-100"
+                  className="flex items-center justify-between p-4 bg-blue-50 border border-blue-100"
                 >
                   <div className="flex items-center gap-4">
                     <div className="text-blue-600 font-semibold">
@@ -143,7 +145,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   {entry.class_info.is_remote && (
-                    <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+                    <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium">
                       Zdalne
                     </span>
                   )}
@@ -154,9 +156,11 @@ export default function DashboardPage() {
         )}
 
         {/* Upcoming classes */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Nadchodzące zajęcia</h2>
+            <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+              Nadchodzące zajęcia
+            </h2>
             <button
               onClick={() => router.push('/')}
               className="text-sm text-blue-600 hover:text-blue-700"
@@ -177,7 +181,7 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={entry.id}
-                    className={`flex items-center justify-between p-4 rounded-lg border ${
+                    className={`flex items-center justify-between p-4 border ${
                       isToday
                         ? 'bg-blue-50 border-blue-200'
                         : 'bg-gray-50 border-gray-200'
@@ -204,11 +208,11 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {entry.class_info.is_remote ? (
-                        <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+                        <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium">
                           Zdalne
                         </span>
                       ) : (
-                        <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                        <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium">
                           Stacjonarne
                         </span>
                       )}

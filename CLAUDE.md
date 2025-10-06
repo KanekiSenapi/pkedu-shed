@@ -1,2 +1,3 @@
 - Always push after commit
 - At end of work alwayes commit and push changes
+- NEVER EVER USE GRADIENT DESIGN, NO ROUNDS CORNER
