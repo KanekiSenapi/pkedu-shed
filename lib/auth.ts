@@ -1,6 +1,6 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { verifyCredentials } from './auth-db';
+import { verifyCredentials, logLogin } from './auth-db';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -10,7 +10,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
@@ -20,6 +20,10 @@ export const authOptions: NextAuthOptions = {
         if (!user) {
           return null;
         }
+
+        // Log successful login
+        const userAgent = req?.headers?.['user-agent'];
+        await logLogin(user.id, userAgent);
 
         return {
           id: user.id,

@@ -100,6 +100,8 @@ export async function initDatabase() {
       type TEXT NOT NULL,
       title TEXT NOT NULL,
       message TEXT NOT NULL,
+      target_rok INTEGER,
+      target_groups TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -236,4 +238,17 @@ export async function initDatabase() {
   await turso.execute(`
     CREATE INDEX IF NOT EXISTS idx_login_logs_date ON login_logs(login_at DESC)
   `);
+
+  // Migration: Add target columns to notifications
+  try {
+    await turso.execute(`ALTER TABLE notifications ADD COLUMN target_rok INTEGER`);
+  } catch (error) {
+    // Column already exists
+  }
+
+  try {
+    await turso.execute(`ALTER TABLE notifications ADD COLUMN target_groups TEXT`);
+  } catch (error) {
+    // Column already exists
+  }
 }
