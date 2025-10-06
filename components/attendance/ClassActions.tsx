@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { HomeworkList } from '@/components/homework/HomeworkList';
 
 interface ClassActionsProps {
   date: string;
@@ -230,6 +231,11 @@ export function ClassActions({ date, time, subject }: ClassActionsProps) {
             {existingNote}
           </div>
         )}
+      </div>
+
+      {/* Homework */}
+      <div>
+        <HomeworkList date={date} time={time} subject={subject} />
       </div>
     </div>
   );
