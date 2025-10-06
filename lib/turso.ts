@@ -1,9 +1,19 @@
 import { createClient } from '@libsql/client';
 
-export const turso = createClient({
-  url: process.env.TURSO_DATABASE_URL!,
-  authToken: process.env.TURSO_AUTH_TOKEN,
-});
+// Use local database in development if Turso credentials are not set
+const isDev = process.env.NODE_ENV !== 'production';
+const hasTursoConfig = process.env.TURSO_DATABASE_URL && process.env.TURSO_DATABASE_URL.trim() !== '';
+
+export const turso = createClient(
+  hasTursoConfig
+    ? {
+        url: process.env.TURSO_DATABASE_URL!,
+        authToken: process.env.TURSO_AUTH_TOKEN,
+      }
+    : {
+        url: 'file:./data/local.db',
+      }
+);
 
 // Initialize database schema
 export async function initDatabase() {
