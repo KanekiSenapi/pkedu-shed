@@ -227,7 +227,7 @@ export default function DashboardPage() {
 
         {/* Calendar */}
         <div className="mt-6">
-          <ScheduleCalendar />
+          <ScheduleCalendar entries={filteredEntries} />
         </div>
       </div>
     </div>

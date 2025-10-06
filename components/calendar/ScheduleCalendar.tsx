@@ -17,8 +17,13 @@ interface CalendarEvent extends BigCalendarEvent {
   entry: ScheduleEntry;
 }
 
-export function ScheduleCalendar() {
-  const { filteredEntries } = useScheduleStore();
+interface ScheduleCalendarProps {
+  entries?: ScheduleEntry[]; // Optional: if provided, use these instead of store
+}
+
+export function ScheduleCalendar({ entries: providedEntries }: ScheduleCalendarProps = {}) {
+  const { filteredEntries: storeEntries } = useScheduleStore();
+  const filteredEntries = providedEntries ?? storeEntries;
   const [selectedEvent, setSelectedEvent] = useState<ScheduleEntry | null>(null);
   const [view, setView] = useState<View>('month');
   const [date, setDate] = useState(new Date());
