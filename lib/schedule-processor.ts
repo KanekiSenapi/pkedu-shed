@@ -98,14 +98,26 @@ export function parseClassInfo(cellContent: string): ClassInfo | null {
   }
 
   // Normalizacja: usuń ": - :" jeśli występuje
-  let raw = cellContent.trim().replace(/:\s*-\s*:/g, '');
+  let raw = cellContent.trim().replace(/:\s*-\s*:/g, '').trim();
+
+  // Wykryj zmienioną godzinę na początku (np. "13:45-16:15  Przedmiot...")
+  let overrideTime: { start: string; end: string } | null = null;
+  const timeMatch = raw.match(/^(\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})\s+(.+)$/);
+  if (timeMatch) {
+    const timeRange = parseTimeRange(timeMatch[1]);
+    if (timeRange) {
+      overrideTime = timeRange;
+      raw = timeMatch[2]; // Usuń godzinę z contentu
+    }
+  }
 
   // Try tab-separated format first
   if (raw.includes('\t')) {
     const parts = raw.split('\t').map(p => p.trim());
 
     if (parts.length >= 2) {
-      const subjectRaw = parts[0] || '';
+      // Usuń ": - :" z nazwy przedmiotu jeśli występuje
+      let subjectRaw = (parts[0] || '').replace(/:\s*-\s*:/g, '').trim();
       const typeRaw = parts[1] || '';
       const instructorRaw = parts[2] || '';
       const locationRaw = parts[3] || '';
@@ -132,7 +144,8 @@ export function parseClassInfo(cellContent: string): ClassInfo | null {
         instructor: instructor || null,
         room,
         is_remote,
-        raw,
+        raw: cellContent.trim(),
+        overrideTime: overrideTime || undefined,
       };
     }
   }
@@ -150,7 +163,8 @@ export function parseClassInfo(cellContent: string): ClassInfo | null {
     instructor,
     room: is_remote ? null : room,
     is_remote,
-    raw,
+    raw: cellContent.trim(),
+    overrideTime: overrideTime || undefined,
   };
 }
 
@@ -160,15 +174,17 @@ export function parseClassInfo(cellContent: string): ClassInfo | null {
 function expandSubject(subjectRaw: string): string {
   if (!subjectRaw) return '';
 
+  // Usuń standalone " P" z końca (typ zajęć - projekt)
+  let cleaned = subjectRaw.trim().replace(/\s+P\s*$/g, '').trim();
+
   // Check if it's an abbreviation in SUBJECT_MAP
-  const abbr = subjectRaw.trim();
-  if (SUBJECT_MAP[abbr]) {
-    return SUBJECT_MAP[abbr];
+  if (SUBJECT_MAP[cleaned]) {
+    return SUBJECT_MAP[cleaned];
   }
 
   // Otherwise use mapSubjectName for comprehensive mapping
-  const mapped = mapSubjectName(abbr);
-  return mapped || abbr;
+  const mapped = mapSubjectName(cleaned);
+  return mapped || cleaned;
 }
 
 /**

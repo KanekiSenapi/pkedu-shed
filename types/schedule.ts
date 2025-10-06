@@ -13,6 +13,7 @@ export interface ClassInfo {
   room: string | null;       // "sala 151" or null if remote
   is_remote: boolean;        // true if "ZDALNIE"
   raw: string;               // original cell text
+  overrideTime?: { start: string; end: string }; // optional time override (e.g., "13:45-16:15")
 }
 
 export interface ScheduleEntry {

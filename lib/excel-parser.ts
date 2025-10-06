@@ -333,13 +333,16 @@ function parseEntries(
             if (classInfo) {
               const groupLabel = mergedGroups.join(', ');
 
+              // Use overrideTime from classInfo if available, otherwise use timeRange from TIME_COL
+              const actualTime = classInfo.overrideTime || timeRange;
+
               const entry: ScheduleEntry = {
-                id: generateEntryId(currentDate!, `${timeRange.start}-${timeRange.end}`, groupLabel, classInfo.subject),
+                id: generateEntryId(currentDate!, `${actualTime.start}-${actualTime.end}`, groupLabel, classInfo.subject),
                 date: currentDate!,
                 day: currentDay! as DayOfWeek,
-                time: `${timeRange.start}-${timeRange.end}`,
-                start_time: timeRange.start,
-                end_time: timeRange.end,
+                time: `${actualTime.start}-${actualTime.end}`,
+                start_time: actualTime.start,
+                end_time: actualTime.end,
                 group: groupLabel,
                 class_info: classInfo,
                 kierunek: config.kierunek,
@@ -358,13 +361,16 @@ function parseEntries(
             const classInfo = parseClassInfo(cellStr);
 
             if (classInfo) {
+              // Use overrideTime from classInfo if available, otherwise use timeRange from TIME_COL
+              const actualTime = classInfo.overrideTime || timeRange;
+
               const entry: ScheduleEntry = {
-                id: generateEntryId(currentDate!, `${timeRange.start}-${timeRange.end}`, group, classInfo.subject),
+                id: generateEntryId(currentDate!, `${actualTime.start}-${actualTime.end}`, group, classInfo.subject),
                 date: currentDate!,
                 day: currentDay! as DayOfWeek,
-                time: `${timeRange.start}-${timeRange.end}`,
-                start_time: timeRange.start,
-                end_time: timeRange.end,
+                time: `${actualTime.start}-${actualTime.end}`,
+                start_time: actualTime.start,
+                end_time: actualTime.end,
                 group,
                 class_info: classInfo,
                 kierunek: config.kierunek,
