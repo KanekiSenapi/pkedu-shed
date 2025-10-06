@@ -68,8 +68,11 @@ export function NotificationBell() {
   };
 
   const formatTimestamp = (dateStr: string) => {
+    // Parse UTC timestamp and convert to local time
     const date = new Date(dateStr);
     const now = new Date();
+
+    // Calculate difference in milliseconds
     const diff = now.getTime() - date.getTime();
 
     const minutes = Math.floor(diff / 60000);
