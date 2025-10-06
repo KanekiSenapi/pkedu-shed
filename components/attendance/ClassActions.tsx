@@ -18,6 +18,13 @@ export function ClassActions({ date, time, subject }: ClassActionsProps) {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
 
+  // Check if class is in the future
+  const isFutureClass = () => {
+    const [endTime] = time.split('-').map(t => t.trim()).reverse();
+    const classDateTime = new Date(`${date}T${endTime}:00`);
+    return classDateTime > new Date();
+  };
+
   if (status === 'loading') {
     return (
       <div className="text-center text-gray-500 py-4">Ładowanie...</div>
@@ -146,30 +153,36 @@ export function ClassActions({ date, time, subject }: ClassActionsProps) {
       {/* Attendance */}
       <div>
         <div className="text-xs text-gray-500 uppercase tracking-wide mb-2">Obecność</div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => handleAttendanceChange(true)}
-            disabled={saving}
-            className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
-              attended === true
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            ✓ Byłem
-          </button>
-          <button
-            onClick={() => handleAttendanceChange(false)}
-            disabled={saving}
-            className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
-              attended === false
-                ? 'bg-red-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            ✗ Nie byłem
-          </button>
-        </div>
+        {isFutureClass() ? (
+          <div className="p-3 bg-gray-50 border border-gray-200 text-sm text-gray-600 text-center">
+            Obecność można zaznaczyć dopiero po zakończeniu zajęć
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleAttendanceChange(true)}
+              disabled={saving}
+              className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
+                attended === true
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              ✓ Byłem
+            </button>
+            <button
+              onClick={() => handleAttendanceChange(false)}
+              disabled={saving}
+              className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
+                attended === false
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              ✗ Nie byłem
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Notes */}
