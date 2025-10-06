@@ -90,11 +90,33 @@ export function useSchedule() {
   }, [fetchSchedule, setLastChecked]);
 
   /**
-   * Initial load - fetch from API (database)
+   * Initial load - use cache first, then fetch if needed
    */
   useEffect(() => {
     const initializeSchedule = async () => {
-      // Always fetch from API (which loads from database)
+      // Try to load from localStorage first (instant)
+      const cached = loadFromCache();
+
+      if (cached) {
+        setSchedule(cached.schedule);
+        console.log('[Schedule] Loaded from localStorage cache');
+
+        // Check if cache is still valid (< 7 days)
+        const cacheDate = new Date(cached.timestamp);
+        const now = new Date();
+        const hoursSinceCache = (now.getTime() - cacheDate.getTime()) / (1000 * 60 * 60);
+
+        // If cache is fresh (< 1 hour), skip API call
+        if (hoursSinceCache < 1) {
+          console.log('[Schedule] Cache is fresh, skipping API call');
+          return;
+        }
+
+        // Cache is old, check for updates in background
+        console.log('[Schedule] Cache is stale, checking for updates...');
+      }
+
+      // No cache or cache is old - fetch from API
       await fetchSchedule();
     };
 
