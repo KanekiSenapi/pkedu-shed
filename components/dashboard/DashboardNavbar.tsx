@@ -137,13 +137,22 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
                   >
                     Zgłoś błąd lub sugestię
                   </button>
+                  <button
+                    onClick={() => {
+                      setShowDropdown(false);
+                      router.push('/begin');
+                    }}
+                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-200"
+                  >
+                    Ustawienia
+                  </button>
                   {session ? (
                     <button
                       onClick={() => {
                         setShowDropdown(false);
                         signOut();
                       }}
-                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-200"
+                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                       Wyloguj się
                     </button>
@@ -153,20 +162,11 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
                         setShowDropdown(false);
                         setShowAuth(true);
                       }}
-                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-200"
+                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                       Zaloguj się
                     </button>
                   )}
-                  <button
-                    onClick={() => {
-                      setShowDropdown(false);
-                      router.push('/begin');
-                    }}
-                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Ustawienia
-                  </button>
                 </div>
               )}
             </div>
