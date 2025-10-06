@@ -228,9 +228,9 @@ export default function BeginPage() {
             <button
               onClick={handleStudentComplete}
               disabled={!stopien || !rok || selectedGroups.length === 0}
-              className="w-full py-3 px-4 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
+              className="w-full py-3 px-4 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              Kontynuuj do dashboard
+              Kontynuuj
             </button>
           </div>
         )}
@@ -271,9 +271,9 @@ export default function BeginPage() {
             <button
               onClick={handleInstructorComplete}
               disabled={!selectedInstructor}
-              className="w-full py-3 px-4 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
+              className="w-full py-3 px-4 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              Kontynuuj do dashboard
+              Kontynuuj
             </button>
           </div>
         )}
