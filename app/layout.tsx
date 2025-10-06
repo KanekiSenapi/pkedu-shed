@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { SessionProvider } from "@/components/providers/SessionProvider";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Plan Zajęć PK - Informatyka",
@@ -27,6 +28,7 @@ export default function RootLayout({
           {children}
           <Toaster position="top-right" />
         </SessionProvider>
+        <Analytics />
       </body>
     </html>
   );
