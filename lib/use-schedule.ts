@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useScheduleStore } from './store';
-import { loadFromCache, saveToCache } from './cache-manager';
+import { loadFromCache, saveToCache, getStoredHash } from './cache-manager';
 import toast from 'react-hot-toast';
 
 const CHECK_INTERVAL = 60 * 60 * 1000; // 1 hour in milliseconds
@@ -68,10 +68,19 @@ export function useSchedule() {
    */
   const checkForUpdates = useCallback(async () => {
     try {
-      const response = await fetch('/api/schedule/check');
+      // Get client's current hash
+      const clientHash = getStoredHash();
+
+      // Build URL with client hash
+      const url = clientHash
+        ? `/api/schedule/check?clientHash=${encodeURIComponent(clientHash)}`
+        : '/api/schedule/check';
+
+      const response = await fetch(url);
       const result = await response.json();
 
       if (result.success && result.hasUpdate) {
+        console.log('[Schedule] New version detected, updating...');
         toast(
           'Dostępna jest nowa wersja planu zajęć!',
           {
@@ -82,6 +91,8 @@ export function useSchedule() {
 
         // Automatically fetch new data
         await fetchSchedule(true);
+      } else {
+        console.log('[Schedule] Client data is up to date');
       }
 
       setLastChecked(new Date());
@@ -91,7 +102,7 @@ export function useSchedule() {
   }, [fetchSchedule, setLastChecked]);
 
   /**
-   * Initial load - use cache first, then fetch if needed
+   * Initial load - use cache first, then check for updates
    */
   useEffect(() => {
     const initializeSchedule = async () => {
@@ -102,23 +113,15 @@ export function useSchedule() {
         setSchedule(cached.schedule);
         console.log('[Schedule] Loaded from localStorage cache');
 
-        // Check if cache is still valid (< 7 days)
-        const cacheDate = new Date(cached.timestamp);
-        const now = new Date();
-        const hoursSinceCache = (now.getTime() - cacheDate.getTime()) / (1000 * 60 * 60);
-
-        // If cache is fresh (< 1 hour), skip API call
-        if (hoursSinceCache < 1) {
-          console.log('[Schedule] Cache is fresh, skipping API call');
-          return;
-        }
-
-        // Cache is old, check for updates in background
-        console.log('[Schedule] Cache is stale, checking for updates...');
+        // ALWAYS check for updates on mount (even if cache is fresh)
+        // This ensures users see latest data after cron updates
+        console.log('[Schedule] Checking for updates...');
+        await checkForUpdates();
+      } else {
+        // No cache - fetch from API
+        console.log('[Schedule] No cache found, fetching from API...');
+        await fetchSchedule();
       }
-
-      // No cache or cache is old - fetch from API
-      await fetchSchedule();
     };
 
     initializeSchedule();

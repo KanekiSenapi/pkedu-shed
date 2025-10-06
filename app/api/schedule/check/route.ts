@@ -1,41 +1,44 @@
 import { NextResponse } from 'next/server';
-import { loadScheduleFromDB } from '@/lib/schedule-db';
+import { loadScheduleFromDB, getLatestScheduleHash } from '@/lib/schedule-db';
 
 /**
  * GET /api/schedule/check
- * Checks if the schedule data is recent (lightweight check)
- * Returns: { hasUpdate: boolean, lastUpdated: string }
+ * Checks if client has the latest version of schedule data
+ * Query params:
+ * - clientHash: The file hash that client currently has
+ * Returns: { hasUpdate: boolean, serverHash: string, lastUpdated: string }
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    console.log('[Check] Checking schedule freshness...');
+    const { searchParams } = new URL(request.url);
+    const clientHash = searchParams.get('clientHash');
 
-    // Load from database
+    console.log('[Check] Checking schedule version...');
+
+    // Get server hash and schedule
+    const serverHash = await getLatestScheduleHash();
     const schedule = await loadScheduleFromDB();
 
-    if (!schedule) {
+    if (!schedule || !serverHash) {
       return NextResponse.json({
         success: true,
         hasUpdate: true,
+        serverHash: null,
         lastUpdated: null,
-        message: 'No schedule data available',
+        message: 'No schedule data available on server',
       });
     }
 
-    // Check if data is fresh (< 24 hours)
-    const lastUpdated = new Date(schedule.lastUpdated);
-    const now = new Date();
-    const hoursSinceUpdate = (now.getTime() - lastUpdated.getTime()) / (1000 * 60 * 60);
+    // Compare hashes
+    const hasUpdate = clientHash !== serverHash;
 
-    const hasUpdate = hoursSinceUpdate > 24;
-
-    console.log(`[Check] Data is ${hoursSinceUpdate.toFixed(1)}h old - ${hasUpdate ? 'stale' : 'fresh'}`);
+    console.log(`[Check] Client hash: ${clientHash?.substring(0, 8)}... | Server hash: ${serverHash.substring(0, 8)}... | Update: ${hasUpdate}`);
 
     return NextResponse.json({
       success: true,
       hasUpdate,
+      serverHash,
       lastUpdated: schedule.lastUpdated,
-      hoursSinceUpdate: Math.round(hoursSinceUpdate),
     });
   } catch (error) {
     console.error('[Check] Error checking for updates:', error);
