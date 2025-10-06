@@ -13,14 +13,18 @@ export interface DownloadResult {
  * Fetches the schedule page and finds Excel file links
  */
 export async function findScheduleFiles(): Promise<string[]> {
+  const start = Date.now();
   try {
+    console.log('[Scraper] Fetching schedule page...');
     const response = await axios.get(PK_SCHEDULE_URL, {
       timeout: 30000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
     });
+    console.log(`[Scraper] Page fetched in ${Date.now() - start}ms`);
 
+    const parseStart = Date.now();
     const $ = cheerio.load(response.data);
     const excelFiles: string[] = [];
 
@@ -36,6 +40,7 @@ export async function findScheduleFiles(): Promise<string[]> {
       }
     });
 
+    console.log(`[Scraper] Found ${excelFiles.length} Excel files in ${Date.now() - parseStart}ms`);
     return excelFiles;
   } catch (error) {
     console.error('Error fetching schedule files:', error);
@@ -47,7 +52,11 @@ export async function findScheduleFiles(): Promise<string[]> {
  * Downloads an Excel file from the given URL
  */
 export async function downloadExcelFile(url: string): Promise<DownloadResult> {
+  const start = Date.now();
   try {
+    const filename = url.split('/').pop() || 'schedule.xlsx';
+    console.log(`[Scraper] Downloading ${filename}...`);
+
     const response = await axios.get(url, {
       responseType: 'arraybuffer',
       timeout: 60000,
@@ -57,7 +66,7 @@ export async function downloadExcelFile(url: string): Promise<DownloadResult> {
     });
 
     const buffer = Buffer.from(response.data);
-    const filename = url.split('/').pop() || 'schedule.xlsx';
+    console.log(`[Scraper] Downloaded ${filename} in ${Date.now() - start}ms (${buffer.length} bytes)`);
 
     return {
       buffer,
@@ -75,6 +84,7 @@ export async function downloadExcelFile(url: string): Promise<DownloadResult> {
  * If filter is not provided, downloads the first available Excel file
  */
 export async function downloadSchedule(filter?: string): Promise<DownloadResult> {
+  const start = Date.now();
   const files = await findScheduleFiles();
 
   if (files.length === 0) {
@@ -91,10 +101,15 @@ export async function downloadSchedule(filter?: string): Promise<DownloadResult>
 
     if (matchingFile) {
       targetUrl = matchingFile;
+      console.log(`[Scraper] Matched filter "${filter}" to: ${matchingFile.split('/').pop()}`);
+    } else {
+      console.log(`[Scraper] No match for filter "${filter}", using first file`);
     }
   }
 
-  return downloadExcelFile(targetUrl);
+  const result = await downloadExcelFile(targetUrl);
+  console.log(`[Scraper] Total download time: ${Date.now() - start}ms`);
+  return result;
 }
 
 /**

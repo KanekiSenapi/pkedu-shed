@@ -5,31 +5,44 @@ import { ParsedSchedule, ScheduleEntry } from '@/types/schedule';
  * Save schedule to Turso database
  */
 export async function saveScheduleToDB(schedule: ParsedSchedule): Promise<void> {
+  const start = Date.now();
+  console.log('[DB] Starting database save...');
+
   // Ensure tables exist
+  const initStart = Date.now();
   await initDatabase();
+  console.log(`[DB] Database initialized in ${Date.now() - initStart}ms`);
 
   // Check if schedule with this hash already exists
+  const checkStart = Date.now();
   const existingResult = await turso.execute({
     sql: 'SELECT id FROM schedules WHERE file_hash = ?',
     args: [schedule.fileHash],
   });
+  console.log(`[DB] Hash check took ${Date.now() - checkStart}ms`);
 
   if (existingResult.rows.length > 0) {
-    console.log('Schedule with this hash already exists, skipping save');
+    console.log('[DB] Schedule with this hash already exists, skipping save');
     return;
   }
 
   // Get previous schedule for comparison
+  const prevStart = Date.now();
   const previousSchedule = await loadScheduleFromDB();
+  console.log(`[DB] Previous schedule loaded in ${Date.now() - prevStart}ms`);
 
   // Insert new schedule
   const scheduleId = `schedule_${Date.now()}`;
+  const scheduleInsertStart = Date.now();
   await turso.execute({
     sql: 'INSERT INTO schedules (id, file_hash, last_updated) VALUES (?, ?, ?)',
     args: [scheduleId, schedule.fileHash, schedule.lastUpdated],
   });
+  console.log(`[DB] Schedule record inserted in ${Date.now() - scheduleInsertStart}ms`);
 
   // Insert all entries
+  const entriesStart = Date.now();
+  let totalEntries = 0;
   for (const section of schedule.sections) {
     for (const entry of section.entries) {
       await turso.execute({
@@ -60,16 +73,22 @@ export async function saveScheduleToDB(schedule: ParsedSchedule): Promise<void> 
           entry.tryb,
         ],
       });
+      totalEntries++;
     }
   }
+  console.log(`[DB] Inserted ${totalEntries} entries in ${Date.now() - entriesStart}ms`);
 
   // If there was a previous schedule, compute and save changes
   if (previousSchedule) {
+    const changesStart = Date.now();
     const previousScheduleId = await getPreviousScheduleId();
     if (previousScheduleId) {
       await computeAndSaveChanges(previousSchedule, schedule, previousScheduleId, scheduleId);
     }
+    console.log(`[DB] Changes computed in ${Date.now() - changesStart}ms`);
   }
+
+  console.log(`[DB] Total save time: ${Date.now() - start}ms`);
 }
 
 /**

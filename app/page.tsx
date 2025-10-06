@@ -17,15 +17,6 @@ export default function Home() {
       <Navbar />
 
       <main className="container mx-auto px-4 py-8">
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-800">
-              <strong>Błąd:</strong> {error}
-            </p>
-          </div>
-        )}
-
         {/* Loading State */}
         {loading && !error && (
           <div className="flex items-center justify-center h-64">

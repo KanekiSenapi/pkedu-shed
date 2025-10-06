@@ -17,11 +17,15 @@ export const maxDuration = 60; // 60 seconds timeout
  * INTERNAL ONLY - requires authorization
  */
 export async function GET(request: Request) {
+  const startTime = Date.now();
+
   try {
     const { searchParams } = new URL(request.url);
     const filter = searchParams.get('filter') || 'niestacjonarne';
     const force = searchParams.get('force') === 'true';
     const authToken = searchParams.get('token');
+
+    console.log(`[Fetch] START - force=${force}, filter=${filter}`);
 
     // Require auth token for force updates
     if (force && authToken !== process.env.CRON_SECRET) {
@@ -33,7 +37,10 @@ export async function GET(request: Request) {
 
     // Check if we have fresh data in database
     if (!force) {
+      const cacheCheckStart = Date.now();
       const cachedSchedule = await loadScheduleFromDB();
+      console.log(`[Fetch] Cache check took ${Date.now() - cacheCheckStart}ms`);
+
       if (cachedSchedule) {
         // Check if cache is fresh (< 12 hours)
         const cacheDate = new Date(cachedSchedule.lastUpdated);
@@ -55,18 +62,24 @@ export async function GET(request: Request) {
     }
 
     // Download the schedule file
-    console.log('Downloading schedule file from PK website...');
+    const downloadStart = Date.now();
+    console.log('[Fetch] Starting download from PK website...');
     const downloadResult = await downloadSchedule(filter);
+    console.log(`[Fetch] Download completed in ${Date.now() - downloadStart}ms (${downloadResult.buffer.length} bytes)`);
 
     // Calculate hash
+    const hashStart = Date.now();
     const fileHash = calculateHash(downloadResult.buffer);
+    console.log(`[Fetch] Hash calculated in ${Date.now() - hashStart}ms: ${fileHash.substring(0, 8)}...`);
 
     // Check if file has changed
+    const hashCheckStart = Date.now();
     const storedHash = await getLatestScheduleHash();
     const hasChanges = storedHash !== fileHash;
+    console.log(`[Fetch] Hash check took ${Date.now() - hashCheckStart}ms - hasChanges=${hasChanges}`);
 
     if (!force && !hasChanges) {
-      console.log('File has not changed, using cached data');
+      console.log('[Fetch] File has not changed, using cached data');
       const cachedSchedule = await loadScheduleFromDB();
       if (cachedSchedule) {
         return NextResponse.json({
@@ -79,14 +92,19 @@ export async function GET(request: Request) {
     }
 
     // Parse the Excel file
-    console.log('Parsing Excel file...');
+    const parseStart = Date.now();
+    console.log('[Fetch] Starting Excel parsing...');
     const schedule = parseExcelSchedule(downloadResult.buffer);
     schedule.fileHash = fileHash;
+    console.log(`[Fetch] Parsing completed in ${Date.now() - parseStart}ms (${schedule.sections.length} sections)`);
 
     // Save to database
+    const saveStart = Date.now();
+    console.log('[Fetch] Starting database save...');
     await saveScheduleToDB(schedule);
+    console.log(`[Fetch] Database save completed in ${Date.now() - saveStart}ms`);
 
-    console.log(`Successfully parsed and saved schedule with ${schedule.sections.length} sections`);
+    console.log(`[Fetch] TOTAL TIME: ${Date.now() - startTime}ms`);
 
     // Create notification for successful schedule update (only if there were changes)
     if (force && authToken && hasChanges) {
