@@ -85,6 +85,25 @@ export async function GET(request: Request) {
 
     console.log(`Successfully parsed and saved schedule with ${schedule.sections.length} sections`);
 
+    // Create notification for successful schedule update
+    if (force && authToken) {
+      try {
+        const notifUrl = new URL('/api/notifications', request.url);
+        await fetch(notifUrl.toString(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'success',
+            title: 'Plan zaktualizowany',
+            message: `Załadowano ${schedule.sections.length} sekcji`,
+            token: authToken,
+          }),
+        });
+      } catch (notifError) {
+        console.error('Failed to create notification:', notifError);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: schedule,
@@ -94,6 +113,29 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('Error fetching schedule:', error);
+
+    // Create error notification
+    const { searchParams } = new URL(request.url);
+    const authToken = searchParams.get('token');
+    const force = searchParams.get('force') === 'true';
+
+    if (force && authToken) {
+      try {
+        const notifUrl = new URL('/api/notifications', request.url);
+        await fetch(notifUrl.toString(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'error',
+            title: 'Błąd aktualizacji planu',
+            message: error instanceof Error ? error.message : 'Nieznany błąd',
+            token: authToken,
+          }),
+        });
+      } catch (notifError) {
+        console.error('Failed to create error notification:', notifError);
+      }
+    }
 
     // Try to load from database on error
     const cachedSchedule = await loadScheduleFromDB();
