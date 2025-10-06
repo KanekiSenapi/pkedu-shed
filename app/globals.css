@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
+@import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 
 @theme {
   --color-lecture: #8b5cf6;
@@ -61,4 +62,9 @@ body {
 
 .rbc-event.stationary {
   border: 2px solid #10b981;
+}
+
+/* Hide routing instruction panels - only show the route line on map */
+.leaflet-routing-container {
+  display: none !important;
 }

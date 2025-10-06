@@ -21,11 +21,14 @@ import { TodaysTimeline } from '@/components/dashboard/TodaysTimeline';
 import { SubjectProgress } from '@/components/dashboard/SubjectProgress';
 import { ScheduleCalendar } from '@/components/calendar/ScheduleCalendar';
 import { DashboardNavbar } from '@/components/dashboard/DashboardNavbar';
+import { parseRoomFromText, findBuildingForRoom, Building } from '@/lib/campus-data';
+import { MapModal } from '@/components/map/MapModal';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { schedule, loading } = useSchedule();
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+  const [mapModal, setMapModal] = useState<{ building: Building; roomNumber: string } | null>(null);
 
   useEffect(() => {
     syncLoadUserPreferences().then(prefs => {
@@ -162,10 +165,25 @@ export default function DashboardPage() {
                           <div className="font-medium text-gray-900">
                             {entry.class_info.subject}
                           </div>
-                          <div className="text-sm text-gray-600">
-                            {entry.class_info.type}
-                            {entry.class_info.instructor && ` • ${entry.class_info.instructor}`}
-                            {entry.class_info.room && ` • ${entry.class_info.room}`}
+                          <div className="text-sm text-gray-600 flex items-center gap-2">
+                            <span>
+                              {entry.class_info.type}
+                              {entry.class_info.instructor && ` • ${entry.class_info.instructor}`}
+                              {entry.class_info.room && ` • ${entry.class_info.room}`}
+                            </span>
+                            {entry.class_info.room && (() => {
+                              const roomNumber = parseRoomFromText(entry.class_info.room);
+                              const building = roomNumber ? findBuildingForRoom(roomNumber) : null;
+                              return building ? (
+                                <button
+                                  onClick={() => setMapModal({ building, roomNumber })}
+                                  className="text-blue-600 hover:text-blue-700 transition-colors"
+                                  title="Pokaż na mapie"
+                                >
+                                  🗺️
+                                </button>
+                              ) : null;
+                            })()}
                           </div>
                         </div>
                       </div>
@@ -201,6 +219,16 @@ export default function DashboardPage() {
           <ScheduleCalendar entries={filteredEntries} />
         </div>
       </div>
+
+      {/* Map Modal */}
+      {mapModal && (
+        <MapModal
+          isOpen={true}
+          onClose={() => setMapModal(null)}
+          building={mapModal.building}
+          roomNumber={mapModal.roomNumber}
+        />
+      )}
     </div>
   );
 }

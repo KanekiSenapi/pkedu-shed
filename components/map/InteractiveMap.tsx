@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, ReactNode } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, Polygon, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Building } from '@/lib/campus-data';
@@ -86,7 +86,7 @@ export function InteractiveMap({
     ? [selectedBuilding.lat, selectedBuilding.lng]
     : userLocation
     ? [userLocation.lat, userLocation.lng]
-    : [50.0682, 19.9187];
+    : [50.0719, 19.9415];
 
   // Tylko aktualizuj widok gdy wyraźnie zmienia się selectedBuilding lub userLocation
   // I NIE jesteśmy w trybie rysowania (disableAutoCenter)
@@ -106,36 +106,71 @@ export function InteractiveMap({
 
       {!disableAutoCenter && <MapController center={center} shouldUpdate={shouldUpdateView} />}
 
-      {/* Markery budynków */}
+      {/* Polygony i markery budynków */}
       {buildings.map((building) => {
         const isSelected = selectedBuilding?.id === building.id;
         const hasRooms = building.rooms.length > 0;
+        const hasPolygon = building.polygon && building.polygon.length >= 3;
 
         return (
-          <Marker
-            key={building.id}
-            position={[building.lat, building.lng]}
-            icon={isSelected ? selectedIcon : hasRooms ? buildingIcon : otherBuildingIcon}
-            eventHandlers={{
-              click: () => onBuildingClick?.(building),
-            }}
-          >
-            <Popup>
-              <div className="text-sm">
-                <div className="font-bold">{building.shortName}</div>
-                <div className="text-xs text-gray-600 mt-1">{building.name}</div>
-                {building.description && (
-                  <div className="text-xs text-gray-500 mt-1">{building.description}</div>
-                )}
-                {hasRooms && (
-                  <div className="mt-2">
-                    <div className="text-xs font-medium text-gray-700">Sale:</div>
-                    <div className="text-xs text-gray-600">{building.rooms.join(', ')}</div>
+          <div key={building.id}>
+            {/* Polygon budynku */}
+            {hasPolygon && (
+              <Polygon
+                positions={building.polygon!}
+                pathOptions={{
+                  color: isSelected ? '#10b981' : hasRooms ? '#3b82f6' : '#9ca3af',
+                  fillColor: isSelected ? '#10b981' : hasRooms ? '#3b82f6' : '#9ca3af',
+                  fillOpacity: 0.2,
+                  weight: 2,
+                }}
+                eventHandlers={{
+                  click: () => onBuildingClick?.(building),
+                }}
+              >
+                <Popup>
+                  <div className="text-sm">
+                    <div className="font-bold">{building.shortName}</div>
+                    <div className="text-xs text-gray-600 mt-1">{building.name}</div>
+                    {building.description && (
+                      <div className="text-xs text-gray-500 mt-1">{building.description}</div>
+                    )}
+                    {hasRooms && (
+                      <div className="mt-2">
+                        <div className="text-xs font-medium text-gray-700">Sale:</div>
+                        <div className="text-xs text-gray-600">{building.rooms.join(', ')}</div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </Popup>
-          </Marker>
+                </Popup>
+              </Polygon>
+            )}
+
+            {/* Marker wejścia lub centrum */}
+            <Marker
+              position={building.entrance || [building.lat, building.lng]}
+              icon={isSelected ? selectedIcon : hasRooms ? buildingIcon : otherBuildingIcon}
+              eventHandlers={{
+                click: () => onBuildingClick?.(building),
+              }}
+            >
+              <Popup>
+                <div className="text-sm">
+                  <div className="font-bold">{building.shortName}</div>
+                  <div className="text-xs text-gray-600 mt-1">{building.name}</div>
+                  {building.description && (
+                    <div className="text-xs text-gray-500 mt-1">{building.description}</div>
+                  )}
+                  {hasRooms && (
+                    <div className="mt-2">
+                      <div className="text-xs font-medium text-gray-700">Sale:</div>
+                      <div className="text-xs text-gray-600">{building.rooms.join(', ')}</div>
+                    </div>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          </div>
         );
       })}
 

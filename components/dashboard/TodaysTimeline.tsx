@@ -2,6 +2,8 @@
 
 import { ScheduleEntry } from '@/types/schedule';
 import { useEffect, useRef, useState } from 'react';
+import { parseRoomFromText, findBuildingForRoom, Building } from '@/lib/campus-data';
+import { MapModal } from '@/components/map/MapModal';
 
 interface TodaysTimelineProps {
   todayClasses: ScheduleEntry[];
@@ -24,6 +26,7 @@ const MIN_FREE_TIME_MINUTES = 45;
 export function TodaysTimeline({ todayClasses }: TodaysTimelineProps) {
   const timelineRef = useRef<HTMLDivElement>(null);
   const [currentTimeMinutes, setCurrentTimeMinutes] = useState<number>(0);
+  const [mapModal, setMapModal] = useState<{ building: Building; roomNumber: string } | null>(null);
 
   useEffect(() => {
     const updateCurrentTime = () => {
@@ -186,9 +189,24 @@ export function TodaysTimeline({ todayClasses }: TodaysTimelineProps) {
                     {formatMinutesToTime(block.startMinutes)} -{' '}
                     {formatMinutesToTime(block.endMinutes)}
                   </div>
-                  <div className="text-xs text-blue-600 mt-1">
-                    {block.entry.class_info.type}
-                    {block.entry.class_info.room && ` • ${block.entry.class_info.room}`}
+                  <div className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                    <span>
+                      {block.entry.class_info.type}
+                      {block.entry.class_info.room && ` • ${block.entry.class_info.room}`}
+                    </span>
+                    {block.entry.class_info.room && (() => {
+                      const roomNumber = parseRoomFromText(block.entry.class_info.room);
+                      const building = roomNumber ? findBuildingForRoom(roomNumber) : null;
+                      return building ? (
+                        <button
+                          onClick={() => setMapModal({ building, roomNumber })}
+                          className="text-blue-700 hover:text-blue-800 transition-colors"
+                          title="Pokaż na mapie"
+                        >
+                          🗺️
+                        </button>
+                      ) : null;
+                    })()}
                   </div>
                   {block.entry.class_info.is_remote && (
                     <div className="text-xs text-purple-600 mt-1">Zdalne</div>
@@ -229,6 +247,16 @@ export function TodaysTimeline({ todayClasses }: TodaysTimelineProps) {
           </div>
         )}
       </div>
+
+      {/* Map Modal */}
+      {mapModal && (
+        <MapModal
+          isOpen={true}
+          onClose={() => setMapModal(null)}
+          building={mapModal.building}
+          roomNumber={mapModal.roomNumber}
+        />
+      )}
     </div>
   );
 }

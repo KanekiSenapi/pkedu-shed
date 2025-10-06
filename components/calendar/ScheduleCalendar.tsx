@@ -8,6 +8,8 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '@/app/calendar.css';
 import { useScheduleStore } from '@/lib/store';
 import { ScheduleEntry } from '@/types/schedule';
+import { parseRoomFromText, findBuildingForRoom, Building } from '@/lib/campus-data';
+import { MapModal } from '@/components/map/MapModal';
 
 // Configure moment locale
 moment.locale('pl');
@@ -28,6 +30,7 @@ export function ScheduleCalendar({ entries: providedEntries }: ScheduleCalendarP
   const [view, setView] = useState<View>('month');
   const [date, setDate] = useState(new Date());
   const [weekendsOnly, setWeekendsOnly] = useState(true);
+  const [mapModal, setMapModal] = useState<{ building: Building; roomNumber: string } | null>(null);
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -399,12 +402,30 @@ export function ScheduleCalendar({ entries: providedEntries }: ScheduleCalendarP
                 <span className="text-gray-500">
                   {selectedEvent.class_info.is_remote ? '💻' : '📍'}
                 </span>
-                <div>
+                <div className="flex-1">
                   <div className="text-xs text-gray-500 uppercase tracking-wide">Miejsce</div>
-                  <div className="text-gray-900 mt-1">
-                    {selectedEvent.class_info.is_remote
-                      ? 'Zajęcia zdalne'
-                      : selectedEvent.class_info.room || 'Nie określono'}
+                  <div className="text-gray-900 mt-1 flex items-center gap-2">
+                    <span>
+                      {selectedEvent.class_info.is_remote
+                        ? 'Zajęcia zdalne'
+                        : selectedEvent.class_info.room || 'Nie określono'}
+                    </span>
+                    {!selectedEvent.class_info.is_remote && selectedEvent.class_info.room && (() => {
+                      const roomNumber = parseRoomFromText(selectedEvent.class_info.room);
+                      const building = roomNumber ? findBuildingForRoom(roomNumber) : null;
+                      return building ? (
+                        <button
+                          onClick={() => {
+                            setMapModal({ building, roomNumber });
+                            setSelectedEvent(null);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 transition-colors"
+                          title="Pokaż na mapie"
+                        >
+                          🗺️
+                        </button>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
               </div>
@@ -432,6 +453,16 @@ export function ScheduleCalendar({ entries: providedEntries }: ScheduleCalendarP
             </div>
           </div>
         </div>
+      )}
+
+      {/* Map Modal */}
+      {mapModal && (
+        <MapModal
+          isOpen={true}
+          onClose={() => setMapModal(null)}
+          building={mapModal.building}
+          roomNumber={mapModal.roomNumber}
+        />
       )}
     </div>
   );

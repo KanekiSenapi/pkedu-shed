@@ -2,6 +2,8 @@
 
 import { ScheduleEntry } from '@/types/schedule';
 import { useEffect, useState } from 'react';
+import { parseRoomFromText, findBuildingForRoom, Building } from '@/lib/campus-data';
+import { MapModal } from '@/components/map/MapModal';
 
 interface NextClassCountdownProps {
   todayClasses: ScheduleEntry[];
@@ -15,6 +17,7 @@ type ClassState =
 
 export function NextClassCountdown({ todayClasses }: NextClassCountdownProps) {
   const [state, setState] = useState<ClassState>({ type: 'none' });
+  const [mapModal, setMapModal] = useState<{ building: Building; roomNumber: string } | null>(null);
 
   useEffect(() => {
     const calculateState = (): ClassState => {
@@ -113,10 +116,25 @@ export function NextClassCountdown({ todayClasses }: NextClassCountdownProps) {
         <div className="text-sm text-blue-700">
           Koniec za {formatTime(state.minutesRemaining)}
         </div>
-        <div className="text-xs text-blue-600 mt-2">
-          {state.entry.class_info.type}
-          {state.entry.class_info.instructor && ` • ${state.entry.class_info.instructor}`}
-          {state.entry.class_info.room && ` • ${state.entry.class_info.room}`}
+        <div className="text-xs text-blue-600 mt-2 flex items-center gap-2">
+          <span>
+            {state.entry.class_info.type}
+            {state.entry.class_info.instructor && ` • ${state.entry.class_info.instructor}`}
+            {state.entry.class_info.room && ` • ${state.entry.class_info.room}`}
+          </span>
+          {state.entry.class_info.room && (() => {
+            const roomNumber = parseRoomFromText(state.entry.class_info.room);
+            const building = roomNumber ? findBuildingForRoom(roomNumber) : null;
+            return building ? (
+              <button
+                onClick={() => setMapModal({ building, roomNumber })}
+                className="text-blue-700 hover:text-blue-800 transition-colors"
+                title="Pokaż na mapie"
+              >
+                🗺️
+              </button>
+            ) : null;
+          })()}
         </div>
       </div>
     );
@@ -137,11 +155,36 @@ export function NextClassCountdown({ todayClasses }: NextClassCountdownProps) {
       <div className="text-2xl font-bold text-blue-600">
         za {formatTime(state.minutesUntil)}
       </div>
-      <div className="text-xs text-gray-500 mt-2">
-        {state.entry.class_info.type}
-        {state.entry.class_info.instructor && ` • ${state.entry.class_info.instructor}`}
-        {state.entry.class_info.room && ` • ${state.entry.class_info.room}`}
+      <div className="text-xs text-gray-500 mt-2 flex items-center gap-2">
+        <span>
+          {state.entry.class_info.type}
+          {state.entry.class_info.instructor && ` • ${state.entry.class_info.instructor}`}
+          {state.entry.class_info.room && ` • ${state.entry.class_info.room}`}
+        </span>
+        {state.entry.class_info.room && (() => {
+          const roomNumber = parseRoomFromText(state.entry.class_info.room);
+          const building = roomNumber ? findBuildingForRoom(roomNumber) : null;
+          return building ? (
+            <button
+              onClick={() => setMapModal({ building, roomNumber })}
+              className="text-blue-600 hover:text-blue-700 transition-colors"
+              title="Pokaż na mapie"
+            >
+              🗺️
+            </button>
+          ) : null;
+        })()}
       </div>
+
+      {/* Map Modal */}
+      {mapModal && (
+        <MapModal
+          isOpen={true}
+          onClose={() => setMapModal(null)}
+          building={mapModal.building}
+          roomNumber={mapModal.roomNumber}
+        />
+      )}
     </div>
   );
 }
