@@ -4,12 +4,16 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { BugReportModal } from '@/components/admin/BugReportModal';
+import { UserManagementModal } from '@/components/admin/UserManagementModal';
+import { NotificationCreatorModal } from '@/components/admin/NotificationCreatorModal';
+import { ScheduleChangesViewer } from '@/components/admin/ScheduleChangesViewer';
 
 interface User {
   id: string;
   email: string;
   name: string | null;
   is_admin: boolean;
+  role: string;
   created_at: string;
 }
 
@@ -32,10 +36,13 @@ export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [reports, setReports] = useState<BugReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'users' | 'reports'>('reports');
+  const [activeTab, setActiveTab] = useState<'users' | 'reports' | 'stats' | 'notifications' | 'changes'>('reports');
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [showNotificationCreator, setShowNotificationCreator] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [loginStats, setLoginStats] = useState<any>(null);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -57,9 +64,10 @@ export default function AdminPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [usersRes, reportsRes] = await Promise.all([
+      const [usersRes, reportsRes, statsRes] = await Promise.all([
         fetch('/api/admin/users'),
         fetch('/api/admin/bug-reports'),
+        fetch('/api/admin/login-stats'),
       ]);
 
       if (usersRes.ok) {
@@ -70,6 +78,11 @@ export default function AdminPage() {
       if (reportsRes.ok) {
         const reportsData = await reportsRes.json();
         setReports(reportsData.reports || []);
+      }
+
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setLoginStats(statsData);
       }
     } catch (error) {
       console.error('Error loading admin data:', error);
@@ -155,7 +168,7 @@ export default function AdminPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
           <button
             onClick={() => setActiveTab('reports')}
             className={`px-4 py-2 text-sm border transition-colors ${
@@ -175,6 +188,36 @@ export default function AdminPage() {
             }`}
           >
             Użytkownicy ({users.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('stats')}
+            className={`px-4 py-2 text-sm border transition-colors ${
+              activeTab === 'stats'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            Statystyki logowań
+          </button>
+          <button
+            onClick={() => setActiveTab('notifications')}
+            className={`px-4 py-2 text-sm border transition-colors ${
+              activeTab === 'notifications'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            Powiadomienia
+          </button>
+          <button
+            onClick={() => setActiveTab('changes')}
+            className={`px-4 py-2 text-sm border transition-colors ${
+              activeTab === 'changes'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            Historia zmian
           </button>
         </div>
 
@@ -301,7 +344,11 @@ export default function AdminPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {users.map(user => (
-                    <tr key={user.id} className="hover:bg-gray-50">
+                    <tr
+                      key={user.id}
+                      onClick={() => setSelectedUserId(user.id)}
+                      className="hover:bg-gray-50 cursor-pointer"
+                    >
                       <td className="px-4 py-3 text-sm text-gray-900">
                         {user.email}
                       </td>
@@ -333,6 +380,111 @@ export default function AdminPage() {
             )}
           </div>
         )}
+
+        {/* Login Stats Tab */}
+        {activeTab === 'stats' && loginStats && (
+          <div className="space-y-6">
+            {/* Top Users */}
+            <div className="bg-white border border-gray-200">
+              <div className="border-b border-gray-200 p-4">
+                <h3 className="text-sm font-medium text-gray-900">Najczęściej logowani użytkownicy</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Email
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Imię
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Liczba logowań
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Ostatnie logowanie
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {loginStats.stats?.map((stat: any) => (
+                      <tr key={stat.user_id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm text-gray-900">{stat.user_email}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{stat.user_name || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{stat.login_count}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500">
+                          {stat.last_login ? formatDate(stat.last_login) : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Recent Logins */}
+            <div className="bg-white border border-gray-200">
+              <div className="border-b border-gray-200 p-4">
+                <h3 className="text-sm font-medium text-gray-900">Ostatnie logowania</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Email
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Data
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        User Agent
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {loginStats.recent_logins?.map((login: any) => (
+                      <tr key={login.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm text-gray-900">{login.user_email}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500">{formatDate(login.login_at)}</td>
+                        <td className="px-4 py-3 text-xs text-gray-500 font-mono max-w-md truncate">
+                          {login.user_agent || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Notifications Tab */}
+        {activeTab === 'notifications' && (
+          <div className="bg-white border border-gray-200">
+            <div className="border-b border-gray-200 p-4 flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-900">Zarządzanie powiadomieniami</h3>
+              <button
+                onClick={() => setShowNotificationCreator(true)}
+                className="px-4 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors"
+              >
+                + Nowe powiadomienie
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-600">
+                Powiadomienia można tworzyć jako globalne (dla wszystkich) lub targetowane (dla konkretnego roku/grup).
+              </p>
+              <p className="text-sm text-gray-600 mt-2">
+                Typy: Info (niebieskie), Sukces (zielone), Ostrzeżenie (pomarańczowe), Błąd (czerwone)
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Schedule Changes Tab */}
+        {activeTab === 'changes' && <ScheduleChangesViewer />}
       </main>
 
       {/* Bug Report Modal */}
@@ -341,6 +493,21 @@ export default function AdminPage() {
         isOpen={selectedReportId !== null}
         onClose={() => setSelectedReportId(null)}
         onUpdate={loadData}
+      />
+
+      {/* User Management Modal */}
+      <UserManagementModal
+        userId={selectedUserId}
+        isOpen={selectedUserId !== null}
+        onClose={() => setSelectedUserId(null)}
+        onUpdate={loadData}
+      />
+
+      {/* Notification Creator Modal */}
+      <NotificationCreatorModal
+        isOpen={showNotificationCreator}
+        onClose={() => setShowNotificationCreator(false)}
+        onSuccess={loadData}
       />
     </div>
   );
