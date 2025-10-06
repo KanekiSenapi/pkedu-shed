@@ -8,7 +8,6 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '@/app/calendar.css';
 import { useScheduleStore } from '@/lib/store';
 import { ScheduleEntry } from '@/types/schedule';
-import { exportSingleEntry, exportAllEntries } from '@/lib/ics-export';
 
 // Configure moment locale
 moment.locale('pl');
@@ -200,14 +199,6 @@ export function ScheduleCalendar() {
         </h2>
 
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Export to Calendar */}
-          <button
-            onClick={() => exportAllEntries(filteredEntries)}
-            className="text-xs text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            Eksportuj .ics
-          </button>
-
           {/* Weekend Toggle */}
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -290,13 +281,6 @@ export function ScheduleCalendar() {
                   }`}>
                     {selectedEvent.class_info.is_remote ? 'ZDALNIE' : 'STACJONARNE'}
                   </span>
-                  <button
-                    onClick={() => exportSingleEntry(selectedEvent)}
-                    className="text-xs text-gray-500 hover:text-gray-700"
-                    title="Dodaj do kalendarza"
-                  >
-                    Pobierz .ics
-                  </button>
                 </div>
               </div>
               <button
