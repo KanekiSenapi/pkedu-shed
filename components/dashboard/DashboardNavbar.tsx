@@ -86,7 +86,7 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="flex items-center justify-center w-9 h-9 bg-gray-200 text-gray-700 font-medium text-sm border border-gray-300 hover:bg-gray-300 transition-colors"
+                className="flex items-center justify-center w-9 h-9 bg-gray-200 text-gray-700 font-medium text-sm border border-gray-300 hover:bg-gray-300 transition-colors cursor-pointer"
               >
                 {getUserInitials()}
               </button>

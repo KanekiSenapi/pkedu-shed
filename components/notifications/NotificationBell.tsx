@@ -93,7 +93,7 @@ export function NotificationBell() {
       {/* Bell Icon */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 hover:bg-gray-100 transition-colors"
+        className="relative p-2 hover:bg-gray-100 transition-colors cursor-pointer"
         aria-label="Notyfikacje"
       >
         <svg
