@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { BugReportModal } from '@/components/admin/BugReportModal';
 
 interface User {
   id: string;
@@ -32,6 +33,9 @@ export default function AdminPage() {
   const [reports, setReports] = useState<BugReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'users' | 'reports'>('reports');
+  const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -177,6 +181,32 @@ export default function AdminPage() {
         {/* Bug Reports Table */}
         {activeTab === 'reports' && (
           <div className="bg-white border border-gray-200">
+            {/* Filters */}
+            <div className="border-b border-gray-200 p-4 flex gap-3">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-200 text-sm focus:outline-none focus:border-gray-400"
+              >
+                <option value="all">Wszystkie statusy</option>
+                <option value="open">Otwarte</option>
+                <option value="in_progress">W trakcie</option>
+                <option value="resolved">Rozwiązane</option>
+                <option value="closed">Zamknięte</option>
+              </select>
+
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-200 text-sm focus:outline-none focus:border-gray-400"
+              >
+                <option value="all">Wszystkie typy</option>
+                <option value="bug">Błędy</option>
+                <option value="feature">Sugestie</option>
+                <option value="other">Inne</option>
+              </select>
+            </div>
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
@@ -202,8 +232,15 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {reports.map(report => (
-                    <tr key={report.id} className="hover:bg-gray-50">
+                  {reports
+                    .filter(r => statusFilter === 'all' || r.status === statusFilter)
+                    .filter(r => typeFilter === 'all' || r.type === typeFilter)
+                    .map(report => (
+                    <tr
+                      key={report.id}
+                      onClick={() => setSelectedReportId(report.id)}
+                      className="hover:bg-gray-50 cursor-pointer"
+                    >
                       <td className="px-4 py-3 text-sm text-gray-900">
                         #{report.id}
                       </td>
@@ -297,6 +334,14 @@ export default function AdminPage() {
           </div>
         )}
       </main>
+
+      {/* Bug Report Modal */}
+      <BugReportModal
+        reportId={selectedReportId}
+        isOpen={selectedReportId !== null}
+        onClose={() => setSelectedReportId(null)}
+        onUpdate={loadData}
+      />
     </div>
   );
 }
