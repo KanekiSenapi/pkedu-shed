@@ -11,14 +11,14 @@ export default function Home() {
   const { loading, error } = useSchedule();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
 
       <main className="container mx-auto px-4 py-8">
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-            <p className="text-red-800 dark:text-red-200">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-red-800">
               <strong>Błąd:</strong> {error}
             </p>
           </div>
@@ -29,7 +29,7 @@ export default function Home() {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <div className="text-lg text-gray-600 dark:text-gray-400">
+              <div className="text-lg text-gray-600">
                 Pobieranie planu zajęć...
               </div>
             </div>

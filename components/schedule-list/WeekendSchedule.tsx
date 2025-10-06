@@ -37,31 +37,31 @@ export function WeekendSchedule() {
   const getTypeColor = (type: string | null) => {
     switch (type) {
       case 'wykład':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+        return 'bg-purple-100 text-purple-800';
       case 'laboratorium':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+        return 'bg-orange-100 text-orange-800';
       case 'projekt':
-        return 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200';
+        return 'bg-pink-100 text-pink-800';
       case 'ćwiczenia':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+        return 'bg-blue-100 text-blue-800';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getModeColor = (isRemote: boolean) => {
     return isRemote
-      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-      : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      ? 'bg-blue-100 text-blue-800'
+      : 'bg-green-100 text-green-800';
   };
 
   if (sortedDates.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
           Zjazdy (Weekendy)
         </h2>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-gray-600">
           Brak zaplanowanych zjazdów weekendowych dla wybranych filtrów.
         </p>
       </div>
@@ -69,8 +69,8 @@ export function WeekendSchedule() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <h2 className="text-xl font-semibold text-gray-900 mb-4">
         Zjazdy (Weekendy)
       </h2>
 
@@ -82,13 +82,13 @@ export function WeekendSchedule() {
           return (
             <div
               key={date}
-              className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+              className="border border-gray-200 rounded-lg p-4"
             >
               {/* Date Header */}
-              <div className="mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="mb-4 pb-2 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">
                   {date}{' '}
-                  <span className="text-sm font-normal text-gray-600 dark:text-gray-400">
+                  <span className="text-sm font-normal text-gray-600">
                     ({firstEntry.day})
                   </span>
                 </h3>
@@ -99,14 +99,14 @@ export function WeekendSchedule() {
                 {entries.map((entry) => (
                   <div
                     key={entry.id}
-                    className="bg-gray-50 dark:bg-gray-700 rounded-md p-3"
+                    className="bg-gray-50 rounded-md p-3"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900 dark:text-white">
+                        <h4 className="font-semibold text-gray-900">
                           {entry.class_info.subject}
                         </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-sm text-gray-600">
                           {entry.time}
                         </p>
                       </div>
@@ -131,7 +131,7 @@ export function WeekendSchedule() {
                       </div>
                     </div>
 
-                    <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                    <div className="text-sm text-gray-700 space-y-1">
                       {entry.class_info.instructor && (
                         <p>
                           <span className="font-medium">Prowadzący:</span>{' '}

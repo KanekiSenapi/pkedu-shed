@@ -137,7 +137,11 @@ export function ScheduleCalendar() {
 
   // Custom event component with labels
   const CustomEvent = ({ event }: { event: CalendarEvent }) => {
-    const typeLabel = event.entry.class_info.type || 'inne';
+    const type = event.entry.class_info.type || 'inne';
+    const typeLabel = type === 'laboratorium' ? 'lab.' :
+                      type === 'wykład' ? 'wyk.' :
+                      type === 'ćwiczenia' ? 'ćw.' :
+                      type === 'projekt' ? 'proj.' : type;
     const modeLabel = event.entry.class_info.is_remote ? 'zdalne' : 'stacj.';
 
     return (
@@ -152,9 +156,9 @@ export function ScheduleCalendar() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
+    <div className="bg-white border border-gray-200 p-4">
       <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
-        <h2 className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+        <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
           Kalendarz
         </h2>
 
@@ -162,7 +166,7 @@ export function ScheduleCalendar() {
           {/* Export to Calendar */}
           <button
             onClick={() => exportAllEntries(filteredEntries)}
-            className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+            className="text-xs text-gray-600 hover:text-gray-900 transition-colors"
           >
             Eksportuj .ics
           </button>
@@ -173,9 +177,9 @@ export function ScheduleCalendar() {
               type="checkbox"
               checked={weekendsOnly}
               onChange={(e) => handleWeekendsOnlyChange(e.target.checked)}
-              className="w-3.5 h-3.5 border-gray-300 dark:border-gray-600 rounded"
+              className="w-3.5 h-3.5 border-gray-300 rounded"
             />
-            <span className="text-xs text-gray-600 dark:text-gray-400">
+            <span className="text-xs text-gray-600">
               Tylko weekendy
             </span>
           </label>
@@ -229,36 +233,36 @@ export function ScheduleCalendar() {
           onClick={() => setSelectedEvent(null)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-start mb-6">
               <div className="flex-1 pr-4">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+                <h3 className="text-xl font-bold text-gray-900 leading-tight">
                   {selectedEvent.class_info.subject}
                 </h3>
                 <div className="mt-2 flex items-center gap-2 flex-wrap">
                   <span className={`px-2 py-1 rounded text-xs font-medium ${
                     selectedEvent.class_info.type === 'wykład'
-                      ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+                      ? 'bg-purple-100 text-purple-800'
                       : selectedEvent.class_info.type === 'laboratorium'
-                      ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                      ? 'bg-orange-100 text-orange-800'
                       : selectedEvent.class_info.type === 'projekt'
-                      ? 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300'
-                      : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                      ? 'bg-pink-100 text-pink-800'
+                      : 'bg-blue-100 text-blue-800'
                   }`}>
                     {selectedEvent.class_info.type || 'Inne'}
                   </span>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${
                     selectedEvent.class_info.is_remote
-                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                      : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-green-100 text-green-800'
                   }`}>
                     {selectedEvent.class_info.is_remote ? 'ZDALNIE' : 'STACJONARNE'}
                   </span>
                   <button
                     onClick={() => exportSingleEntry(selectedEvent)}
-                    className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    className="text-xs text-gray-500 hover:text-gray-700"
                     title="Dodaj do kalendarza"
                   >
                     Pobierz .ics
@@ -267,45 +271,45 @@ export function ScheduleCalendar() {
               </div>
               <button
                 onClick={() => setSelectedEvent(null)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl font-light leading-none"
+                className="text-gray-400 hover:text-gray-600 text-2xl font-light leading-none"
               >
                 ×
               </button>
             </div>
 
             <div className="space-y-3">
-              <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <span className="text-gray-500 dark:text-gray-400">📅</span>
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-500">📅</span>
                 <div className="flex-1">
-                  <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Data i godzina</div>
-                  <div className="text-gray-900 dark:text-white font-medium mt-1">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">Data i godzina</div>
+                  <div className="text-gray-900 font-medium mt-1">
                     {selectedEvent.date}
                   </div>
-                  <div className="text-gray-600 dark:text-gray-300 text-sm font-medium mt-1">
+                  <div className="text-gray-600 text-sm font-medium mt-1">
                     {selectedEvent.time}
                   </div>
                 </div>
               </div>
 
               {selectedEvent.class_info.instructor && (
-                <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <span className="text-gray-500 dark:text-gray-400">👤</span>
+                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                  <span className="text-gray-500">👤</span>
                   <div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Prowadzący</div>
-                    <div className="text-gray-900 dark:text-white mt-1">
+                    <div className="text-xs text-gray-500 uppercase tracking-wide">Prowadzący</div>
+                    <div className="text-gray-900 mt-1">
                       {selectedEvent.class_info.instructor}
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <span className="text-gray-500 dark:text-gray-400">
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-500">
                   {selectedEvent.class_info.is_remote ? '💻' : '📍'}
                 </span>
                 <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Miejsce</div>
-                  <div className="text-gray-900 dark:text-white mt-1">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">Miejsce</div>
+                  <div className="text-gray-900 mt-1">
                     {selectedEvent.class_info.is_remote
                       ? 'Zajęcia zdalne'
                       : selectedEvent.class_info.room || 'Nie określono'}
@@ -314,22 +318,22 @@ export function ScheduleCalendar() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Grupa</div>
-                  <div className="text-gray-900 dark:text-white font-medium mt-1">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">Grupa</div>
+                  <div className="text-gray-900 font-medium mt-1">
                     {selectedEvent.group}
                   </div>
                 </div>
-                <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Rok/Semestr</div>
-                  <div className="text-gray-900 dark:text-white font-medium mt-1">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">Rok/Semestr</div>
+                  <div className="text-gray-900 font-medium mt-1">
                     {selectedEvent.rok}/{selectedEvent.semestr}
                   </div>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                <div className="text-xs text-gray-500 dark:text-gray-400">
+              <div className="pt-3 border-t border-gray-200">
+                <div className="text-xs text-gray-500">
                   {selectedEvent.kierunek} {selectedEvent.stopien} stopień
                 </div>
               </div>

@@ -38,14 +38,14 @@ export function Filters() {
   const showGroups = filters.stopien && filters.rok !== undefined;
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
+    <div className="bg-white border border-gray-200 p-4">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+        <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
           Filtry
         </h2>
         <button
           onClick={resetFilters}
-          className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-300"
+          className="text-xs text-gray-500 hover:text-gray-700"
         >
           Wyczyść
         </button>
@@ -54,13 +54,13 @@ export function Filters() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Przedmiot */}
         <div className="md:col-span-2">
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs text-gray-500 mb-1">
             Przedmiot
           </label>
           <select
             value={filters.subject || ''}
             onChange={(e) => setFilters({ subject: e.target.value || undefined })}
-            className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-gray-500"
+            className="w-full border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:outline-none focus:border-gray-400"
           >
             <option value="">Wszystkie przedmioty</option>
             {available.subjects.map((subject) => (
@@ -73,7 +73,7 @@ export function Filters() {
 
         {/* Stopień */}
         <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs text-gray-500 mb-1">
             Stopień
           </label>
           <select
@@ -85,7 +85,7 @@ export function Filters() {
                 groups: undefined
               })
             }
-            className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-gray-500"
+            className="w-full border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:outline-none focus:border-gray-400"
           >
             <option value="">Wybierz</option>
             {available.stopnie.map((s) => (
@@ -98,7 +98,7 @@ export function Filters() {
 
         {/* Rok */}
         <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs text-gray-500 mb-1">
             Rok
           </label>
           <select
@@ -110,7 +110,7 @@ export function Filters() {
               })
             }
             disabled={!filters.stopien}
-            className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 focus:outline-none focus:border-gray-400 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <option value="">Wybierz</option>
             {available.lata.map((r) => (
@@ -124,7 +124,7 @@ export function Filters() {
         {/* Grupy */}
         {showGroups && (
           <div className="md:col-span-2 lg:col-span-1">
-            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <label className="block text-xs text-gray-500 mb-1">
               Grupy
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -145,8 +145,8 @@ export function Filters() {
                       }}
                       className={`px-2.5 py-1 text-xs transition-colors ${
                         isSelected
-                          ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          ? 'bg-gray-900 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
                       {group}

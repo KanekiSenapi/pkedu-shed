@@ -50,7 +50,7 @@ export function SearchBar() {
           onChange={(e) => handleSearch(e.target.value)}
           onFocus={() => query && setShowResults(results.length > 0)}
           placeholder="Szukaj..."
-          className="w-full px-3 py-2 pl-9 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500"
+          className="w-full px-3 py-2 pl-9 border border-gray-300 bg-white text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-400"
         />
         <svg
           className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
@@ -73,17 +73,17 @@ export function SearchBar() {
             className="fixed inset-0 z-10"
             onClick={() => setShowResults(false)}
           />
-          <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm max-h-80 overflow-y-auto">
+          <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 shadow-sm max-h-80 overflow-y-auto">
             {results.map((entry) => (
               <div
                 key={entry.id}
-                className="p-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 last:border-0 cursor-pointer"
+                className="p-2.5 hover:bg-gray-50 border-b border-gray-100 last:border-0 cursor-pointer"
                 onClick={() => setShowResults(false)}
               >
-                <div className="text-sm text-gray-900 dark:text-white">
+                <div className="text-sm text-gray-900">
                   {entry.class_info.subject}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <div className="text-xs text-gray-500 mt-0.5">
                   {entry.class_info.type && (
                     <span className="mr-2">
                       {entry.class_info.type}
@@ -93,7 +93,7 @@ export function SearchBar() {
                     <span className="mr-2">• {entry.class_info.instructor}</span>
                   )}
                 </div>
-                <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                <div className="text-xs text-gray-400 mt-0.5">
                   {entry.date} • {entry.time} • {entry.group}
                   {entry.class_info.room && ` • ${entry.class_info.room}`}
                 </div>
