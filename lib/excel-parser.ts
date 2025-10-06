@@ -183,8 +183,9 @@ function findSections(degreeRow: any[], headerRow: any[], groupRow: any[]): Sect
         if (checkIdx < groupRow.length) {
           const groupCell = String(groupRow[checkIdx] || '').trim();
 
-          // Wykryj grupę (DS1, DS2, CY1, itp.)
-          if (/^[A-Z]{1,3}\d+$/.test(groupCell)) {
+          // Wykryj grupę (DS1, DS2, CY1, 11, 21, itp.)
+          // Pasuje do: DS1, CY2, 11, 12, 21, 22 etc.
+          if (/^([A-Z]{1,3}\d+|\d{1,2})$/.test(groupCell)) {
             // Sprawdź czy ta grupa nie jest już przypisana do innej sekcji
             const alreadyUsed = configs.some(c => c.groupColumns[groupCell] === checkIdx);
             if (!alreadyUsed && !groupColumns[groupCell]) {
