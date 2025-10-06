@@ -31,12 +31,42 @@ export async function GET(request: Request) {
           raw: false,
         });
 
-        // Find date cells (column 0, rows after 7)
+        // Find ALL date cells (column 0, rows after 7)
         const dates: string[] = [];
-        for (let rowIdx = 7; rowIdx < Math.min(data.length, 100); rowIdx++) {
+        const dateCellsRaw: Array<{ row: number; raw: any; parsed: string | null }> = [];
+
+        for (let rowIdx = 7; rowIdx < data.length; rowIdx++) {
           const dateCell = data[rowIdx]?.[0];
           if (dateCell && String(dateCell).trim()) {
-            dates.push(String(dateCell).trim());
+            const rawValue = String(dateCell).trim();
+            dates.push(rawValue);
+
+            // Try to parse the date to see if parsing fails
+            let parsedDate: string | null = null;
+            if (typeof dateCell === 'number') {
+              const date = XLSX.SSF.parse_date_code(dateCell);
+              if (date) {
+                const year = date.y;
+                const month = String(date.m).padStart(2, '0');
+                const day = String(date.d).padStart(2, '0');
+                parsedDate = `${year}-${month}-${day}`;
+              }
+            } else if (typeof dateCell === 'string') {
+              const isoMatch = dateCell.match(/(\d{4})-(\d{2})-(\d{2})/);
+              if (isoMatch) {
+                parsedDate = dateCell;
+              } else {
+                const parsed = new Date(dateCell);
+                if (!isNaN(parsed.getTime())) {
+                  const year = parsed.getFullYear();
+                  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+                  const day = String(parsed.getDate()).padStart(2, '0');
+                  parsedDate = `${year}-${month}-${day}`;
+                }
+              }
+            }
+
+            dateCellsRaw.push({ row: rowIdx, raw: dateCell, parsed: parsedDate });
           }
         }
 
@@ -47,8 +77,10 @@ export async function GET(request: Request) {
           headerRow5: data[4] || [],
           headerRow6: data[5] || [],
           groupRow7: data[6] || [],
-          sampleDates: dates.slice(0, 10),
+          allDates: dateCellsRaw,
           totalDateCells: dates.length,
+          firstDate: dateCellsRaw[0]?.parsed || null,
+          lastDate: dateCellsRaw[dateCellsRaw.length - 1]?.parsed || null,
         };
       }),
     };

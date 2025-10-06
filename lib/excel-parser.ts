@@ -248,6 +248,7 @@ function parseEntries(
 
   let currentDate: string | null = null;
   let currentDay: string | null = null;
+  let dateChanges = 0;
 
   // Start from row 7 (Python też zaczyna od 7)
   for (let rowIdx = 7; rowIdx < data.length; rowIdx++) {
@@ -260,7 +261,16 @@ function parseEntries(
 
       // Update current date
       if (dateCell && String(dateCell).trim()) {
-        currentDate = parseDateCell(dateCell);
+        const newDate = parseDateCell(dateCell);
+        if (newDate && newDate !== currentDate) {
+          currentDate = newDate;
+          dateChanges++;
+          if (dateChanges <= 5 || dateChanges % 10 === 0) {
+            console.log(`[Parser] Row ${rowIdx}: Date changed to ${currentDate} (raw: ${dateCell})`);
+          }
+        } else if (!newDate) {
+          console.log(`[Parser] Row ${rowIdx}: Failed to parse date cell: ${dateCell}`);
+        }
       }
 
       // Update current day
@@ -368,6 +378,12 @@ function parseEntries(
       // Skip problematic rows
       continue;
     }
+  }
+
+  // Log summary of dates processed
+  if (entries.length > 0) {
+    const uniqueDates = [...new Set(entries.map(e => e.date))].sort();
+    console.log(`[Parser] Section ${config.kierunek} rok ${config.rok} sem ${config.semestr}: Processed ${dateChanges} date changes, ${uniqueDates.length} unique dates: ${uniqueDates[0]} to ${uniqueDates[uniqueDates.length - 1]}`);
   }
 
   return entries;
