@@ -73,6 +73,7 @@ const INSTRUCTOR_MAP: Record<string, string> = {
   'JW.': 'mgr inż. Jan Wojtas',
   'AWoź': 'mgr inż. Andrzej Woźniacki',
   'AWyrz': 'dr Adam Wyrzykowski',
+  'MZ': 'dr Maryam Zomorodi Moghaddam, prof. PK',
   'Mzom': 'dr Maryam Zomorodi Moghaddam, prof. PK',
   'DŻ': 'dr inż. Dariusz Żelasko',
   'TL': 'dr Tomasz Ligocki',
