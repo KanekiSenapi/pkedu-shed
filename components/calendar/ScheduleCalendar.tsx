@@ -166,16 +166,26 @@ export function ScheduleCalendar() {
     );
   };
 
-  // Custom date cell wrapper to add "ZJAZD" label to weekends in month view
+  // Custom date cell wrapper to add "ZJAZD" label to weekends with stationary classes
   const CustomDateCellWrapper = ({ children, value }: { children: React.ReactNode; value: Date }) => {
     const weekend = isWeekend(value);
-    const showLabel = view === 'month' && weekend;
+
+    // Check if this day has stationary classes
+    const hasStationaryClasses = view === 'month' && weekend && events.some(event => {
+      const eventDate = event.start;
+      return (
+        eventDate.getFullYear() === value.getFullYear() &&
+        eventDate.getMonth() === value.getMonth() &&
+        eventDate.getDate() === value.getDate() &&
+        !event.entry.class_info.is_remote
+      );
+    });
 
     return (
       <div className="rbc-day-bg-wrapper">
         {children}
-        {showLabel && (
-          <div className="absolute top-1 right-1 text-[9px] font-bold px-1.5 py-0.5 bg-orange-500 text-white uppercase tracking-wide">
+        {hasStationaryClasses && (
+          <div className="absolute top-0 left-0 right-0 text-center text-[8px] font-semibold px-1 py-0.5 bg-green-600 text-white uppercase tracking-wider">
             ZJAZD
           </div>
         )}
