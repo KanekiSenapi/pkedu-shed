@@ -9,8 +9,9 @@ import { turso } from '@/lib/turso';
  */
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await getServerSession(authOptions);
 
@@ -41,7 +42,7 @@ export async function POST(
 
     const result = await turso.execute({
       sql: `INSERT INTO bug_report_notes (report_id, admin_id, note) VALUES (?, ?, ?)`,
-      args: [params.id, session.user.id, note.trim()],
+      args: [id, session.user.id, note.trim()],
     });
 
     return NextResponse.json({

@@ -9,8 +9,9 @@ import { turso } from '@/lib/turso';
  */
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await getServerSession(authOptions);
 
@@ -32,7 +33,7 @@ export async function GET(
     // Get bug report
     const reportResult = await turso.execute({
       sql: `SELECT * FROM bug_reports WHERE id = ?`,
-      args: [params.id],
+      args: [id],
     });
 
     if (reportResult.rows.length === 0) {
@@ -53,7 +54,7 @@ export async function GET(
         WHERE brn.report_id = ?
         ORDER BY brn.created_at DESC
       `,
-      args: [params.id],
+      args: [id],
     });
 
     const notes = notesResult.rows.map(row => ({
@@ -97,8 +98,9 @@ export async function GET(
  */
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await getServerSession(authOptions);
 
@@ -129,7 +131,7 @@ export async function PATCH(
 
     await turso.execute({
       sql: `UPDATE bug_reports SET status = ? WHERE id = ?`,
-      args: [status, params.id],
+      args: [status, id],
     });
 
     return NextResponse.json({
