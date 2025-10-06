@@ -264,10 +264,21 @@ export default function LoginPage() {
             </form>
           )}
 
-          {/* Optional notice */}
-          <p className="text-xs text-gray-500 mt-6 text-center">
-            Logowanie jest opcjonalne. Możesz korzystać z podstawowych funkcji bez konta.
-          </p>
+          {/* Guest option */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <p className="text-sm text-gray-600 mb-3 text-center">
+              Nie masz konta?
+            </p>
+            <button
+              onClick={() => router.push('/begin')}
+              className="w-full px-4 py-3 bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 transition-colors border border-gray-300"
+            >
+              Kontynuuj jako gość
+            </button>
+            <p className="text-xs text-gray-500 mt-3 text-center">
+              Korzystaj z podstawowych funkcji bez konta
+            </p>
+          </div>
         </div>
       </div>
 
