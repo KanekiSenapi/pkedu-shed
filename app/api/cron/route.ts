@@ -34,9 +34,9 @@ export async function GET(request: Request) {
 
     console.log('[Cron] Starting schedule update...');
 
-    // Call internal fetch endpoint with force=true and token
+    // Call internal fetch endpoint (without force - let it check hash)
     const fetchUrl = new URL('/api/schedule/fetch', request.url);
-    fetchUrl.searchParams.set('force', 'true');
+    // Don't use force=true - we want to check hash and only update if file changed
     fetchUrl.searchParams.set('token', process.env.CRON_SECRET || '');
 
     // Make the request and wait for it
