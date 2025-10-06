@@ -196,6 +196,78 @@ export function ScheduleCalendar({ entries: providedEntries }: ScheduleCalendarP
     );
   };
 
+  // Custom toolbar with week status
+  const CustomToolbar = (toolbar: any) => {
+    const getWeekStatus = () => {
+      if (view !== 'week') return null;
+
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      // Get the start and end of the displayed week
+      const weekStart = new Date(toolbar.date);
+      const day = weekStart.getDay();
+      const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
+      weekStart.setDate(diff);
+      weekStart.setHours(0, 0, 0, 0);
+
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
+
+      // Check if current week
+      if (today >= weekStart && today <= weekEnd) {
+        return { label: 'bieżący tydzień', color: 'text-blue-600' };
+      }
+
+      // Check if past week
+      if (today > weekEnd) {
+        return { label: 'przeszły tydzień', color: 'text-gray-500' };
+      }
+
+      // Future week
+      return { label: 'przyszły tydzień', color: 'text-green-600' };
+    };
+
+    const weekStatus = getWeekStatus();
+
+    return (
+      <div className="rbc-toolbar">
+        <span className="rbc-btn-group">
+          <button type="button" onClick={() => toolbar.onNavigate('TODAY')}>
+            {toolbar.localizer.messages.today}
+          </button>
+          <button type="button" onClick={() => toolbar.onNavigate('PREV')}>
+            {toolbar.localizer.messages.previous}
+          </button>
+          <button type="button" onClick={() => toolbar.onNavigate('NEXT')}>
+            {toolbar.localizer.messages.next}
+          </button>
+        </span>
+        <span className="rbc-toolbar-label">
+          {toolbar.label}
+          {weekStatus && (
+            <span className={`ml-2 text-xs font-medium ${weekStatus.color}`}>
+              ({weekStatus.label})
+            </span>
+          )}
+        </span>
+        <span className="rbc-btn-group">
+          {toolbar.views.map((name: string) => (
+            <button
+              key={name}
+              type="button"
+              className={toolbar.view === name ? 'rbc-active' : ''}
+              onClick={() => toolbar.onView(name)}
+            >
+              {toolbar.localizer.messages[name]}
+            </button>
+          ))}
+        </span>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white border border-gray-200 p-4">
       <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
@@ -236,6 +308,7 @@ export function ScheduleCalendar({ entries: providedEntries }: ScheduleCalendarP
           components={{
             event: CustomEvent,
             dateCellWrapper: CustomDateCellWrapper,
+            toolbar: CustomToolbar,
           }}
           popup
           popupOffset={{ x: 0, y: 20 }}
