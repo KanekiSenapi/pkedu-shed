@@ -168,6 +168,7 @@ export function ScheduleCalendar() {
     // Check if this day has stationary classes
     const hasStationaryClasses = view === 'month' && weekend && events.some(event => {
       const eventDate = event.start;
+      if (!eventDate) return false;
       return (
         eventDate.getFullYear() === value.getFullYear() &&
         eventDate.getMonth() === value.getMonth() &&
