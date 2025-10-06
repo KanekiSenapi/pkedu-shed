@@ -90,8 +90,8 @@ export default function MapPage() {
 
     // Załaduj najbliższe zajęcia
     syncLoadUserPreferences().then(prefs => {
-      if (prefs && schedule && schedule.entries && schedule.entries.length > 0) {
-        const filtered = filterScheduleByPreferences(schedule.entries, prefs);
+      if (prefs && schedule) {
+        const filtered = filterScheduleByPreferences(schedule, prefs);
         const upcoming = getUpcomingClasses(filtered);
         if (upcoming.length > 0) {
           setNextClass(upcoming[0]);
