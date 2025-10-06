@@ -116,6 +116,16 @@ export function UpcomingDaysCalendar({ entries }: UpcomingDaysCalendarProps) {
     return false;
   };
 
+  const dayHasFreeTimeGap = (entries: ScheduleEntry[]): boolean => {
+    const sorted = [...entries].sort((a, b) => a.start_time.localeCompare(b.start_time));
+    for (let i = 1; i < sorted.length; i++) {
+      if (hasFreeTimeGap(sorted, i)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   return (
     <div className="bg-white border border-gray-200 p-4">
       <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-3">
@@ -134,20 +144,27 @@ export function UpcomingDaysCalendar({ entries }: UpcomingDaysCalendarProps) {
                 <span className="text-xs text-gray-500">{getTimeRange(day.entries)}</span>
                 <span className="text-xs text-blue-600">• {getTimeUntil(day.date)}</span>
               </div>
-              <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 border border-blue-200">
-                {day.entries.length}{' '}
-                {day.entries.length === 1
-                  ? 'blok zajęć'
-                  : day.entries.length < 5
-                    ? 'bloki zajęć'
-                    : 'bloków zajęć'}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 border border-blue-200">
+                  {day.entries.length}{' '}
+                  {day.entries.length === 1
+                    ? 'blok zajęć'
+                    : day.entries.length < 5
+                      ? 'bloki zajęć'
+                      : 'bloków zajęć'}
+                </span>
+                {dayHasFreeTimeGap(day.entries) && (
+                  <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium border border-orange-300">
+                    okienko
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="space-y-1">
               {[...day.entries]
                 .sort((a, b) => a.start_time.localeCompare(b.start_time))
-                .map((entry, idx, sortedEntries) => (
+                .map((entry, idx) => (
                   <div key={idx} className="text-xs text-gray-600 flex items-center gap-2 flex-wrap">
                     <span className="font-mono text-gray-500">{entry.start_time}</span>
                     <span className="text-gray-900">{entry.class_info.subject}</span>
@@ -159,11 +176,6 @@ export function UpcomingDaysCalendar({ entries }: UpcomingDaysCalendarProps) {
                     ) : entry.class_info.room ? (
                       <span className="text-gray-500">• {entry.class_info.room}</span>
                     ) : null}
-                    {hasFreeTimeGap(sortedEntries, idx) && (
-                      <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium border border-orange-300">
-                        okienko
-                      </span>
-                    )}
                   </div>
                 ))}
             </div>
