@@ -2,8 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useSession, signOut } from 'next-auth/react';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { BugReportModal } from '@/components/bug-report/BugReportModal';
+import { AuthModal } from '@/components/auth/AuthModal';
 import { UserPreferences } from '@/lib/user-preferences';
 
 interface DashboardNavbarProps {
@@ -13,8 +15,10 @@ interface DashboardNavbarProps {
 export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showBugReport, setShowBugReport] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -90,7 +94,9 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 shadow-lg z-50">
                   <div className="p-4 border-b border-gray-200">
-                    <div className="text-xs text-gray-500 mb-1">Niezalogowany</div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      {session ? session.user?.email : 'Niezalogowany'}
+                    </div>
                     <div className="text-sm text-gray-900">{getUserInfo()}</div>
                   </div>
                   <button
@@ -120,6 +126,27 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
                   >
                     Zgłoś błąd lub sugestię
                   </button>
+                  {session ? (
+                    <button
+                      onClick={() => {
+                        setShowDropdown(false);
+                        signOut();
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-200"
+                    >
+                      Wyloguj się
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setShowDropdown(false);
+                        setShowAuth(true);
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-200"
+                    >
+                      Zaloguj się
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       setShowDropdown(false);
@@ -142,6 +169,12 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
       isOpen={showBugReport}
       onClose={() => setShowBugReport(false)}
       userInfo={preferences ? getUserInfo() : undefined}
+    />
+
+    {/* Auth Modal */}
+    <AuthModal
+      isOpen={showAuth}
+      onClose={() => setShowAuth(false)}
     />
   </>
   );
