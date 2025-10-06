@@ -46,7 +46,7 @@ export default function BeginPage() {
       schedule?.sections
         .flatMap(s => s.entries)
         .map(e => e.class_info.instructor)
-        .filter(Boolean) || []
+        .filter((i): i is string => Boolean(i)) || []
     ),
   ].sort();
 
