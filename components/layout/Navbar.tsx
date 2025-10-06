@@ -2,6 +2,7 @@
 
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useState } from 'react';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 export function Navbar() {
   const { data: session, status } = useSession();
@@ -22,6 +23,11 @@ export function Navbar() {
                 Politechnika Krakowska
               </span>
             </div>
+          </div>
+
+          {/* Right Section */}
+          <div className="flex items-center">
+            <NotificationBell />
           </div>
         </div>
       </div>

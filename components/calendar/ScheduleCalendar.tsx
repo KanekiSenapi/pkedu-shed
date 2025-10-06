@@ -105,9 +105,12 @@ export function ScheduleCalendar() {
     // Clean minimal styling with subtle border
     const borderLeft = entry.class_info.is_remote ? '3px solid #60a5fa' : '3px solid #10b981';
 
+    // Subtle background for week/day views to make events more visible
+    const backgroundColor = view === 'week' || view === 'day' ? '#f9fafb' : '#ffffff';
+
     return {
       style: {
-        backgroundColor: '#ffffff',
+        backgroundColor,
         borderLeft,
         border: '1px solid #e5e7eb',
         borderRadius: '0',
@@ -117,7 +120,7 @@ export function ScheduleCalendar() {
         boxShadow: 'none',
       },
     };
-  }, []);
+  }, [view]);
 
   // Day style getter - hide weekdays if needed
   const dayPropGetter = useCallback((date: Date) => {
