@@ -11,23 +11,43 @@ import {
 /**
  * GET /api/schedule/fetch
  * Downloads the schedule file from PK website, parses it, and saves to database
+ * INTERNAL ONLY - requires authorization
  */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const filter = searchParams.get('filter') || 'niestacjonarne';
     const force = searchParams.get('force') === 'true';
+    const authToken = searchParams.get('token');
 
-    // Check if we have data in database
+    // Require auth token for force updates
+    if (force && authToken !== process.env.CRON_SECRET) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized - invalid token' },
+        { status: 401 }
+      );
+    }
+
+    // Check if we have fresh data in database
     if (!force) {
       const cachedSchedule = await loadScheduleFromDB();
       if (cachedSchedule) {
-        return NextResponse.json({
-          success: true,
-          data: cachedSchedule,
-          cached: true,
-          timestamp: cachedSchedule.lastUpdated,
-        });
+        // Check if cache is fresh (< 12 hours)
+        const cacheDate = new Date(cachedSchedule.lastUpdated);
+        const now = new Date();
+        const hoursSinceUpdate = (now.getTime() - cacheDate.getTime()) / (1000 * 60 * 60);
+
+        if (hoursSinceUpdate < 12) {
+          console.log(`[Fetch] Cache is fresh (${hoursSinceUpdate.toFixed(1)}h old), skipping download`);
+          return NextResponse.json({
+            success: true,
+            data: cachedSchedule,
+            cached: true,
+            timestamp: cachedSchedule.lastUpdated,
+          });
+        }
+
+        console.log(`[Fetch] Cache is stale (${hoursSinceUpdate.toFixed(1)}h old), checking for updates...`);
       }
     }
 

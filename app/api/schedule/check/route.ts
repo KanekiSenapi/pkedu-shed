@@ -1,40 +1,44 @@
 import { NextResponse } from 'next/server';
-import { downloadSchedule } from '@/lib/scraper';
-import { calculateHash } from '@/lib/cache-manager';
-import { getLatestScheduleHash } from '@/lib/schedule-db';
+import { loadScheduleFromDB } from '@/lib/schedule-db';
 
 /**
  * GET /api/schedule/check
- * Checks if the schedule file has been updated on the PK website
- * Returns: { hasUpdate: boolean, currentHash: string, storedHash: string }
+ * Checks if the schedule data is recent (lightweight check)
+ * Returns: { hasUpdate: boolean, lastUpdated: string }
  */
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const filter = searchParams.get('filter') || 'niestacjonarne';
+    console.log('[Check] Checking schedule freshness...');
 
-    // Download the schedule file (just to get hash)
-    console.log('Checking for updates...');
-    const downloadResult = await downloadSchedule(filter);
+    // Load from database
+    const schedule = await loadScheduleFromDB();
 
-    // Calculate current hash
-    const currentHash = calculateHash(downloadResult.buffer);
+    if (!schedule) {
+      return NextResponse.json({
+        success: true,
+        hasUpdate: true,
+        lastUpdated: null,
+        message: 'No schedule data available',
+      });
+    }
 
-    // Get stored hash from database
-    const storedHash = await getLatestScheduleHash();
+    // Check if data is fresh (< 24 hours)
+    const lastUpdated = new Date(schedule.lastUpdated);
+    const now = new Date();
+    const hoursSinceUpdate = (now.getTime() - lastUpdated.getTime()) / (1000 * 60 * 60);
 
-    const hasUpdate = !storedHash || currentHash !== storedHash;
+    const hasUpdate = hoursSinceUpdate > 24;
 
-    console.log(`Check complete: ${hasUpdate ? 'Update available' : 'No update'}`);
+    console.log(`[Check] Data is ${hoursSinceUpdate.toFixed(1)}h old - ${hasUpdate ? 'stale' : 'fresh'}`);
 
     return NextResponse.json({
       success: true,
       hasUpdate,
-      currentHash,
-      storedHash: storedHash || null,
+      lastUpdated: schedule.lastUpdated,
+      hoursSinceUpdate: Math.round(hoursSinceUpdate),
     });
   } catch (error) {
-    console.error('Error checking for updates:', error);
+    console.error('[Check] Error checking for updates:', error);
 
     return NextResponse.json(
       {

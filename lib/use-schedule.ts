@@ -23,7 +23,7 @@ export function useSchedule() {
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   /**
-   * Fetches schedule data from API
+   * Fetches schedule data from API (read-only, cached)
    */
   const fetchSchedule = useCallback(
     async (force = false) => {
@@ -31,14 +31,15 @@ export function useSchedule() {
       setError(null);
 
       try {
-        const response = await fetch(`/api/schedule/fetch?force=${force}`);
+        // Use public read-only endpoint
+        const response = await fetch('/api/schedule');
         const result = await response.json();
 
         if (result.success) {
           setSchedule(result.data);
           saveToCache(result.data);
 
-          if (!result.cached || force) {
+          if (force) {
             toast.success('Plan zajęć zaktualizowany!');
           }
         } else {

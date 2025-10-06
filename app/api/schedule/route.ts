@@ -1,32 +1,38 @@
 import { NextResponse } from 'next/server';
-import { downloadSchedule } from '@/lib/scraper';
-import { parseExcelSchedule } from '@/lib/excel-parser';
+import { loadScheduleFromDB } from '@/lib/schedule-db';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // 60s dla Pro, 10s dla Hobby
 
 /**
  * GET /api/schedule
- * Główne API - pobiera plan bezpośrednio (bez bazy dla Vercel)
+ * Public read-only endpoint - returns cached schedule from database
  */
 export async function GET() {
   try {
-    console.log('Downloading schedule from PK...');
-    const downloadResult = await downloadSchedule('niestacjonarne');
+    console.log('[API] Loading schedule from database cache...');
+    const schedule = await loadScheduleFromDB();
 
-    console.log('Parsing Excel file...');
-    const schedule = parseExcelSchedule(downloadResult.buffer);
+    if (!schedule) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'No schedule data available. Please wait for the next update.',
+        },
+        { status: 404 }
+      );
+    }
 
-    console.log(`Successfully parsed ${schedule.sections.length} sections`);
+    console.log(`[API] Loaded schedule with ${schedule.sections.length} sections from cache`);
 
     return NextResponse.json({
       success: true,
       data: schedule,
+      cached: true,
       timestamp: schedule.lastUpdated,
       sections: schedule.sections.length,
     });
   } catch (error) {
-    console.error('Error fetching schedule:', error);
+    console.error('[API] Error loading schedule:', error);
 
     return NextResponse.json(
       {
