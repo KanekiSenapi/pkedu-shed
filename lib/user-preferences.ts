@@ -56,3 +56,49 @@ export function clearUserPreferences(): void {
 export function hasCompletedOnboarding(): boolean {
   return loadUserPreferences() !== null;
 }
+
+/**
+ * Save user preferences to both localStorage and database (if logged in)
+ */
+export async function syncSaveUserPreferences(preferences: UserPreferences): Promise<void> {
+  // Always save to localStorage first (sync)
+  saveUserPreferences(preferences);
+
+  // Try to sync to database if user is logged in
+  try {
+    await fetch('/api/preferences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ preferences }),
+    });
+  } catch (error) {
+    // Silently fail - localStorage save already succeeded
+    console.log('Could not sync preferences to database (user may not be logged in)');
+  }
+}
+
+/**
+ * Load user preferences from database (if logged in) or localStorage
+ * If user is logged in, DB preferences take precedence
+ */
+export async function syncLoadUserPreferences(): Promise<UserPreferences | null> {
+  try {
+    // Try to load from database first
+    const response = await fetch('/api/preferences');
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.preferences) {
+        // Also update localStorage with DB preferences
+        saveUserPreferences(data.preferences);
+        return data.preferences;
+      }
+    }
+  } catch (error) {
+    // If DB load fails, fall back to localStorage
+    console.log('Could not load preferences from database, using localStorage');
+  }
+
+  // Fall back to localStorage
+  return loadUserPreferences();
+}

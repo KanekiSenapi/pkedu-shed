@@ -46,7 +46,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         setEmail('');
         setPassword('');
         onClose();
-        router.refresh();
+
+        // Reload page to fetch and sync preferences from database
+        window.location.reload();
       }
     } catch (error) {
       console.error('Login error:', error);

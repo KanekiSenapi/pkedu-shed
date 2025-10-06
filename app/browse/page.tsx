@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSchedule } from '@/lib/use-schedule';
 import { DashboardNavbar } from '@/components/dashboard/DashboardNavbar';
-import { loadUserPreferences, type UserPreferences } from '@/lib/user-preferences';
+import { syncLoadUserPreferences, type UserPreferences } from '@/lib/user-preferences';
 import { SearchBar } from '@/components/search/SearchBar';
 import { Filters } from '@/components/filters/Filters';
 import { ScheduleCalendar } from '@/components/calendar/ScheduleCalendar';
@@ -16,8 +16,9 @@ export default function BrowsePage() {
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
 
   useEffect(() => {
-    const prefs = loadUserPreferences();
-    setPreferences(prefs);
+    syncLoadUserPreferences().then(prefs => {
+      setPreferences(prefs);
+    });
   }, []);
 
   return (

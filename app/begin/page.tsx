@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  saveUserPreferences,
+  syncSaveUserPreferences,
   type UserRole,
   type StudentPreferences,
   type InstructorPreferences,
@@ -64,7 +64,7 @@ export default function BeginPage() {
     );
   };
 
-  const handleStudentComplete = () => {
+  const handleStudentComplete = async () => {
     if (!stopien || !rok || selectedGroups.length === 0) return;
 
     const preferences: StudentPreferences = {
@@ -74,11 +74,11 @@ export default function BeginPage() {
       groups: selectedGroups,
     };
 
-    saveUserPreferences(preferences);
+    await syncSaveUserPreferences(preferences);
     router.push('/dashboard');
   };
 
-  const handleInstructorComplete = () => {
+  const handleInstructorComplete = async () => {
     if (!selectedInstructor) return;
 
     const preferences: InstructorPreferences = {
@@ -86,7 +86,7 @@ export default function BeginPage() {
       fullName: selectedInstructor,
     };
 
-    saveUserPreferences(preferences);
+    await syncSaveUserPreferences(preferences);
     router.push('/dashboard');
   };
 

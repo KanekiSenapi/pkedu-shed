@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSchedule } from '@/lib/use-schedule';
 import {
-  loadUserPreferences,
+  syncLoadUserPreferences,
   type UserPreferences,
 } from '@/lib/user-preferences';
 import {
@@ -28,12 +28,13 @@ export default function DashboardPage() {
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
 
   useEffect(() => {
-    const prefs = loadUserPreferences();
-    if (!prefs) {
-      router.push('/begin');
-      return;
-    }
-    setPreferences(prefs);
+    syncLoadUserPreferences().then(prefs => {
+      if (!prefs) {
+        router.push('/begin');
+        return;
+      }
+      setPreferences(prefs);
+    });
   }, [router]);
 
   if (loading || !preferences) {
