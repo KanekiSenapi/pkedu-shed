@@ -61,25 +61,36 @@ export function ScheduleCalendar() {
 
   // Convert schedule entries to calendar events
   const events = useMemo<CalendarEvent[]>(() => {
-    return filteredEntries.map((entry) => {
-      const [year, month, day] = entry.date.split('-').map(Number);
-      const [startHour, startMin] = entry.start_time.split(':').map(Number);
-      const [endHour, endMin] = entry.end_time.split(':').map(Number);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-      const start = new Date(year, month - 1, day, startHour, startMin);
-      const end = new Date(year, month - 1, day, endHour, endMin);
+    return filteredEntries
+      .map((entry) => {
+        const [year, month, day] = entry.date.split('-').map(Number);
+        const [startHour, startMin] = entry.start_time.split(':').map(Number);
+        const [endHour, endMin] = entry.end_time.split(':').map(Number);
 
-      // Tytuł bez ikon - tylko nazwa przedmiotu
-      const title = entry.class_info.subject;
+        const start = new Date(year, month - 1, day, startHour, startMin);
+        const end = new Date(year, month - 1, day, endHour, endMin);
 
-      return {
-        title,
-        start,
-        end,
-        entry,
-      };
-    });
-  }, [filteredEntries]);
+        // Tytuł bez ikon - tylko nazwa przedmiotu
+        const title = entry.class_info.subject;
+
+        return {
+          title,
+          start,
+          end,
+          entry,
+        };
+      })
+      .filter((event) => {
+        // W widoku Agenda pokazuj tylko przyszłe zajęcia (od dzisiaj)
+        if (view === 'agenda') {
+          return event.start >= today;
+        }
+        return true;
+      });
+  }, [filteredEntries, view]);
 
   // Sprawdź czy jest weekend
   const isWeekend = (date: Date) => {
