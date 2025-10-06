@@ -6,6 +6,8 @@ import { SearchBar } from '@/components/search/SearchBar';
 import { Filters } from '@/components/filters/Filters';
 import { ScheduleCalendar } from '@/components/calendar/ScheduleCalendar';
 import { ScheduleStats } from '@/components/stats/ScheduleStats';
+import { SubjectStatsTable } from '@/components/stats/SubjectStatsTable';
+import { StationaryDaysCalendar } from '@/components/stats/StationaryDaysCalendar';
 
 export default function Home() {
   const { loading, error } = useSchedule();
@@ -50,6 +52,15 @@ export default function Home() {
 
             {/* Stats */}
             <ScheduleStats />
+
+            {/* Grid layout for additional stats */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Subject Stats Table */}
+              <SubjectStatsTable />
+
+              {/* Stationary Days Calendar */}
+              <StationaryDaysCalendar />
+            </div>
           </div>
         )}
       </main>

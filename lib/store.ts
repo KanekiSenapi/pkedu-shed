@@ -7,6 +7,25 @@ import {
 } from '@/types/schedule';
 import { isWeekend } from './schedule-processor';
 
+export interface SubjectStats {
+  subject: string;
+  total: number;
+  lectures: number;
+  labs: number;
+  projects: number;
+  exercises: number;
+  other: number;
+  remote: number;
+  stationary: number;
+}
+
+export interface StationaryDay {
+  date: string;
+  dayName: string;
+  classCount: number;
+  entries: ScheduleEntry[];
+}
+
 interface ScheduleStore {
   // Data
   schedule: ParsedSchedule | null;
@@ -31,6 +50,8 @@ interface ScheduleStore {
   // Computed
   getStats: () => ScheduleStats;
   getWeekendEntries: () => ScheduleEntry[];
+  getSubjectStats: () => SubjectStats[];
+  getStationaryDays: () => StationaryDay[];
   getAvailableFilters: () => {
     kierunki: string[];
     stopnie: string[];
@@ -166,6 +187,79 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
   getWeekendEntries: () => {
     const { filteredEntries } = get();
     return filteredEntries.filter((e) => isWeekend(e.day));
+  },
+
+  getSubjectStats: () => {
+    const { filteredEntries } = get();
+    const subjectMap = new Map<string, SubjectStats>();
+
+    filteredEntries.forEach((entry) => {
+      const subject = entry.class_info.subject;
+
+      if (!subjectMap.has(subject)) {
+        subjectMap.set(subject, {
+          subject,
+          total: 0,
+          lectures: 0,
+          labs: 0,
+          projects: 0,
+          exercises: 0,
+          other: 0,
+          remote: 0,
+          stationary: 0,
+        });
+      }
+
+      const stats = subjectMap.get(subject)!;
+      stats.total++;
+
+      // Count by type
+      if (entry.class_info.type === 'wykład') stats.lectures++;
+      else if (entry.class_info.type === 'laboratorium') stats.labs++;
+      else if (entry.class_info.type === 'projekt') stats.projects++;
+      else if (entry.class_info.type === 'ćwiczenia') stats.exercises++;
+      else stats.other++;
+
+      // Count by location
+      if (entry.class_info.is_remote) stats.remote++;
+      else stats.stationary++;
+    });
+
+    return Array.from(subjectMap.values()).sort((a, b) =>
+      a.subject.localeCompare(b.subject, 'pl')
+    );
+  },
+
+  getStationaryDays: () => {
+    const { filteredEntries } = get();
+    const stationaryEntries = filteredEntries.filter((e) => !e.class_info.is_remote);
+
+    const dayMap = new Map<string, StationaryDay>();
+
+    stationaryEntries.forEach((entry) => {
+      if (!dayMap.has(entry.date)) {
+        dayMap.set(entry.date, {
+          date: entry.date,
+          dayName: entry.day,
+          classCount: 0,
+          entries: [],
+        });
+      }
+
+      const day = dayMap.get(entry.date)!;
+      day.classCount++;
+      day.entries.push(entry);
+    });
+
+    // Sort entries within each day by start time
+    dayMap.forEach((day) => {
+      day.entries.sort((a, b) => a.start_time.localeCompare(b.start_time));
+    });
+
+    // Return sorted by date
+    return Array.from(dayMap.values()).sort((a, b) =>
+      a.date.localeCompare(b.date)
+    );
   },
 
   getAvailableFilters: () => {
