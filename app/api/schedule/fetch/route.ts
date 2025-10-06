@@ -8,6 +8,9 @@ import {
   getLatestScheduleHash,
 } from '@/lib/schedule-db';
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // 60 seconds timeout
+
 /**
  * GET /api/schedule/fetch
  * Downloads the schedule file from PK website, parses it, and saves to database
