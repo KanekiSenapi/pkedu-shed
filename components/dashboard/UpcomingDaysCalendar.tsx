@@ -75,6 +75,18 @@ export function UpcomingDaysCalendar({ entries }: UpcomingDaysCalendarProps) {
     return `za ${weeks} tygodnie i ${remainingDays} ${remainingDays === 1 ? 'dzień' : 'dni'}`;
   };
 
+  const getTimeRange = (entries: ScheduleEntry[]): string => {
+    if (entries.length === 0) return '';
+
+    // Sort by start time
+    const sorted = [...entries].sort((a, b) => a.start_time.localeCompare(b.start_time));
+
+    const firstStart = sorted[0].start_time;
+    const lastEnd = sorted[sorted.length - 1].end_time;
+
+    return `(${firstStart}-${lastEnd})`;
+  };
+
   return (
     <div className="bg-white border border-gray-200 p-4">
       <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-3">
@@ -88,8 +100,9 @@ export function UpcomingDaysCalendar({ entries }: UpcomingDaysCalendarProps) {
             className="border border-gray-200 p-3 hover:bg-gray-50 transition-colors"
           >
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm font-medium text-gray-900">{formatDate(day.date)}</span>
+                <span className="text-xs text-gray-500">{getTimeRange(day.entries)}</span>
                 <span className="text-xs text-gray-500">({day.dayName})</span>
                 <span className="text-xs text-blue-600">• {getTimeUntil(day.date)}</span>
               </div>
