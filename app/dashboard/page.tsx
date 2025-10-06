@@ -19,6 +19,7 @@ import { WeekendNotice } from '@/components/dashboard/WeekendNotice';
 import { NextClassCountdown } from '@/components/dashboard/NextClassCountdown';
 import { TodaysTimeline } from '@/components/dashboard/TodaysTimeline';
 import { SubjectProgress } from '@/components/dashboard/SubjectProgress';
+import { ScheduleCalendar } from '@/components/calendar/ScheduleCalendar';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -218,6 +219,11 @@ export default function DashboardPage() {
         {/* Subject Progress */}
         <div className="mt-6">
           <SubjectProgress entries={filteredEntries} />
+        </div>
+
+        {/* Calendar */}
+        <div className="mt-6">
+          <ScheduleCalendar />
         </div>
       </div>
     </div>
