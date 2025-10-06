@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { BugReportModal } from '@/components/bug-report/BugReportModal';
 import { UserPreferences } from '@/lib/user-preferences';
 
 interface DashboardNavbarProps {
@@ -13,6 +14,7 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showBugReport, setShowBugReport] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -55,6 +57,7 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
   };
 
   return (
+    <>
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14">
@@ -111,6 +114,15 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
                   <button
                     onClick={() => {
                       setShowDropdown(false);
+                      setShowBugReport(true);
+                    }}
+                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-200"
+                  >
+                    Zgłoś błąd
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDropdown(false);
                       router.push('/begin');
                     }}
                     className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -124,5 +136,13 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
         </div>
       </div>
     </nav>
+
+    {/* Bug Report Modal */}
+    <BugReportModal
+      isOpen={showBugReport}
+      onClose={() => setShowBugReport(false)}
+      userInfo={preferences ? getUserInfo() : undefined}
+    />
+  </>
   );
 }

@@ -107,4 +107,28 @@ export async function initDatabase() {
   await turso.execute(`
     CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at DESC)
   `);
+
+  // Bug reports table
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS bug_reports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      url TEXT,
+      user_info TEXT,
+      contact_email TEXT,
+      user_agent TEXT,
+      status TEXT DEFAULT 'open',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_bug_reports_status ON bug_reports(status)
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_bug_reports_created ON bug_reports(created_at DESC)
+  `);
 }
