@@ -26,6 +26,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           isAdmin: user.is_admin,
+          role: user.role,
         };
       },
     }),
@@ -37,6 +38,7 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email;
         token.name = user.name;
         token.isAdmin = (user as any).isAdmin || false;
+        token.role = (user as any).role || 'user';
       }
       return token;
     },
@@ -46,6 +48,7 @@ export const authOptions: NextAuthOptions = {
         session.user.email = token.email as string;
         session.user.name = token.name as string;
         (session.user as any).isAdmin = token.isAdmin || false;
+        (session.user as any).role = token.role || 'user';
       }
       return session;
     },

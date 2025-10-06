@@ -2,11 +2,16 @@ import { turso } from './turso';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
 
+export type UserRole = 'user' | 'starosta' | 'admin';
+
 export interface User {
   id: string;
   email: string;
   name: string | null;
   is_admin: boolean;
+  role: UserRole;
+  starosta_rok: number | null;
+  starosta_groups: string[] | null;
   created_at: string;
 }
 
@@ -27,6 +32,9 @@ export async function createUser(email: string, password: string, name?: string)
     email,
     name: name || null,
     is_admin: false,
+    role: 'user',
+    starosta_rok: null,
+    starosta_groups: null,
     created_at: new Date().toISOString(),
   };
 }
@@ -36,7 +44,7 @@ export async function createUser(email: string, password: string, name?: string)
  */
 export async function verifyCredentials(email: string, password: string): Promise<User | null> {
   const result = await turso.execute({
-    sql: `SELECT id, email, password_hash, name, is_admin, created_at FROM users WHERE email = ?`,
+    sql: `SELECT id, email, password_hash, name, is_admin, role, starosta_rok, starosta_groups, created_at FROM users WHERE email = ?`,
     args: [email],
   });
 
@@ -58,6 +66,9 @@ export async function verifyCredentials(email: string, password: string): Promis
     email: user.email as string,
     name: (user.name as string) || null,
     is_admin: (user.is_admin as number) === 1,
+    role: (user.role as UserRole) || 'user',
+    starosta_rok: (user.starosta_rok as number) || null,
+    starosta_groups: user.starosta_groups ? JSON.parse(user.starosta_groups as string) : null,
     created_at: user.created_at as string,
   };
 }
@@ -67,7 +78,7 @@ export async function verifyCredentials(email: string, password: string): Promis
  */
 export async function getUserByEmail(email: string): Promise<User | null> {
   const result = await turso.execute({
-    sql: `SELECT id, email, name, is_admin, created_at FROM users WHERE email = ?`,
+    sql: `SELECT id, email, name, is_admin, role, starosta_rok, starosta_groups, created_at FROM users WHERE email = ?`,
     args: [email],
   });
 
@@ -81,6 +92,9 @@ export async function getUserByEmail(email: string): Promise<User | null> {
     email: user.email as string,
     name: (user.name as string) || null,
     is_admin: (user.is_admin as number) === 1,
+    role: (user.role as UserRole) || 'user',
+    starosta_rok: (user.starosta_rok as number) || null,
+    starosta_groups: user.starosta_groups ? JSON.parse(user.starosta_groups as string) : null,
     created_at: user.created_at as string,
   };
 }
@@ -90,7 +104,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
  */
 export async function getUserById(id: string): Promise<User | null> {
   const result = await turso.execute({
-    sql: `SELECT id, email, name, is_admin, created_at FROM users WHERE id = ?`,
+    sql: `SELECT id, email, name, is_admin, role, starosta_rok, starosta_groups, created_at FROM users WHERE id = ?`,
     args: [id],
   });
 
@@ -104,8 +118,21 @@ export async function getUserById(id: string): Promise<User | null> {
     email: user.email as string,
     name: (user.name as string) || null,
     is_admin: (user.is_admin as number) === 1,
+    role: (user.role as UserRole) || 'user',
+    starosta_rok: (user.starosta_rok as number) || null,
+    starosta_groups: user.starosta_groups ? JSON.parse(user.starosta_groups as string) : null,
     created_at: user.created_at as string,
   };
+}
+
+/**
+ * Log user login
+ */
+export async function logLogin(userId: string, userAgent?: string): Promise<void> {
+  await turso.execute({
+    sql: `INSERT INTO login_logs (user_id, user_agent) VALUES (?, ?)`,
+    args: [userId, userAgent || null],
+  });
 }
 
 /**

@@ -141,6 +141,9 @@ export async function initDatabase() {
       google_id TEXT UNIQUE,
       name TEXT,
       is_admin INTEGER DEFAULT 0,
+      role TEXT DEFAULT 'user',
+      starosta_rok INTEGER,
+      starosta_groups TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
@@ -178,4 +181,59 @@ export async function initDatabase() {
   } catch (error) {
     // Column already exists, ignore error
   }
+
+  // Migration: Add role columns
+  try {
+    await turso.execute(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'`);
+  } catch (error) {
+    // Column already exists
+  }
+
+  try {
+    await turso.execute(`ALTER TABLE users ADD COLUMN starosta_rok INTEGER`);
+  } catch (error) {
+    // Column already exists
+  }
+
+  try {
+    await turso.execute(`ALTER TABLE users ADD COLUMN starosta_groups TEXT`);
+  } catch (error) {
+    // Column already exists
+  }
+
+  // Bug report notes table
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS bug_report_notes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      report_id INTEGER NOT NULL,
+      admin_id TEXT NOT NULL,
+      note TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (report_id) REFERENCES bug_reports(id) ON DELETE CASCADE,
+      FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_notes_report ON bug_report_notes(report_id)
+  `);
+
+  // Login logs table
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS login_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      login_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      user_agent TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_login_logs_user ON login_logs(user_id)
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_login_logs_date ON login_logs(login_at DESC)
+  `);
 }
