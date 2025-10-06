@@ -1,7 +1,7 @@
 import { ClassInfo, ClassType } from '@/types/schedule';
 import { mapSubjectName } from './subjects-map';
 
-// Mapa skrótów przedmiotów do pełnych nazw (DEPRECATED - używaj mapSubjectName)
+// Mapa skrótów przedmiotów do pełnych nazw (primary mapping - fallback to mapSubjectName if not found)
 const SUBJECT_MAP: Record<string, string> = {
   'EDT': 'Eksploracja danych tekstowych',
   'SND': 'Sieci neuronowe i deep learning',
