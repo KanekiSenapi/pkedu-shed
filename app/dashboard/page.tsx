@@ -127,17 +127,9 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Upcoming classes */}
           <div className="bg-white border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
-                Nadchodzące zajęcia
-              </h2>
-              <button
-                onClick={() => router.push('/')}
-                className="text-sm text-blue-600 hover:text-blue-700"
-              >
-                Zobacz pełny kalendarz →
-              </button>
-            </div>
+            <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-4">
+              Nadchodzące zajęcia
+            </h2>
 
             {upcomingClasses.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
