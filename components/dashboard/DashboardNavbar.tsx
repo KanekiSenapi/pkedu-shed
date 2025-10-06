@@ -5,7 +5,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { BugReportModal } from '@/components/bug-report/BugReportModal';
-import { AuthModal } from '@/components/auth/AuthModal';
 import { UserPreferences } from '@/lib/user-preferences';
 
 interface DashboardNavbarProps {
@@ -18,7 +17,6 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
   const { data: session } = useSession();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showBugReport, setShowBugReport] = useState(false);
-  const [showAuth, setShowAuth] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -160,7 +158,7 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
                     <button
                       onClick={() => {
                         setShowDropdown(false);
-                        setShowAuth(true);
+                        router.push('/login');
                       }}
                       className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     >
@@ -180,12 +178,6 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
       isOpen={showBugReport}
       onClose={() => setShowBugReport(false)}
       userInfo={preferences ? getUserInfo() : undefined}
-    />
-
-    {/* Auth Modal */}
-    <AuthModal
-      isOpen={showAuth}
-      onClose={() => setShowAuth(false)}
     />
   </>
   );
