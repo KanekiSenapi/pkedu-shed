@@ -59,19 +59,19 @@ export async function GET(request: Request) {
     const fileHash = calculateHash(downloadResult.buffer);
 
     // Check if file has changed
-    if (!force) {
-      const storedHash = await getLatestScheduleHash();
-      if (storedHash && storedHash === fileHash) {
-        console.log('File has not changed, using cached data');
-        const cachedSchedule = await loadScheduleFromDB();
-        if (cachedSchedule) {
-          return NextResponse.json({
-            success: true,
-            data: cachedSchedule,
-            cached: true,
-            timestamp: cachedSchedule.lastUpdated,
-          });
-        }
+    const storedHash = await getLatestScheduleHash();
+    const hasChanges = storedHash !== fileHash;
+
+    if (!force && !hasChanges) {
+      console.log('File has not changed, using cached data');
+      const cachedSchedule = await loadScheduleFromDB();
+      if (cachedSchedule) {
+        return NextResponse.json({
+          success: true,
+          data: cachedSchedule,
+          cached: true,
+          timestamp: cachedSchedule.lastUpdated,
+        });
       }
     }
 
@@ -85,8 +85,8 @@ export async function GET(request: Request) {
 
     console.log(`Successfully parsed and saved schedule with ${schedule.sections.length} sections`);
 
-    // Create notification for successful schedule update
-    if (force && authToken) {
+    // Create notification for successful schedule update (only if there were changes)
+    if (force && authToken && hasChanges) {
       try {
         const notifUrl = new URL('/api/notifications', request.url);
         await fetch(notifUrl.toString(), {
@@ -95,7 +95,7 @@ export async function GET(request: Request) {
           body: JSON.stringify({
             type: 'success',
             title: 'Plan zaktualizowany',
-            message: `Załadowano ${schedule.sections.length} sekcji`,
+            message: 'Wykryto zmiany w planie zajęć',
             token: authToken,
           }),
         });
