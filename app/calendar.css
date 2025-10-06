@@ -42,19 +42,20 @@
   cursor: pointer;
 }
 
-/* Custom event content */
-.custom-event-content {
+/* Custom event - full control */
+.custom-event-full {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 4px;
   width: 100%;
+  flex-wrap: wrap;
 }
 
-.custom-event-content .event-tags {
-  display: flex;
-  gap: 3px;
-  flex-wrap: wrap;
-  margin: 1px 0;
+.custom-event-full .event-time {
+  font-size: 0.65rem;
+  font-weight: 500;
+  opacity: 0.9;
+  white-space: nowrap;
 }
 
 .event-tag {
@@ -70,13 +71,14 @@
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-.custom-event-content .event-subject {
+.custom-event-full .event-subject {
   font-size: 0.7rem;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 1px;
+  flex: 1;
+  min-width: 0;
 }
 
 /* Show more button styling */

@@ -148,14 +148,12 @@ export function ScheduleCalendar() {
     const modeLabel = event.entry.class_info.is_remote ? 'zdalne' : 'stacj.';
 
     return (
-      <div className="custom-event-content">
-        <div className="event-tags">
-          <span className="event-tag event-tag-type">{typeLabel}</span>
-          <span className="event-tag event-tag-mode">{modeLabel}</span>
-        </div>
-        <div className="event-subject" title={event.entry.class_info.subject}>
+      <div className="custom-event-full">
+        <span className="event-tag event-tag-type">{typeLabel}</span>
+        <span className="event-tag event-tag-mode">{modeLabel}</span>
+        <span className="event-subject" title={event.entry.class_info.subject}>
           {event.entry.class_info.subject}
-        </div>
+        </span>
       </div>
     );
   };
@@ -258,11 +256,13 @@ export function ScheduleCalendar() {
                   }`}>
                     {selectedEvent.class_info.type || 'Inne'}
                   </span>
-                  {selectedEvent.class_info.is_remote && (
-                    <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                      ZDALNIE
-                    </span>
-                  )}
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    selectedEvent.class_info.is_remote
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                      : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                  }`}>
+                    {selectedEvent.class_info.is_remote ? 'ZDALNIE' : 'STACJONARNE'}
+                  </span>
                   <button
                     onClick={() => exportSingleEntry(selectedEvent)}
                     className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -288,29 +288,8 @@ export function ScheduleCalendar() {
                   <div className="text-gray-900 dark:text-white font-medium mt-1">
                     {selectedEvent.date}
                   </div>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <div className="text-gray-600 dark:text-gray-300 text-sm font-medium">
-                      {selectedEvent.time}
-                    </div>
-                    <div className="text-gray-400">•</div>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      selectedEvent.class_info.type === 'wykład'
-                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-                        : selectedEvent.class_info.type === 'laboratorium'
-                        ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
-                        : selectedEvent.class_info.type === 'projekt'
-                        ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300'
-                        : 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300'
-                    }`}>
-                      {selectedEvent.class_info.type || 'Inne'}
-                    </span>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      selectedEvent.class_info.is_remote
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                        : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                    }`}>
-                      {selectedEvent.class_info.is_remote ? 'Zdalne' : 'Stacjonarne'}
-                    </span>
+                  <div className="text-gray-600 dark:text-gray-300 text-sm font-medium mt-1">
+                    {selectedEvent.time}
                   </div>
                 </div>
               </div>
