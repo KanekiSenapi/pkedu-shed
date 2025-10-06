@@ -1,6 +1,7 @@
 import { ClassInfo, ClassType } from '@/types/schedule';
+import { mapSubjectName } from './subjects-map';
 
-// Mapa skrótów przedmiotów do pełnych nazw
+// Mapa skrótów przedmiotów do pełnych nazw (DEPRECATED - używaj mapSubjectName)
 const SUBJECT_MAP: Record<string, string> = {
   'EDT': 'Eksploracja danych tekstowych',
   'SND': 'Sieci neuronowe i deep learning',
@@ -315,7 +316,10 @@ function extractSubject(
   // Usuń wielokrotne spacje i trim
   subject = subject.replace(/\s+/g, ' ').trim();
 
-  return subject || raw;
+  // Map subject name using the comprehensive subjects map
+  const mappedSubject = mapSubjectName(subject);
+
+  return mappedSubject || subject || raw;
 }
 
 /**
