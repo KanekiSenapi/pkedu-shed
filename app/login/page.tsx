@@ -192,8 +192,8 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                onClick={handleMicrosoftLogin}
-                disabled={loading}
+                disabled={true}
+                title="Wkrótce"
                 className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
               >
                 <svg className="w-5 h-5" viewBox="0 0 21 21">
@@ -344,7 +344,7 @@ export default function LoginPage() {
                   Inteligentne powiadomienia
                 </h3>
                 <p className="text-gray-600 text-sm">
-                  Wykrywanie przerw między zajęciami i powiadomienia o nadchodzących klasach.
+                  Wykrywanie przerw między zajęciami i powiadomienia o nadchodzących zajęciach.
                 </p>
               </div>
             </div>
