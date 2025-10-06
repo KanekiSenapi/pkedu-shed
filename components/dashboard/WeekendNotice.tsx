@@ -11,6 +11,8 @@ interface WeekendNoticeProps {
 export function WeekendNotice({ entries }: WeekendNoticeProps) {
   const weekendInfo = useMemo(() => checkUpcomingWeekend(entries), [entries]);
 
+  const weekendDateStr = formatWeekendDate(weekendInfo.weekendStart, weekendInfo.weekendEnd);
+
   if (!weekendInfo.hasClasses) {
     return (
       <div className="bg-green-50 border border-green-200 p-4">
@@ -19,7 +21,7 @@ export function WeekendNotice({ entries }: WeekendNoticeProps) {
           <div>
             <div className="font-medium text-green-900">Wolny weekend!</div>
             <div className="text-sm text-green-700">
-              Brak zajęć w weekend {formatWeekendDate(weekendInfo.weekendStart)}
+              Brak zajęć w weekend {weekendDateStr}
             </div>
           </div>
         </div>
@@ -35,13 +37,16 @@ export function WeekendNotice({ entries }: WeekendNoticeProps) {
           <div>
             <div className="font-medium text-blue-900">Zajęcia zdalne w weekend</div>
             <div className="text-sm text-blue-700">
-              Weekend {formatWeekendDate(weekendInfo.weekendStart)} - wszystkie zajęcia zdalne
+              Weekend {weekendDateStr} - wszystkie zajęcia zdalne
             </div>
           </div>
         </div>
       </div>
     );
   }
+
+  const saturdayStationary = weekendInfo.saturdayClasses.filter(e => !e.class_info.is_remote);
+  const sundayStationary = weekendInfo.sundayClasses.filter(e => !e.class_info.is_remote);
 
   return (
     <div className="bg-orange-50 border border-orange-200 p-4">
@@ -50,17 +55,17 @@ export function WeekendNotice({ entries }: WeekendNoticeProps) {
         <div className="flex-1">
           <div className="font-medium text-orange-900">Zajęcia stacjonarne w weekend</div>
           <div className="text-sm text-orange-700">
-            Weekend {formatWeekendDate(weekendInfo.weekendStart)} - {weekendInfo.stationaryCount}{' '}
+            Weekend {weekendDateStr} - {weekendInfo.stationaryCount}{' '}
             {weekendInfo.stationaryCount === 1 ? 'zajęcia' : 'zajęć'} stacjonarnych
           </div>
-          {weekendInfo.saturdayClasses.filter(e => !e.class_info.is_remote).length > 0 && (
+          {saturdayStationary.length > 0 && (
             <div className="text-xs text-orange-600 mt-1">
-              Sobota: {weekendInfo.saturdayClasses.filter(e => !e.class_info.is_remote).map(e => e.class_info.subject).join(', ')}
+              Sobota: {saturdayStationary.map(e => e.class_info.subject).join(', ')}
             </div>
           )}
-          {weekendInfo.sundayClasses.filter(e => !e.class_info.is_remote).length > 0 && (
+          {sundayStationary.length > 0 && (
             <div className="text-xs text-orange-600 mt-1">
-              Niedziela: {weekendInfo.sundayClasses.filter(e => !e.class_info.is_remote).map(e => e.class_info.subject).join(', ')}
+              Niedziela: {sundayStationary.map(e => e.class_info.subject).join(', ')}
             </div>
           )}
         </div>

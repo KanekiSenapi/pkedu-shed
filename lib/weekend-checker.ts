@@ -51,12 +51,9 @@ export function checkUpcomingWeekend(entries: ScheduleEntry[]): WeekendInfo {
 /**
  * Format weekend date range for display
  */
-export function formatWeekendDate(weekendStart: string): string {
-  const [year, month, day] = weekendStart.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
+export function formatWeekendDate(weekendStart: string, weekendEnd: string): string {
+  const [yearStart, monthStart, dayStart] = weekendStart.split('-').map(Number);
+  const [yearEnd, monthEnd, dayEnd] = weekendEnd.split('-').map(Number);
 
-  const nextDay = new Date(date);
-  nextDay.setDate(date.getDate() + 1);
-
-  return `${day}.${month} - ${nextDay.getDate()}.${nextDay.getMonth() + 1}`;
+  return `${dayStart}.${monthStart} - ${dayEnd}.${monthEnd}`;
 }
