@@ -113,10 +113,11 @@ export function parseClassInfo(cellContent: string): ClassInfo | null {
 
   // Try tab or multiple-space separated format (columnar data)
   // Excel często używa wielokrotnych spacji zamiast tabów
-  if (raw.includes('\t') || raw.match(/\s{2,}/)) {
+  // Użyj 4+ spacji jako separator kolumn (2-3 spacje mogą być w nazwach)
+  if (raw.includes('\t') || raw.match(/\s{4,}/)) {
     const parts = raw.includes('\t')
       ? raw.split('\t').map(p => p.trim())
-      : raw.split(/\s{2,}/).map(p => p.trim()).filter(p => p);
+      : raw.split(/\s{4,}/).map(p => p.trim()).filter(p => p);
 
     if (parts.length >= 2) {
       // Usuń ": - :" z nazwy przedmiotu jeśli występuje
