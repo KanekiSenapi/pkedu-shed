@@ -1,11 +1,11 @@
 "use client";
 
-import { useSession, signIn, signOut } from 'next-auth/react';
+// import { useSession, signIn, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 
 export function Navbar() {
-  const { data: session, status } = useSession();
-  const [showMenu, setShowMenu] = useState(false);
+  // const { data: session, status } = useSession();
+  // const [showMenu, setShowMenu] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
@@ -59,7 +59,8 @@ export function Navbar() {
               )}
             </button>
 
-            {status === 'loading' ? (
+            {/* Login disabled */}
+            {/* {status === 'loading' ? (
               <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
             ) : session ? (
               <div className="relative">
@@ -101,7 +102,7 @@ export function Navbar() {
               >
                 Zaloguj się
               </button>
-            )}
+            )} */}
           </div>
         </div>
       </div>
