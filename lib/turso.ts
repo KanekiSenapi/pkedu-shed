@@ -64,4 +64,32 @@ export async function initDatabase() {
   await turso.execute(`
     CREATE INDEX IF NOT EXISTS idx_entries_filters ON schedule_entries(kierunek, stopien, rok, semestr)
   `);
+
+  // Table for tracking schedule changes/diffs
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS schedule_changes (
+      id TEXT PRIMARY KEY,
+      old_schedule_id TEXT,
+      new_schedule_id TEXT NOT NULL,
+      change_type TEXT NOT NULL,
+      entry_id TEXT,
+      field_name TEXT,
+      old_value TEXT,
+      new_value TEXT,
+      date TEXT,
+      "group" TEXT,
+      subject TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (old_schedule_id) REFERENCES schedules(id) ON DELETE SET NULL,
+      FOREIGN KEY (new_schedule_id) REFERENCES schedules(id) ON DELETE CASCADE
+    )
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_changes_schedules ON schedule_changes(old_schedule_id, new_schedule_id)
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_changes_type ON schedule_changes(change_type)
+  `);
 }
