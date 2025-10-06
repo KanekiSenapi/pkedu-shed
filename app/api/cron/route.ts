@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clearAllNotifications } from '@/lib/db-notifications';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -7,6 +8,13 @@ export const maxDuration = 60;
  * GET /api/cron
  * Cron job endpoint - updates schedule from PK Excel file
  * Should be called by Vercel Cron once per day
+ *
+ * Query params:
+ * - clear=true: Clear all old data (schedule + notifications) before fetching new data
+ *
+ * Examples:
+ * - https://pk.kiedy.app/api/cron (update schedule)
+ * - https://pk.kiedy.app/api/cron?clear=true (clear all data + update schedule)
  *
  * Setup in vercel.json:
  * {
@@ -29,6 +37,17 @@ export async function GET(request: Request) {
     }
 
     console.log('[Cron] Starting schedule update...');
+
+    // Check if we should clear old data first
+    const url = new URL(request.url);
+    const shouldClear = url.searchParams.get('clear') === 'true';
+
+    if (shouldClear) {
+      console.log('[Cron] Clearing old data (schedule + notifications)...');
+      const clearUrl = new URL('/api/admin/clear-db', request.url);
+      await fetch(clearUrl.toString(), { method: 'POST' });
+      await clearAllNotifications();
+    }
 
     // Call internal fetch endpoint with force=true and token
     const fetchUrl = new URL('/api/schedule/fetch', request.url);

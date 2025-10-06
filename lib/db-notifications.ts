@@ -72,3 +72,11 @@ export async function cleanupOldNotifications(keepLast = 100) {
     args: [keepLast],
   });
 }
+
+/**
+ * Clear all notifications
+ */
+export async function clearAllNotifications() {
+  const db = turso;
+  await db.execute('DELETE FROM notifications');
+}
