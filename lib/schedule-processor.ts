@@ -78,9 +78,16 @@ const INSTRUCTOR_MAP: Record<string, string> = {
 /**
  * Parses a cell content and extracts class information
  *
- * Example cell content:
- * "Eksploracja danych tekstowych wykład RK ZDALNIE"
- * "Programowanie obiektowe lab. JB s. 151"
+ * Tab-separated format:
+ * [0] Subject (full name or abbreviation)
+ * [1] Type (P = projekt, lab. = laboratorium, wykład = wykład)
+ * [2] Instructor (full name or abbreviation)
+ * [3] Location (room or "ZDALNIE")
+ *
+ * Examples:
+ * "Eksploracja danych tekstowych\twykład\tdr Radosław Kycia\tZDALNIE"
+ * "EDT\tP\tAN\ts. 114 GIL"
+ * "Big Data\twykład\tTomasz Ligocki\tZDALNIE"
  */
 export function parseClassInfo(cellContent: string): ClassInfo | null {
   if (!cellContent || cellContent.trim() === '' || cellContent.trim() === '---') {
@@ -89,19 +96,48 @@ export function parseClassInfo(cellContent: string): ClassInfo | null {
 
   const raw = cellContent.trim();
 
-  // Check if remote
+  // Try tab-separated format first
+  if (raw.includes('\t')) {
+    const parts = raw.split('\t').map(p => p.trim());
+
+    if (parts.length >= 2) {
+      const subjectRaw = parts[0] || '';
+      const typeRaw = parts[1] || '';
+      const instructorRaw = parts[2] || '';
+      const locationRaw = parts[3] || '';
+
+      // Expand subject abbreviation
+      const subject = expandSubject(subjectRaw);
+
+      // Parse type
+      const type = parseType(typeRaw);
+
+      // Expand instructor abbreviation
+      const instructor = expandInstructor(instructorRaw);
+
+      // Check if remote
+      const is_remote = locationRaw.toUpperCase().includes('ZDALNIE') ||
+                        locationRaw.toUpperCase().includes('ZDALNE');
+
+      // Extract room (if not remote)
+      const room = is_remote ? null : parseRoom(locationRaw);
+
+      return {
+        subject,
+        type,
+        instructor: instructor || null,
+        room,
+        is_remote,
+        raw,
+      };
+    }
+  }
+
+  // Fallback to old regex-based parsing for non-tab-separated data
   const is_remote = raw.toUpperCase().includes('ZDALNIE') || raw.toUpperCase().includes('ZDALNE');
-
-  // Detect class type
   const type = detectClassType(raw);
-
-  // Extract instructor (and expand abbreviation)
   const instructor = extractInstructor(raw);
-
-  // Extract room
   const room = extractRoom(raw);
-
-  // Extract subject name (clean from type, instructor, location)
   const subject = extractSubject(raw, type, instructor, room, is_remote);
 
   return {
@@ -112,6 +148,118 @@ export function parseClassInfo(cellContent: string): ClassInfo | null {
     is_remote,
     raw,
   };
+}
+
+/**
+ * Expand subject abbreviation to full name
+ */
+function expandSubject(subjectRaw: string): string {
+  if (!subjectRaw) return '';
+
+  // Check if it's an abbreviation in SUBJECT_MAP
+  const abbr = subjectRaw.trim();
+  if (SUBJECT_MAP[abbr]) {
+    return SUBJECT_MAP[abbr];
+  }
+
+  // Otherwise use mapSubjectName for comprehensive mapping
+  const mapped = mapSubjectName(abbr);
+  return mapped || abbr;
+}
+
+/**
+ * Parse type from type column
+ */
+function parseType(typeRaw: string): ClassType {
+  if (!typeRaw) return null;
+
+  const lower = typeRaw.toLowerCase().trim();
+
+  if (lower === 'p' || lower.includes('projekt')) {
+    return 'projekt';
+  }
+  if (lower === 'wykład' || lower.includes('wykład')) {
+    return 'wykład';
+  }
+  if (lower === 'lab.' || lower === 'lab' || lower.includes('laborator')) {
+    return 'laboratorium';
+  }
+  if (lower.includes('ćwiczenia') || lower.includes('cwiczenia')) {
+    return 'ćwiczenia';
+  }
+
+  return null;
+}
+
+/**
+ * Expand instructor abbreviation to full name
+ */
+function expandInstructor(instructorRaw: string): string | null {
+  if (!instructorRaw) return null;
+
+  const trimmed = instructorRaw.trim();
+
+  // Check if it's an abbreviation in INSTRUCTOR_MAP
+  if (INSTRUCTOR_MAP[trimmed]) {
+    return INSTRUCTOR_MAP[trimmed];
+  }
+
+  // Check if it already contains a title (dr, mgr, prof.) - then it's already full name
+  const titles = ['dr hab. inż.', 'dr hab.', 'dr inż.', 'mgr inż.', 'prof.', 'dr', 'mgr'];
+  for (const title of titles) {
+    if (trimmed.includes(title)) {
+      return trimmed; // Already full name with title
+    }
+  }
+
+  // Check if it's a name without title (like "Tomasz Ligocki")
+  // Search in INSTRUCTOR_MAP values
+  const instructorFullNames = Object.values(INSTRUCTOR_MAP);
+  for (const fullName of instructorFullNames) {
+    // Extract name only (without titles)
+    let nameOnly = fullName;
+    for (const title of titles) {
+      nameOnly = nameOnly.replace(title, '').trim();
+    }
+    nameOnly = nameOnly.replace(/,?\s*prof\.\s*PK\s*$/i, '').trim();
+
+    // Check if matches
+    if (nameOnly.toLowerCase() === trimmed.toLowerCase()) {
+      return fullName; // Return full name with title
+    }
+  }
+
+  // Return as-is if not found
+  return trimmed || null;
+}
+
+/**
+ * Parse room from location column
+ */
+function parseRoom(locationRaw: string): string | null {
+  if (!locationRaw || locationRaw.toUpperCase().includes('ZDALNIE')) {
+    return null;
+  }
+
+  const trimmed = locationRaw.trim();
+
+  // Format: "s. 114 GIL" -> "sala 114 GIL"
+  const roomMatch = trimmed.match(/s\.\s*(\d+[A-Za-z]?\s*[A-Z]*)/i);
+  if (roomMatch) {
+    return `sala ${roomMatch[1].trim()}`;
+  }
+
+  // Already formatted as "sala 114"
+  if (trimmed.toLowerCase().startsWith('sala')) {
+    return trimmed;
+  }
+
+  // Just a number/code
+  if (trimmed.match(/^\d+/)) {
+    return `sala ${trimmed}`;
+  }
+
+  return trimmed || null;
 }
 
 /**
