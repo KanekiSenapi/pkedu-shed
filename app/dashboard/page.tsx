@@ -14,6 +14,7 @@ import {
   getDashboardStats,
 } from '@/lib/user-schedule';
 import { ScheduleEntry } from '@/types/schedule';
+import { UpcomingDaysCalendar } from '@/components/dashboard/UpcomingDaysCalendar';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -155,73 +156,79 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Upcoming classes */}
-        <div className="bg-white border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
-              Nadchodzące zajęcia
-            </h2>
-            <button
-              onClick={() => router.push('/')}
-              className="text-sm text-blue-600 hover:text-blue-700"
-            >
-              Zobacz pełny kalendarz →
-            </button>
+        {/* Grid layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Upcoming classes */}
+          <div className="bg-white border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                Nadchodzące zajęcia
+              </h2>
+              <button
+                onClick={() => router.push('/')}
+                className="text-sm text-blue-600 hover:text-blue-700"
+              >
+                Zobacz pełny kalendarz →
+              </button>
+            </div>
+
+            {upcomingClasses.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                Brak nadchodzących zajęć w najbliższym tygodniu
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {upcomingClasses.map(entry => {
+                  const isToday = entry.date === new Date().toISOString().split('T')[0];
+
+                  return (
+                    <div
+                      key={entry.id}
+                      className={`flex items-center justify-between p-4 border ${
+                        isToday
+                          ? 'bg-blue-50 border-blue-200'
+                          : 'bg-gray-50 border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="text-center">
+                          <div className="text-xs text-gray-600">{formatDate(entry.date)}</div>
+                          <div className={`font-semibold ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
+                            {formatTime(entry.start_time)}
+                          </div>
+                        </div>
+                        <div className="w-px h-12 bg-gray-300"></div>
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            {entry.class_info.subject}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {entry.class_info.type}
+                            {entry.class_info.instructor && ` • ${entry.class_info.instructor}`}
+                            {entry.class_info.room && ` • ${entry.class_info.room}`}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {entry.class_info.is_remote ? (
+                          <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium">
+                            Zdalne
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium">
+                            Stacjonarne
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {upcomingClasses.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
-              Brak nadchodzących zajęć w najbliższym tygodniu
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {upcomingClasses.map(entry => {
-                const isToday = entry.date === new Date().toISOString().split('T')[0];
-
-                return (
-                  <div
-                    key={entry.id}
-                    className={`flex items-center justify-between p-4 border ${
-                      isToday
-                        ? 'bg-blue-50 border-blue-200'
-                        : 'bg-gray-50 border-gray-200'
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="text-center">
-                        <div className="text-xs text-gray-600">{formatDate(entry.date)}</div>
-                        <div className={`font-semibold ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
-                          {formatTime(entry.start_time)}
-                        </div>
-                      </div>
-                      <div className="w-px h-12 bg-gray-300"></div>
-                      <div>
-                        <div className="font-medium text-gray-900">
-                          {entry.class_info.subject}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {entry.class_info.type}
-                          {entry.class_info.instructor && ` • ${entry.class_info.instructor}`}
-                          {entry.class_info.room && ` • ${entry.class_info.room}`}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {entry.class_info.is_remote ? (
-                        <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium">
-                          Zdalne
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium">
-                          Stacjonarne
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {/* Calendar */}
+          <UpcomingDaysCalendar entries={filteredEntries} />
         </div>
       </div>
     </div>
