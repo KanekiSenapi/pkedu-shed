@@ -32,7 +32,7 @@ export async function getClassHomework(
   });
 
   return result.rows.map((row) => ({
-    id: row.id as number,
+    id: Number(row.id),
     user_id: row.user_id as string,
     entry_date: row.entry_date as string,
     entry_time: row.entry_time as string,
@@ -63,7 +63,7 @@ export async function getUserHomework(userId: string, onlyIncomplete: boolean = 
   });
 
   return result.rows.map((row) => ({
-    id: row.id as number,
+    id: Number(row.id),
     user_id: row.user_id as string,
     entry_date: row.entry_date as string,
     entry_time: row.entry_time as string,
@@ -92,7 +92,7 @@ export async function getHomeworkByDueDate(
   });
 
   return result.rows.map((row) => ({
-    id: row.id as number,
+    id: Number(row.id),
     user_id: row.user_id as string,
     entry_date: row.entry_date as string,
     entry_time: row.entry_time as string,
@@ -127,7 +127,7 @@ export async function createHomework(
 
   const now = new Date().toISOString();
   return {
-    id: result.lastInsertRowid as number,
+    id: Number(result.lastInsertRowid),
     user_id: userId,
     entry_date: date,
     entry_time: time,

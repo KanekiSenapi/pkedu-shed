@@ -11,6 +11,7 @@ import {
   filterScheduleByPreferences,
   getTodayClasses,
   getUpcomingClasses,
+  getPastClasses,
   getDashboardStats,
 } from '@/lib/user-schedule';
 import { ScheduleEntry } from '@/types/schedule';
@@ -24,12 +25,15 @@ import { DashboardNavbar } from '@/components/dashboard/DashboardNavbar';
 import { parseRoomFromText, findBuildingForRoom, Building } from '@/lib/campus-data';
 import { MapModal } from '@/components/map/MapModal';
 import { AttendanceStats } from '@/components/attendance/AttendanceStats';
+import { ClassActions } from '@/components/attendance/ClassActions';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { schedule, loading } = useSchedule();
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [mapModal, setMapModal] = useState<{ building: Building; roomNumber: string } | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<ScheduleEntry | null>(null);
+  const [classesView, setClassesView] = useState<'upcoming' | 'past'>('upcoming');
 
   useEffect(() => {
     syncLoadUserPreferences().then(prefs => {
@@ -55,7 +59,10 @@ export default function DashboardPage() {
   const filteredEntries = filterScheduleByPreferences(schedule, preferences);
   const todayClasses = getTodayClasses(filteredEntries);
   const upcomingClasses = getUpcomingClasses(filteredEntries);
+  const pastClasses = getPastClasses(filteredEntries);
   const stats = getDashboardStats(filteredEntries);
+
+  const displayedClasses = classesView === 'upcoming' ? upcomingClasses : pastClasses;
 
   const formatTime = (time: string) => {
     return time; // Already in HH:MM format
@@ -161,27 +168,57 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Upcoming classes */}
           <div className="bg-white border border-gray-200 p-6">
-            <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-4">
-              Nadchodzące zajęcia
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                {classesView === 'upcoming' ? 'Nadchodzące zajęcia' : 'Poprzednie zajęcia'}
+              </h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setClassesView('upcoming')}
+                  className={`px-3 py-1 text-xs font-medium transition-colors ${
+                    classesView === 'upcoming'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Nadchodzące
+                </button>
+                <button
+                  onClick={() => setClassesView('past')}
+                  className={`px-3 py-1 text-xs font-medium transition-colors ${
+                    classesView === 'past'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Poprzednie
+                </button>
+              </div>
+            </div>
 
-            {upcomingClasses.length === 0 ? (
+            {displayedClasses.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
-                Brak nadchodzących zajęć w najbliższym tygodniu
+                {classesView === 'upcoming'
+                  ? 'Brak nadchodzących zajęć w najbliższym tygodniu'
+                  : 'Brak poprzednich zajęć z ostatniego tygodnia'}
               </p>
             ) : (
               <div className="space-y-3">
-                {upcomingClasses.map((entry, index) => {
+                {displayedClasses.map((entry, index) => {
                   const isToday = entry.date === new Date().toISOString().split('T')[0];
                   const freeTimeGap = hasFreeTimeGap(entry, index);
+                  const isPast = classesView === 'past';
 
                   return (
                     <div
                       key={entry.id}
-                      className={`flex items-center justify-between p-4 border ${
+                      onClick={() => setSelectedEvent(entry)}
+                      className={`flex items-center justify-between p-4 border cursor-pointer hover:shadow-md transition-shadow ${
                         isToday
                           ? 'bg-blue-50 border-blue-200'
-                          : 'bg-gray-50 border-gray-200'
+                          : isPast
+                            ? 'bg-gray-100 border-gray-300'
+                            : 'bg-gray-50 border-gray-200'
                       }`}
                     >
                       <div className="flex items-center gap-4">
@@ -262,6 +299,134 @@ export default function DashboardPage() {
           <ScheduleCalendar entries={filteredEntries} />
         </div>
       </div>
+
+      {/* Event Details Modal */}
+      {selectedEvent && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedEvent(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex-1 pr-4">
+                <h3 className="text-xl font-bold text-gray-900 leading-tight">
+                  {selectedEvent.class_info.subject}
+                </h3>
+                <div className="mt-2 flex items-center gap-2 flex-wrap">
+                  <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
+                    {selectedEvent.class_info.type || 'Inne'}
+                  </span>
+                  <span className={`px-2 py-1 text-xs font-medium border ${
+                    selectedEvent.class_info.is_remote
+                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                      : 'bg-green-50 text-green-700 border-green-200'
+                  }`}>
+                    {selectedEvent.class_info.is_remote ? 'ZDALNIE' : 'STACJONARNE'}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedEvent(null)}
+                className="text-gray-400 hover:text-gray-600 text-2xl font-light leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-500">📅</span>
+                <div className="flex-1">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">Data i godzina</div>
+                  <div className="text-gray-900 font-medium mt-1">
+                    {selectedEvent.date}
+                  </div>
+                  <div className="text-gray-600 text-sm font-medium mt-1">
+                    {selectedEvent.time}
+                  </div>
+                </div>
+              </div>
+
+              {selectedEvent.class_info.instructor && (
+                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                  <span className="text-gray-500">👤</span>
+                  <div>
+                    <div className="text-xs text-gray-500 uppercase tracking-wide">Prowadzący</div>
+                    <div className="text-gray-900 mt-1">
+                      {selectedEvent.class_info.instructor}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-500">
+                  {selectedEvent.class_info.is_remote ? '💻' : '📍'}
+                </span>
+                <div className="flex-1">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">Miejsce</div>
+                  <div className="text-gray-900 mt-1 flex items-center gap-2">
+                    <span>
+                      {selectedEvent.class_info.is_remote
+                        ? 'Zajęcia zdalne'
+                        : selectedEvent.class_info.room || 'Nie określono'}
+                    </span>
+                    {!selectedEvent.class_info.is_remote && selectedEvent.class_info.room && (() => {
+                      const roomNumber = parseRoomFromText(selectedEvent.class_info.room);
+                      const building = roomNumber ? findBuildingForRoom(roomNumber) : null;
+                      return (building && roomNumber) ? (
+                        <button
+                          onClick={() => {
+                            setMapModal({ building, roomNumber });
+                            setSelectedEvent(null);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 transition-colors"
+                          title="Pokaż na mapie"
+                        >
+                          🗺️
+                        </button>
+                      ) : null;
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">Grupa</div>
+                  <div className="text-gray-900 font-medium mt-1">
+                    {selectedEvent.group}
+                  </div>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">Rok/Semestr</div>
+                  <div className="text-gray-900 font-medium mt-1">
+                    {selectedEvent.rok}/{selectedEvent.semestr}
+                  </div>
+                </div>
+              </div>
+
+              {/* Class Actions */}
+              <div className="pt-4 border-t border-gray-200">
+                <ClassActions
+                  date={selectedEvent.date}
+                  time={selectedEvent.time}
+                  subject={selectedEvent.class_info.subject}
+                />
+              </div>
+
+              <div className="pt-3 border-t border-gray-200">
+                <div className="text-xs text-gray-500">
+                  {selectedEvent.kierunek} {selectedEvent.stopien} stopień
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Map Modal */}
       {mapModal && (

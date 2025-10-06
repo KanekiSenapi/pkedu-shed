@@ -62,6 +62,27 @@ export function getUpcomingClasses(entries: ScheduleEntry[]): ScheduleEntry[] {
 }
 
 /**
+ * Get past classes (last 7 days before today)
+ */
+export function getPastClasses(entries: ScheduleEntry[]): ScheduleEntry[] {
+  const today = new Date();
+  const weekAgo = new Date();
+  weekAgo.setDate(today.getDate() - 7);
+
+  const todayStr = today.toISOString().split('T')[0];
+  const weekAgoStr = weekAgo.toISOString().split('T')[0];
+
+  return entries
+    .filter(e => e.date >= weekAgoStr && e.date < todayStr)
+    .sort((a, b) => {
+      const dateCompare = b.date.localeCompare(a.date); // Reverse order (newest first)
+      if (dateCompare !== 0) return dateCompare;
+      return b.start_time.localeCompare(a.start_time); // Reverse order
+    })
+    .slice(0, 10); // Limit to 10 entries
+}
+
+/**
  * Get stats for dashboard
  */
 export function getDashboardStats(entries: ScheduleEntry[]) {
