@@ -54,9 +54,14 @@ export function WeekendNotice({ entries }: WeekendNoticeProps) {
         <div className="text-2xl">🎓</div>
         <div className="flex-1">
           <div className="font-medium text-orange-900">Zajęcia stacjonarne w weekend</div>
-          <div className="text-sm text-orange-700">
-            Weekend {weekendDateStr} - {weekendInfo.stationaryCount}{' '}
-            {weekendInfo.stationaryCount === 1 ? 'zajęcia' : 'zajęć'} stacjonarnych
+          <div className="text-sm text-orange-700 flex items-center gap-2 flex-wrap">
+            <span>Weekend {weekendDateStr} - {weekendInfo.stationaryCount}</span>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: weekendInfo.stationaryCount }).map((_, i) => (
+                <div key={i} className="w-2 h-2 bg-orange-600 border border-orange-700"></div>
+              ))}
+            </div>
+            <span>{weekendInfo.stationaryCount === 1 ? 'zajęcia' : 'zajęć'} stacjonarnych</span>
           </div>
           {saturdayStationary.length > 0 && (
             <div className="text-xs text-orange-600 mt-1">
