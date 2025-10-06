@@ -386,37 +386,38 @@ export function mapSubjectName(rawName: string): string {
     }
   }
 
+  // DISABLED: Fuzzy matching is too aggressive and produces false matches
   // Try fuzzy matching - check if any words from input match words in subject name
-  const inputWords = rawName.toLowerCase().split(/\s+/);
-  let bestMatch: Subject | null = null;
-  let bestMatchScore = 0;
+  // const inputWords = rawName.toLowerCase().split(/\s+/);
+  // let bestMatch: Subject | null = null;
+  // let bestMatchScore = 0;
 
-  for (const subject of allSubjects) {
-    const subjectWords = subject.nazwa.toLowerCase().split(/\s+/);
-    let matchScore = 0;
+  // for (const subject of allSubjects) {
+  //   const subjectWords = subject.nazwa.toLowerCase().split(/\s+/);
+  //   let matchScore = 0;
 
-    for (const inputWord of inputWords) {
-      if (inputWord.length < 3) continue; // Skip very short words
+  //   for (const inputWord of inputWords) {
+  //     if (inputWord.length < 3) continue; // Skip very short words
 
-      for (const subjectWord of subjectWords) {
-        if (normalize(subjectWord).includes(normalize(inputWord)) ||
-            normalize(inputWord).includes(normalize(subjectWord))) {
-          matchScore++;
-        }
-      }
-    }
+  //     for (const subjectWord of subjectWords) {
+  //       if (normalize(subjectWord).includes(normalize(inputWord)) ||
+  //           normalize(inputWord).includes(normalize(subjectWord))) {
+  //         matchScore++;
+  //       }
+  //     }
+  //   }
 
-    if (matchScore > bestMatchScore) {
-      bestMatchScore = matchScore;
-      bestMatch = subject;
-    }
-  }
+  //   if (matchScore > bestMatchScore) {
+  //     bestMatchScore = matchScore;
+  //     bestMatch = subject;
+  //   }
+  // }
 
-  // Return best match if score is good enough
-  if (bestMatch && bestMatchScore >= Math.min(2, inputWords.length)) {
-    console.log(`[SubjectMap] Fuzzy matched "${rawName}" → "${bestMatch.nazwa}" (score: ${bestMatchScore})`);
-    return bestMatch.nazwa;
-  }
+  // // Return best match if score is good enough
+  // if (bestMatch && bestMatchScore >= Math.min(2, inputWords.length)) {
+  //   console.log(`[SubjectMap] Fuzzy matched "${rawName}" → "${bestMatch.nazwa}" (score: ${bestMatchScore})`);
+  //   return bestMatch.nazwa;
+  // }
 
   // No match found, return original name
   if (rawName && rawName.length > 3) {
