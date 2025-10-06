@@ -15,6 +15,7 @@ import {
 } from '@/lib/user-schedule';
 import { ScheduleEntry } from '@/types/schedule';
 import { UpcomingDaysCalendar } from '@/components/dashboard/UpcomingDaysCalendar';
+import { WeekendNotice } from '@/components/dashboard/WeekendNotice';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -92,6 +93,11 @@ export default function DashboardPage() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Weekend Notice */}
+        <div className="mb-6">
+          <WeekendNotice entries={filteredEntries} />
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white border border-gray-200 p-6">
