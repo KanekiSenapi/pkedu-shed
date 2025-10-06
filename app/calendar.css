@@ -35,13 +35,54 @@
   padding: 4px 8px !important;
   font-weight: 500;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .rbc-event:hover {
   opacity: 0.9;
   cursor: pointer;
+}
+
+/* Custom event content */
+.custom-event-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+
+.custom-event-content .rbc-event-label {
+  font-size: 0.65rem;
+  font-weight: 500;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.custom-event-content .event-tags {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  margin: 1px 0;
+}
+
+.event-tag {
+  display: inline-block;
+  font-size: 0.6rem;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-weight: 600;
+  text-transform: lowercase;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.custom-event-content .rbc-event-content {
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Show more button styling */

@@ -69,14 +69,8 @@ export function ScheduleCalendar() {
       const start = new Date(year, month - 1, day, startHour, startMin);
       const end = new Date(year, month - 1, day, endHour, endMin);
 
-      // Twórz tytuł z ikonami i kluczowymi info (bez czasu - jest pokazywany u góry)
-      const remoteIcon = entry.class_info.is_remote ? '💻' : '🏫';
-      const typeIcon =
-        entry.class_info.type === 'wykład' ? '📚' :
-        entry.class_info.type === 'laboratorium' ? '🔬' :
-        entry.class_info.type === 'projekt' ? '💼' : '📝';
-
-      const title = `${remoteIcon} ${typeIcon} ${entry.class_info.subject}`;
+      // Tytuł bez ikon - tylko nazwa przedmiotu
+      const title = entry.class_info.subject;
 
       return {
         title,
@@ -148,6 +142,30 @@ export function ScheduleCalendar() {
     return {};
   }, [weekendsOnly]);
 
+  // Custom event component with labels
+  const CustomEvent = ({ event }: { event: CalendarEvent }) => {
+    const typeLabel = event.entry.class_info.type || 'inne';
+    const modeLabel = event.entry.class_info.is_remote ? 'zdalne' : 'stacj.';
+
+    // Format time from event.start and event.end
+    const startTime = moment(event.start).format('HH:mm');
+    const endTime = moment(event.end).format('HH:mm');
+    const timeLabel = `${startTime} – ${endTime}`;
+
+    return (
+      <div className="custom-event-content">
+        <div className="rbc-event-label">{timeLabel}</div>
+        <div className="event-tags">
+          <span className="event-tag event-tag-type">{typeLabel}</span>
+          <span className="event-tag event-tag-mode">{modeLabel}</span>
+        </div>
+        <div className="rbc-event-content" title={event.entry.class_info.subject}>
+          {event.entry.class_info.subject}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4">
       <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
@@ -193,6 +211,9 @@ export function ScheduleCalendar() {
           view={view}
           onView={handleViewChange}
           views={['month', 'week', 'day', 'agenda']}
+          components={{
+            event: CustomEvent,
+          }}
           popup
           popupOffset={{ x: 0, y: 20 }}
           showMultiDayTimes
