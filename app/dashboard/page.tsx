@@ -16,6 +16,8 @@ import {
 import { ScheduleEntry } from '@/types/schedule';
 import { UpcomingDaysCalendar } from '@/components/dashboard/UpcomingDaysCalendar';
 import { WeekendNotice } from '@/components/dashboard/WeekendNotice';
+import { NextClassCountdown } from '@/components/dashboard/NextClassCountdown';
+import { TodaysTimeline } from '@/components/dashboard/TodaysTimeline';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -125,40 +127,15 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Today's classes */}
+        {/* Next Class Countdown */}
+        <div className="mb-8">
+          <NextClassCountdown todayClasses={todayClasses} />
+        </div>
+
+        {/* Today's Timeline */}
         {todayClasses.length > 0 && (
-          <div className="bg-white border border-gray-200 p-6 mb-8">
-            <h2 className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-4">
-              Dzisiejsze zajęcia
-            </h2>
-            <div className="space-y-3">
-              {todayClasses.map(entry => (
-                <div
-                  key={entry.id}
-                  className="flex items-center justify-between p-4 bg-blue-50 border border-blue-100"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="text-blue-600 font-semibold">
-                      {formatTime(entry.start_time)}
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-900">
-                        {entry.class_info.subject}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {entry.class_info.type} • {entry.class_info.instructor}
-                        {entry.class_info.room && ` • ${entry.class_info.room}`}
-                      </div>
-                    </div>
-                  </div>
-                  {entry.class_info.is_remote && (
-                    <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium">
-                      Zdalne
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
+          <div className="mb-8">
+            <TodaysTimeline todayClasses={todayClasses} />
           </div>
         )}
 
