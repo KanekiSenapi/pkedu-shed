@@ -23,6 +23,7 @@ import { ScheduleCalendar } from '@/components/calendar/ScheduleCalendar';
 import { DashboardNavbar } from '@/components/dashboard/DashboardNavbar';
 import { parseRoomFromText, findBuildingForRoom, Building } from '@/lib/campus-data';
 import { MapModal } from '@/components/map/MapModal';
+import { AttendanceStats } from '@/components/attendance/AttendanceStats';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -75,6 +76,35 @@ export default function DashboardPage() {
 
     const days = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota'];
     return `${days[date.getDay()]}, ${date.getDate()}.${date.getMonth() + 1}`;
+  };
+
+  const timeToMinutes = (time: string): number => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const hasFreeTimeGap = (currentEntry: ScheduleEntry, index: number): { hasgap: boolean; duration: number } => {
+    if (index === 0) return { hasgap: false, duration: 0 };
+
+    const previousEntry = upcomingClasses[index - 1];
+    if (previousEntry.date !== currentEntry.date) return { hasgap: false, duration: 0 };
+
+    const gapStart = timeToMinutes(previousEntry.end_time);
+    const gapEnd = timeToMinutes(currentEntry.start_time);
+    const gapDuration = gapEnd - gapStart;
+
+    const MIN_FREE_TIME_MINUTES = 45;
+    const LUNCH_START = 13 * 60 + 15; // 13:15
+    const LUNCH_END = 14 * 60; // 14:00
+
+    if (gapDuration >= MIN_FREE_TIME_MINUTES) {
+      const isLunchBreak = gapStart === LUNCH_START && gapEnd === LUNCH_END;
+      if (!isLunchBreak) {
+        return { hasgap: true, duration: gapDuration };
+      }
+    }
+
+    return { hasgap: false, duration: 0 };
   };
 
   return (
@@ -141,8 +171,9 @@ export default function DashboardPage() {
               </p>
             ) : (
               <div className="space-y-3">
-                {upcomingClasses.map(entry => {
+                {upcomingClasses.map((entry, index) => {
                   const isToday = entry.date === new Date().toISOString().split('T')[0];
+                  const freeTimeGap = hasFreeTimeGap(entry, index);
 
                   return (
                     <div
@@ -161,9 +192,16 @@ export default function DashboardPage() {
                           </div>
                         </div>
                         <div className="w-px h-12 bg-gray-300"></div>
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {entry.class_info.subject}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className="font-medium text-gray-900">
+                              {entry.class_info.subject}
+                            </div>
+                            {freeTimeGap.hasgap && (
+                              <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium border border-orange-300">
+                                okienko
+                              </span>
+                            )}
                           </div>
                           <div className="text-sm text-gray-600 flex items-center gap-2">
                             <span>
@@ -174,7 +212,7 @@ export default function DashboardPage() {
                             {entry.class_info.room && (() => {
                               const roomNumber = parseRoomFromText(entry.class_info.room);
                               const building = roomNumber ? findBuildingForRoom(roomNumber) : null;
-                              return building ? (
+                              return (building && roomNumber) ? (
                                 <button
                                   onClick={() => setMapModal({ building, roomNumber })}
                                   className="text-blue-600 hover:text-blue-700 transition-colors"
@@ -212,6 +250,11 @@ export default function DashboardPage() {
         {/* Subject Progress */}
         <div className="mt-6">
           <SubjectProgress entries={filteredEntries} />
+        </div>
+
+        {/* Attendance Statistics */}
+        <div className="mt-6">
+          <AttendanceStats />
         </div>
 
         {/* Calendar */}

@@ -10,6 +10,7 @@ import { useScheduleStore } from '@/lib/store';
 import { ScheduleEntry } from '@/types/schedule';
 import { parseRoomFromText, findBuildingForRoom, Building } from '@/lib/campus-data';
 import { MapModal } from '@/components/map/MapModal';
+import { ClassActions } from '@/components/attendance/ClassActions';
 
 // Configure moment locale
 moment.locale('pl');
@@ -443,6 +444,15 @@ export function ScheduleCalendar({ entries: providedEntries }: ScheduleCalendarP
                     {selectedEvent.rok}/{selectedEvent.semestr}
                   </div>
                 </div>
+              </div>
+
+              {/* Class Actions */}
+              <div className="pt-4 border-t border-gray-200">
+                <ClassActions
+                  date={selectedEvent.date}
+                  time={selectedEvent.time}
+                  subject={selectedEvent.class_info.subject}
+                />
               </div>
 
               <div className="pt-3 border-t border-gray-200">

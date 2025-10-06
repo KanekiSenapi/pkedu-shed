@@ -251,4 +251,46 @@ export async function initDatabase() {
   } catch (error) {
     // Column already exists
   }
+
+  // Class notes table
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS class_notes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      entry_date TEXT NOT NULL,
+      entry_time TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      note TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_notes_user_date ON class_notes(user_id, entry_date)
+  `);
+
+  // Class attendance table
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS class_attendance (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      entry_date TEXT NOT NULL,
+      entry_time TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      attended INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(user_id, entry_date, entry_time, subject)
+    )
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_attendance_user_date ON class_attendance(user_id, entry_date)
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_attendance_user ON class_attendance(user_id)
+  `);
 }
