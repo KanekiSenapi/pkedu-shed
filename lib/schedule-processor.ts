@@ -111,9 +111,12 @@ export function parseClassInfo(cellContent: string): ClassInfo | null {
     }
   }
 
-  // Try tab-separated format first
-  if (raw.includes('\t')) {
-    const parts = raw.split('\t').map(p => p.trim());
+  // Try tab or multiple-space separated format (columnar data)
+  // Excel często używa wielokrotnych spacji zamiast tabów
+  if (raw.includes('\t') || raw.match(/\s{2,}/)) {
+    const parts = raw.includes('\t')
+      ? raw.split('\t').map(p => p.trim())
+      : raw.split(/\s{2,}/).map(p => p.trim()).filter(p => p);
 
     if (parts.length >= 2) {
       // Usuń ": - :" z nazwy przedmiotu jeśli występuje
