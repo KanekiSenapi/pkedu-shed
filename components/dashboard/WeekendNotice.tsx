@@ -61,7 +61,13 @@ export function WeekendNotice({ entries }: WeekendNoticeProps) {
                 <div key={i} className="w-2 h-2 bg-orange-600 border border-orange-700"></div>
               ))}
             </div>
-            <span>{weekendInfo.stationaryCount === 1 ? 'zajęcia' : 'zajęć'} stacjonarnych</span>
+            <span>
+              {weekendInfo.stationaryCount === 1
+                ? 'blok zajęć'
+                : weekendInfo.stationaryCount < 5
+                  ? 'bloki zajęć'
+                  : 'bloków zajęć'} stacjonarnych
+            </span>
           </div>
           {saturdayStationary.length > 0 && (
             <div className="text-xs text-orange-600 mt-1">
