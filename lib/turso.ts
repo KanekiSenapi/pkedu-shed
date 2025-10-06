@@ -140,6 +140,7 @@ export async function initDatabase() {
       password_hash TEXT,
       google_id TEXT UNIQUE,
       name TEXT,
+      is_admin INTEGER DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
@@ -168,4 +169,13 @@ export async function initDatabase() {
   await turso.execute(`
     CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id)
   `);
+
+  // Migration: Add is_admin column if it doesn't exist
+  try {
+    await turso.execute(`
+      ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0
+    `);
+  } catch (error) {
+    // Column already exists, ignore error
+  }
 }

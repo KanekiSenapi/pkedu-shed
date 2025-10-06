@@ -117,6 +117,17 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
                   >
                     Widok ogólny
                   </button>
+                  {session && (session.user as any).isAdmin && (
+                    <button
+                      onClick={() => {
+                        setShowDropdown(false);
+                        router.push('/admin');
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-200"
+                    >
+                      Panel administratora
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       setShowDropdown(false);

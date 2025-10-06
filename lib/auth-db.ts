@@ -6,6 +6,7 @@ export interface User {
   id: string;
   email: string;
   name: string | null;
+  is_admin: boolean;
   created_at: string;
 }
 
@@ -25,6 +26,7 @@ export async function createUser(email: string, password: string, name?: string)
     id,
     email,
     name: name || null,
+    is_admin: false,
     created_at: new Date().toISOString(),
   };
 }
@@ -34,7 +36,7 @@ export async function createUser(email: string, password: string, name?: string)
  */
 export async function verifyCredentials(email: string, password: string): Promise<User | null> {
   const result = await turso.execute({
-    sql: `SELECT id, email, password_hash, name, created_at FROM users WHERE email = ?`,
+    sql: `SELECT id, email, password_hash, name, is_admin, created_at FROM users WHERE email = ?`,
     args: [email],
   });
 
@@ -55,6 +57,7 @@ export async function verifyCredentials(email: string, password: string): Promis
     id: user.id as string,
     email: user.email as string,
     name: (user.name as string) || null,
+    is_admin: (user.is_admin as number) === 1,
     created_at: user.created_at as string,
   };
 }
@@ -64,7 +67,7 @@ export async function verifyCredentials(email: string, password: string): Promis
  */
 export async function getUserByEmail(email: string): Promise<User | null> {
   const result = await turso.execute({
-    sql: `SELECT id, email, name, created_at FROM users WHERE email = ?`,
+    sql: `SELECT id, email, name, is_admin, created_at FROM users WHERE email = ?`,
     args: [email],
   });
 
@@ -77,6 +80,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
     id: user.id as string,
     email: user.email as string,
     name: (user.name as string) || null,
+    is_admin: (user.is_admin as number) === 1,
     created_at: user.created_at as string,
   };
 }
@@ -86,7 +90,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
  */
 export async function getUserById(id: string): Promise<User | null> {
   const result = await turso.execute({
-    sql: `SELECT id, email, name, created_at FROM users WHERE id = ?`,
+    sql: `SELECT id, email, name, is_admin, created_at FROM users WHERE id = ?`,
     args: [id],
   });
 
@@ -99,6 +103,7 @@ export async function getUserById(id: string): Promise<User | null> {
     id: user.id as string,
     email: user.email as string,
     name: (user.name as string) || null,
+    is_admin: (user.is_admin as number) === 1,
     created_at: user.created_at as string,
   };
 }
