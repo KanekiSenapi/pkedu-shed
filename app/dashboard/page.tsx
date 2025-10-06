@@ -20,6 +20,7 @@ import { NextClassCountdown } from '@/components/dashboard/NextClassCountdown';
 import { TodaysTimeline } from '@/components/dashboard/TodaysTimeline';
 import { SubjectProgress } from '@/components/dashboard/SubjectProgress';
 import { ScheduleCalendar } from '@/components/calendar/ScheduleCalendar';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -86,12 +87,15 @@ export default function DashboardPage() {
                   : preferences.fullName}
               </p>
             </div>
-            <button
-              onClick={() => router.push('/begin')}
-              className="text-sm text-blue-600 hover:text-blue-700"
-            >
-              Zmień ustawienia
-            </button>
+            <div className="flex items-center gap-4">
+              <NotificationBell />
+              <button
+                onClick={() => router.push('/begin')}
+                className="text-sm text-blue-600 hover:text-blue-700"
+              >
+                Zmień ustawienia
+              </button>
+            </div>
           </div>
         </div>
       </div>
