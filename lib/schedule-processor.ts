@@ -316,7 +316,7 @@ function extractSubject(
   // Usuń wielokrotne spacje i trim
   subject = subject.replace(/\s+/g, ' ').trim();
 
-  // Map subject name using the comprehensive subjects map
+  // Map subject name using the comprehensive subjects map (with fallback)
   const mappedSubject = mapSubjectName(subject);
 
   return mappedSubject || subject || raw;

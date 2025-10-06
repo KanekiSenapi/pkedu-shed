@@ -414,10 +414,14 @@ export function mapSubjectName(rawName: string): string {
 
   // Return best match if score is good enough
   if (bestMatch && bestMatchScore >= Math.min(2, inputWords.length)) {
+    console.log(`[SubjectMap] Fuzzy matched "${rawName}" → "${bestMatch.nazwa}" (score: ${bestMatchScore})`);
     return bestMatch.nazwa;
   }
 
   // No match found, return original name
+  if (rawName && rawName.length > 3) {
+    console.log(`[SubjectMap] No match found for "${rawName}", using original`);
+  }
   return rawName;
 }
 
