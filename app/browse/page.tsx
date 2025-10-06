@@ -43,14 +43,14 @@ export default function BrowsePage() {
             {/* Search */}
             <SearchBar />
 
+            {/* Stats */}
+            <ScheduleStats />
+
             {/* Filters */}
             <Filters />
 
             {/* Calendar */}
             <ScheduleCalendar />
-
-            {/* Stats */}
-            <ScheduleStats />
 
             {/* Grid layout for additional stats */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
