@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { downloadSchedule } from '@/lib/scraper';
-import { parseExcelSchedule } from '@/lib/excel-parser';
-import { calculateHash } from '@/lib/cache-manager';
+import { parseExcelSchedule, PARSER_VERSION } from '@/lib/excel-parser';
+import { calculateHash, createVersionedHash } from '@/lib/cache-manager';
 import {
   saveScheduleToDB,
   loadScheduleFromDB,
@@ -95,7 +95,7 @@ export async function GET(request: Request) {
     const parseStart = Date.now();
     console.log('[Fetch] Starting Excel parsing...');
     const schedule = parseExcelSchedule(downloadResult.buffer);
-    schedule.fileHash = fileHash;
+    schedule.fileHash = createVersionedHash(fileHash, PARSER_VERSION);
     console.log(`[Fetch] Parsing completed in ${Date.now() - parseStart}ms (${schedule.sections.length} sections)`);
 
     // Save to database

@@ -13,6 +13,12 @@ import {
 } from './schedule-processor';
 
 /**
+ * Parser version - increase this when parser logic changes
+ * This ensures clients get updates even if the source Excel file hasn't changed
+ */
+export const PARSER_VERSION = "1";
+
+/**
  * Parses an Excel file buffer and extracts all schedule data
  */
 export function parseExcelSchedule(buffer: Buffer): ParsedSchedule {

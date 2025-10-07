@@ -16,6 +16,14 @@ export function calculateHash(buffer: Buffer): string {
 }
 
 /**
+ * Creates a versioned hash by combining file hash with parser version
+ * This ensures clients update when parser logic changes, even if file is the same
+ */
+export function createVersionedHash(fileHash: string, parserVersion: string): string {
+  return `${fileHash}_v${parserVersion}`;
+}
+
+/**
  * Saves schedule data to localStorage
  */
 export function saveToCache(schedule: ParsedSchedule): void {
