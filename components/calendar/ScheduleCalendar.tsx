@@ -414,7 +414,6 @@ export function ScheduleCalendar({ entries: providedEntries }: ScheduleCalendarP
                     {!selectedEvent.class_info.is_remote && selectedEvent.class_info.room && (() => {
                       const roomNumber = parseRoomFromText(selectedEvent.class_info.room);
                       const building = roomNumber ? findBuildingForRoom(roomNumber) : null;
-                      if (!building || !roomNumber) return null;
 
                       return building ? (
                         <button

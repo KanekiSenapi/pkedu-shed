@@ -125,7 +125,7 @@ export function NextClassCountdown({ todayClasses }: NextClassCountdownProps) {
           {state.entry.class_info.room && (() => {
             const roomNumber = parseRoomFromText(state.entry.class_info.room);
             const building = roomNumber ? findBuildingForRoom(roomNumber) : null;
-            return building ? (
+            return building && roomNumber ? (
               <button
                 onClick={() => setMapModal({ building, roomNumber })}
                 className="text-blue-700 hover:text-blue-800 transition-colors"
@@ -164,7 +164,7 @@ export function NextClassCountdown({ todayClasses }: NextClassCountdownProps) {
         {state.entry.class_info.room && (() => {
           const roomNumber = parseRoomFromText(state.entry.class_info.room);
           const building = roomNumber ? findBuildingForRoom(roomNumber) : null;
-          return building ? (
+          return building && roomNumber ? (
             <button
               onClick={() => setMapModal({ building, roomNumber })}
               className="text-blue-600 hover:text-blue-700 transition-colors"
