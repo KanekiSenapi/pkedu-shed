@@ -415,7 +415,7 @@ export function ScheduleCalendar({ entries: providedEntries }: ScheduleCalendarP
                       const roomNumber = parseRoomFromText(selectedEvent.class_info.room);
                       const building = roomNumber ? findBuildingForRoom(roomNumber) : null;
 
-                      return building ? (
+                      return building && roomNumber ? (
                         <button
                           onClick={() => {
                             setMapModal({ building, roomNumber });
