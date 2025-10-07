@@ -4,16 +4,59 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import { useSchedule } from '@/lib/use-schedule';
+import {
+  syncSaveUserPreferences,
+  type UserRole,
+  type StudentPreferences,
+  type InstructorPreferences,
+} from '@/lib/user-preferences';
 
 type Tab = 'login' | 'register';
+type Mode = 'auth' | 'guest';
+type GuestStep = 'role' | 'student' | 'instructor';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { schedule } = useSchedule();
+  const [mode, setMode] = useState<Mode>('auth');
   const [tab, setTab] = useState<Tab>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Guest mode state
+  const [guestStep, setGuestStep] = useState<GuestStep>('role');
+  const [role, setRole] = useState<UserRole | null>(null);
+  const [stopien, setStopien] = useState<string>('');
+  const [rok, setRok] = useState<number | null>(null);
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [selectedInstructor, setSelectedInstructor] = useState<string>('');
+
+  // Get available options from schedule
+  const availableStopnie = [...new Set(schedule?.sections.map(s => s.stopien) || [])];
+  const availableRoki = [...new Set(
+    schedule?.sections
+      .filter(s => s.stopien === stopien)
+      .map(s => s.rok) || []
+  )].sort();
+  const availableGroups = [
+    ...new Set(
+      schedule?.sections
+        .filter(s => s.stopien === stopien && s.rok === rok)
+        .flatMap(s => s.groups)
+        .filter(g => !g.includes(',')) || []
+    ),
+  ].sort();
+  const instructors = [
+    ...new Set(
+      schedule?.sections
+        .flatMap(s => s.entries)
+        .map(e => e.class_info.instructor)
+        .filter((i): i is string => Boolean(i)) || []
+    ),
+  ].sort();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +140,45 @@ export default function LoginPage() {
     }
   };
 
+  const handleRoleSelect = (selectedRole: UserRole) => {
+    setRole(selectedRole);
+    setGuestStep(selectedRole);
+  };
+
+  const handleGroupToggle = (group: string) => {
+    setSelectedGroups(prev =>
+      prev.includes(group)
+        ? prev.filter(g => g !== group)
+        : [...prev, group]
+    );
+  };
+
+  const handleStudentComplete = async () => {
+    if (!stopien || !rok || selectedGroups.length === 0) return;
+
+    const preferences: StudentPreferences = {
+      role: 'student',
+      stopien,
+      rok,
+      groups: selectedGroups,
+    };
+
+    await syncSaveUserPreferences(preferences);
+    router.push('/dashboard');
+  };
+
+  const handleInstructorComplete = async () => {
+    if (!selectedInstructor) return;
+
+    const preferences: InstructorPreferences = {
+      role: 'instructor',
+      fullName: selectedInstructor,
+    };
+
+    await syncSaveUserPreferences(preferences);
+    router.push('/dashboard');
+  };
+
   return (
     <div className="min-h-screen bg-white flex">
       {/* Left side - Login/Register */}
@@ -118,32 +200,58 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Tabs */}
+          {/* Mode Selector */}
           <div className="flex gap-2 mb-8">
             <button
-              onClick={() => setTab('login')}
+              onClick={() => setMode('auth')}
               className={`flex-1 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                tab === 'login'
+                mode === 'auth'
                   ? 'border-blue-600 text-blue-600'
                   : 'border-gray-200 text-gray-600 hover:text-gray-900'
               }`}
             >
-              Logowanie
+              Zaloguj się
             </button>
             <button
-              onClick={() => setTab('register')}
+              onClick={() => setMode('guest')}
               className={`flex-1 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                tab === 'register'
+                mode === 'guest'
                   ? 'border-blue-600 text-blue-600'
                   : 'border-gray-200 text-gray-600 hover:text-gray-900'
               }`}
             >
-              Rejestracja
+              Jako gość
             </button>
           </div>
 
-          {/* Login Form */}
-          {tab === 'login' && (
+          {/* Auth Mode - Tabs */}
+          {mode === 'auth' && (
+            <div className="flex gap-2 mb-8">
+              <button
+                onClick={() => setTab('login')}
+                className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
+                  tab === 'login'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Logowanie
+              </button>
+              <button
+                onClick={() => setTab('register')}
+                className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
+                  tab === 'register'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Rejestracja
+              </button>
+            </div>
+          )}
+
+          {/* Auth Mode Forms */}
+          {mode === 'auth' && tab === 'login' && (
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -207,8 +315,7 @@ export default function LoginPage() {
             </form>
           )}
 
-          {/* Register Form */}
-          {tab === 'register' && (
+          {mode === 'auth' && tab === 'register' && (
             <form onSubmit={handleRegister} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -264,21 +371,170 @@ export default function LoginPage() {
             </form>
           )}
 
-          {/* Guest option */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <p className="text-sm text-gray-600 mb-3 text-center">
-              Nie masz konta?
-            </p>
-            <button
-              onClick={() => router.push('/begin')}
-              className="w-full px-4 py-3 bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 transition-colors border border-gray-300"
-            >
-              Kontynuuj jako gość
-            </button>
-            <p className="text-xs text-gray-500 mt-3 text-center">
-              Korzystaj z podstawowych funkcji bez konta
-            </p>
-          </div>
+          {/* Guest Mode - Role Selection */}
+          {mode === 'guest' && guestStep === 'role' && (
+            <div className="space-y-6">
+              <div className="text-sm text-gray-600 mb-6">
+                Wybierz swoją rolę aby dostosować widok kalendarza
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => handleRoleSelect('student')}
+                  className="w-full bg-white border border-gray-200 p-6 hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                >
+                  <div className="text-3xl mb-2">🎓</div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">Student</h3>
+                  <p className="text-sm text-gray-600">
+                    Zobacz plan dla swojej grupy i roku
+                  </p>
+                </button>
+
+                <button
+                  onClick={() => handleRoleSelect('instructor')}
+                  className="w-full bg-white border border-gray-200 p-6 hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                >
+                  <div className="text-3xl mb-2">👨‍🏫</div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">Prowadzący</h3>
+                  <p className="text-sm text-gray-600">
+                    Zobacz swoje zajęcia i harmonogram
+                  </p>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Guest Mode - Student Flow */}
+          {mode === 'guest' && guestStep === 'student' && (
+            <div className="space-y-6">
+              <button
+                onClick={() => setGuestStep('role')}
+                className="text-blue-600 hover:text-blue-700 text-sm mb-4"
+              >
+                ← Zmień rolę
+              </button>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Stopień studiów
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {availableStopnie.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => {
+                        setStopien(s);
+                        setRok(null);
+                        setSelectedGroups([]);
+                      }}
+                      className={`p-3 border transition-colors text-sm ${
+                        stopien === s
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      {s} stopień
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {stopien && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Rok studiów
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {availableRoki.map(r => (
+                      <button
+                        key={r}
+                        onClick={() => {
+                          setRok(r);
+                          setSelectedGroups([]);
+                        }}
+                        className={`p-3 border transition-colors text-sm ${
+                          rok === r
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        Rok {r}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {rok && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Grupa (możesz wybrać kilka)
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {availableGroups.map(group => (
+                      <button
+                        key={group}
+                        onClick={() => handleGroupToggle(group)}
+                        className={`p-3 border transition-colors text-sm ${
+                          selectedGroups.includes(group)
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        {group}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={handleStudentComplete}
+                disabled={!stopien || !rok || selectedGroups.length === 0}
+                className="w-full py-3 px-4 bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                Kontynuuj
+              </button>
+            </div>
+          )}
+
+          {/* Guest Mode - Instructor Flow */}
+          {mode === 'guest' && guestStep === 'instructor' && (
+            <div className="space-y-6">
+              <button
+                onClick={() => setGuestStep('role')}
+                className="text-blue-600 hover:text-blue-700 text-sm mb-4"
+              >
+                ← Zmień rolę
+              </button>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Imię i nazwisko
+                </label>
+                <select
+                  value={selectedInstructor}
+                  onChange={(e) => setSelectedInstructor(e.target.value)}
+                  className="w-full p-3 border border-gray-300 focus:border-blue-500 focus:outline-none bg-white"
+                >
+                  <option value="">Wybierz prowadzącego...</option>
+                  {instructors.map(instructor => (
+                    <option key={instructor} value={instructor}>
+                      {instructor}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                onClick={handleInstructorComplete}
+                disabled={!selectedInstructor}
+                className="w-full py-3 px-4 bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                Kontynuuj
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
