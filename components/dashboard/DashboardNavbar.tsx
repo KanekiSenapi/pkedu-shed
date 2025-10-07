@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
+import Image from 'next/image';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { BugReportModal } from '@/components/bug-report/BugReportModal';
 import { UserPreferences } from '@/lib/user-preferences';
@@ -65,6 +66,13 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
         <div className="flex items-center justify-between h-14">
           {/* Left Section */}
           <div className="flex items-center space-x-4">
+            <Image
+              src="/images/logo.png"
+              alt="Plan PK Logo"
+              width={32}
+              height={32}
+              className="object-contain"
+            />
             <h1 className="text-lg font-bold text-gray-900">
               {getPageTitle()}
             </h1>

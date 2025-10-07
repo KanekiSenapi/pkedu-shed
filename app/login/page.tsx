@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import Image from 'next/image';
 import { useSchedule } from '@/lib/use-schedule';
 import {
   syncSaveUserPreferences,
@@ -193,11 +194,20 @@ export default function LoginPage() {
           </button>
 
           {/* Logo/Title */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Plan PK</h1>
-            <p className="text-gray-600 text-sm">
-              Zarządzaj swoim planem zajęć
-            </p>
+          <div className="mb-8 flex items-center gap-4">
+            <Image
+              src="/images/logo.png"
+              alt="Plan PK Logo"
+              width={64}
+              height={64}
+              className="object-contain"
+            />
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-1">Plan PK</h1>
+              <p className="text-gray-600 text-sm">
+                Zarządzaj swoim planem zajęć
+              </p>
+            </div>
           </div>
 
           {/* Mode Selector */}
