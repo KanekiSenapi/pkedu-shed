@@ -5,6 +5,10 @@ import toast from 'react-hot-toast';
 
 const CHECK_INTERVAL = 60 * 60 * 1000; // 1 hour in milliseconds
 
+// Global flags to prevent concurrent operations across all hook instances
+let isCheckingForUpdates = false;
+let hasGloballyInitialized = false;
+
 /**
  * Custom hook for managing schedule data
  */
@@ -67,6 +71,14 @@ export function useSchedule() {
    * Checks for updates without forcing a full refresh
    */
   const checkForUpdates = useCallback(async () => {
+    // Prevent concurrent checks across all hook instances
+    if (isCheckingForUpdates) {
+      console.log('[Schedule] Already checking for updates, skipping...');
+      return;
+    }
+
+    isCheckingForUpdates = true;
+
     try {
       // Get client's current hash
       const clientHash = getStoredHash();
@@ -98,6 +110,8 @@ export function useSchedule() {
       setLastChecked(new Date());
     } catch (err) {
       console.error('Error checking for updates:', err);
+    } finally {
+      isCheckingForUpdates = false;
     }
   }, [fetchSchedule, setLastChecked]);
 
@@ -105,6 +119,13 @@ export function useSchedule() {
    * Initial load - use cache first, then check for updates
    */
   useEffect(() => {
+    // Prevent multiple initializations from different hook instances
+    if (hasGloballyInitialized) {
+      console.log('[Schedule] Already initialized globally, skipping...');
+      return;
+    }
+    hasGloballyInitialized = true;
+
     const initializeSchedule = async () => {
       // Try to load from localStorage first (instant)
       const cached = loadFromCache();
@@ -138,8 +159,12 @@ export function useSchedule() {
     }
 
     // Setup new interval to check for updates every hour
+    // Use a stable reference to avoid recreating interval
     checkIntervalRef.current = setInterval(() => {
-      checkForUpdates();
+      // Call checkForUpdates directly to avoid dependency issues
+      if (!isCheckingForUpdates) {
+        checkForUpdates();
+      }
     }, CHECK_INTERVAL);
 
     // Cleanup on unmount
@@ -148,7 +173,9 @@ export function useSchedule() {
         clearInterval(checkIntervalRef.current);
       }
     };
-  }, [checkForUpdates]);
+    // Only recreate interval if CHECK_INTERVAL changes (never does)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     schedule,
