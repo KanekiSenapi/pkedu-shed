@@ -48,6 +48,7 @@ export interface ParsedSchedule {
   sections: ScheduleSection[];
   lastUpdated: string;       // ISO timestamp
   fileHash: string;          // MD5 hash of source file
+  fileName?: string;         // Original filename from source
 }
 
 export interface FilterOptions {

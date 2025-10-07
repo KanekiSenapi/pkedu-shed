@@ -36,13 +36,16 @@ export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [reports, setReports] = useState<BugReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'users' | 'reports' | 'stats' | 'notifications' | 'changes'>('reports');
+  const [activeTab, setActiveTab] = useState<'users' | 'reports' | 'stats' | 'notifications' | 'changes' | 'system'>('reports');
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showNotificationCreator, setShowNotificationCreator] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [loginStats, setLoginStats] = useState<any>(null);
+  const [systemInfo, setSystemInfo] = useState<any>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [localStorageHash, setLocalStorageHash] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -61,13 +64,22 @@ export default function AdminPage() {
     loadData();
   }, [session, status, router]);
 
+  useEffect(() => {
+    // Read localStorage hash on mount
+    if (typeof window !== 'undefined') {
+      const hash = localStorage.getItem('pk_schedule_hash');
+      setLocalStorageHash(hash);
+    }
+  }, []);
+
   const loadData = async () => {
     setLoading(true);
     try {
-      const [usersRes, reportsRes, statsRes] = await Promise.all([
+      const [usersRes, reportsRes, statsRes, systemRes] = await Promise.all([
         fetch('/api/admin/users'),
         fetch('/api/admin/bug-reports'),
         fetch('/api/admin/login-stats'),
+        fetch('/api/admin/system-info'),
       ]);
 
       if (usersRes.ok) {
@@ -83,6 +95,11 @@ export default function AdminPage() {
       if (statsRes.ok) {
         const statsData = await statsRes.json();
         setLoginStats(statsData);
+      }
+
+      if (systemRes.ok) {
+        const systemData = await systemRes.json();
+        setSystemInfo(systemData);
       }
     } catch (error) {
       console.error('Error loading admin data:', error);
@@ -121,6 +138,52 @@ export default function AdminPage() {
       case 'closed': return 'bg-gray-100 text-gray-800';
       case 'resolved': return 'bg-green-100 text-green-800';
       default: return 'bg-blue-100 text-blue-800';
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (!confirm('Czy na pewno chcesz wyczyścić CAŁĄ bazę danych? Ta operacja jest nieodwracalna!')) {
+      return;
+    }
+
+    setActionLoading('clear-all');
+    try {
+      const res = await fetch('/api/admin/clear-all', { method: 'POST' });
+      if (res.ok) {
+        alert('Baza danych wyczyszczona!');
+        await loadData();
+      } else {
+        const data = await res.json();
+        alert(`Błąd: ${data.error || 'Nieznany błąd'}`);
+      }
+    } catch (error) {
+      console.error('Error clearing database:', error);
+      alert('Błąd podczas czyszczenia bazy danych');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCronTrigger = async () => {
+    if (!confirm('Czy na pewno chcesz wymusić aktualizację planu zajęć?')) {
+      return;
+    }
+
+    setActionLoading('cron');
+    try {
+      const res = await fetch('/api/cron', { method: 'GET' });
+      if (res.ok) {
+        alert('Aktualizacja planu rozpoczęta!');
+        await loadData();
+      } else {
+        const data = await res.json();
+        alert(`Błąd: ${data.error || 'Nieznany błąd'}`);
+      }
+    } catch (error) {
+      console.error('Error triggering cron:', error);
+      alert('Błąd podczas uruchamiania aktualizacji');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -218,6 +281,16 @@ export default function AdminPage() {
             }`}
           >
             Historia zmian
+          </button>
+          <button
+            onClick={() => setActiveTab('system')}
+            className={`px-4 py-2 text-sm border transition-colors ${
+              activeTab === 'system'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            System
           </button>
         </div>
 
@@ -485,6 +558,114 @@ export default function AdminPage() {
 
         {/* Schedule Changes Tab */}
         {activeTab === 'changes' && <ScheduleChangesViewer />}
+
+        {/* System Tab */}
+        {activeTab === 'system' && (
+          <div className="space-y-6">
+            {/* System Info Card */}
+            <div className="bg-white border border-gray-200">
+              <div className="border-b border-gray-200 p-4">
+                <h3 className="text-sm font-medium text-gray-900">Informacje systemowe</h3>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                      Wersja parsera
+                    </div>
+                    <div className="text-lg font-mono text-gray-900">
+                      {systemInfo?.parserVersion || '-'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                      Nazwa pliku
+                    </div>
+                    <div className="text-sm text-gray-900 break-all">
+                      {systemInfo?.fileName || '-'}
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                      Hash pliku (baza danych)
+                    </div>
+                    <div className="text-sm font-mono text-gray-900 break-all">
+                      {systemInfo?.fileHash || '-'}
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                      Hash pliku (localStorage cache)
+                    </div>
+                    <div className="text-sm font-mono text-gray-900 break-all">
+                      {localStorageHash || '-'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                      Ostatnia aktualizacja
+                    </div>
+                    <div className="text-sm text-gray-900">
+                      {systemInfo?.lastUpdated ? formatDate(systemInfo.lastUpdated) : '-'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions Card */}
+            <div className="bg-white border border-gray-200">
+              <div className="border-b border-gray-200 p-4">
+                <h3 className="text-sm font-medium text-gray-900">Akcje systemowe</h3>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={handleCronTrigger}
+                    disabled={actionLoading === 'cron'}
+                    className="px-4 py-3 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left"
+                  >
+                    {actionLoading === 'cron' ? (
+                      <span>⏳ Aktualizowanie planu zajęć...</span>
+                    ) : (
+                      <div>
+                        <div className="font-medium">🔄 Wymuś aktualizację planu</div>
+                        <div className="text-xs text-blue-100 mt-1">
+                          Pobiera najnowszy plik z PK i aktualizuje bazę danych
+                        </div>
+                      </div>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={handleClearAll}
+                    disabled={actionLoading === 'clear-all'}
+                    className="px-4 py-3 bg-red-600 text-white text-sm hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left"
+                  >
+                    {actionLoading === 'clear-all' ? (
+                      <span>⏳ Czyszczenie bazy danych...</span>
+                    ) : (
+                      <div>
+                        <div className="font-medium">🗑️ Wyczyść całą bazę danych</div>
+                        <div className="text-xs text-red-100 mt-1">
+                          UWAGA: Usuwa wszystkie dane użytkowników, plan zajęć, obecności, notatki (NIEODWRACALNE!)
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                </div>
+
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 text-xs text-yellow-900">
+                  ⚠️ Te operacje są nieodwracalne. Upewnij się przed wykonaniem!
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Bug Report Modal */}

@@ -35,8 +35,8 @@ export async function saveScheduleToDB(schedule: ParsedSchedule): Promise<void> 
   const scheduleId = `schedule_${Date.now()}`;
   const scheduleInsertStart = Date.now();
   await turso.execute({
-    sql: 'INSERT INTO schedules (id, file_hash, last_updated) VALUES (?, ?, ?)',
-    args: [scheduleId, schedule.fileHash, schedule.lastUpdated],
+    sql: 'INSERT INTO schedules (id, file_hash, file_name, last_updated) VALUES (?, ?, ?, ?)',
+    args: [scheduleId, schedule.fileHash, schedule.fileName || null, schedule.lastUpdated],
   });
   console.log(`[DB] Schedule record inserted in ${Date.now() - scheduleInsertStart}ms`);
 
@@ -172,6 +172,7 @@ export async function loadScheduleFromDB(): Promise<ParsedSchedule | null> {
       sections,
       lastUpdated: scheduleRow.last_updated as string,
       fileHash: scheduleRow.file_hash as string,
+      fileName: scheduleRow.file_name as string | undefined,
     };
   } catch (error) {
     console.error('Error loading schedule from DB:', error);

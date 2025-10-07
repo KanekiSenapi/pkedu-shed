@@ -96,6 +96,7 @@ export async function GET(request: Request) {
     console.log('[Fetch] Starting Excel parsing...');
     const schedule = parseExcelSchedule(downloadResult.buffer);
     schedule.fileHash = createVersionedHash(fileHash, PARSER_VERSION);
+    schedule.fileName = downloadResult.filename;
     console.log(`[Fetch] Parsing completed in ${Date.now() - parseStart}ms (${schedule.sections.length} sections)`);
 
     // Save to database
