@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { useSchedule } from '@/lib/use-schedule';
+import { syncLoadUserPreferences } from '@/lib/user-preferences';
+import { filterScheduleByPreferences } from '@/lib/user-schedule';
 
 interface AttendanceStats {
   total_classes: number;
@@ -14,23 +17,65 @@ interface AttendanceStats {
 
 export function AttendanceStats() {
   const { data: session, status } = useSession();
+  const { schedule } = useSchedule();
   const [stats, setStats] = useState<AttendanceStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    if (session && schedule) {
+      fetchStats();
+    }
+  }, [session, schedule]);
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/attendance?stats=true');
+      // Get user preferences to filter schedule
+      const prefs = await syncLoadUserPreferences();
+      if (!prefs) {
+        setLoading(false);
+        return;
+      }
+
+      // Get filtered schedule entries
+      const filteredEntries = filterScheduleByPreferences(schedule, prefs);
+
+      // Get all attendance records
+      const response = await fetch('/api/attendance');
       if (!response.ok) {
         setLoading(false);
         return;
       }
 
       const data = await response.json();
-      setStats(data.stats);
+      const attendanceRecords = data.attendance || [];
+
+      // Filter out wykłady (lectures) - only count attendance for non-lecture classes
+      const nonLectureAttendance = attendanceRecords.filter((record: any) => {
+        const classEntry = filteredEntries.find(
+          entry =>
+            entry.date === record.entry_date &&
+            entry.time === record.entry_time &&
+            entry.class_info.subject === record.subject
+        );
+
+        // Exclude if it's a wykład (lecture)
+        return classEntry && classEntry.class_info.type?.toLowerCase() !== 'wykład';
+      });
+
+      // Calculate stats manually from filtered records
+      const total = nonLectureAttendance.length;
+      const attended = nonLectureAttendance.filter((r: any) => r.attended).length;
+      const missed = total - attended;
+      const attendance_rate = total > 0 ? (attended / total) * 100 : 0;
+
+      setStats({
+        total_classes: total,
+        attended,
+        missed,
+        attendance_rate,
+        total_hours: 0,
+        attended_hours: 0,
+      });
     } catch (error) {
       console.error('Failed to fetch attendance stats:', error);
     } finally {
@@ -99,26 +144,18 @@ export function AttendanceStats() {
         Statystyki obecności
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Attendance Rate */}
         <div className={`p-4 border ${attendanceBgColor}`}>
-          <div className="text-xs text-gray-600 uppercase tracking-wide mb-1">Frekwencja</div>
+          <div className="text-xs text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+            Frekwencja
+            <span className="text-gray-400 cursor-help" title="Statystyki liczą tylko zaznaczone zajęcia (bez wykładów)">ⓘ</span>
+          </div>
           <div className={`text-3xl font-bold ${attendanceColor}`}>
             {stats.attendance_rate.toFixed(1)}%
           </div>
           <div className="text-xs text-gray-500 mt-1">
             {stats.attended} / {stats.total_classes} zajęć
-          </div>
-        </div>
-
-        {/* Hours Attended */}
-        <div className="p-4 border bg-blue-50 border-blue-200">
-          <div className="text-xs text-gray-600 uppercase tracking-wide mb-1">Godziny obecności</div>
-          <div className="text-3xl font-bold text-blue-600">
-            {stats.attended_hours.toFixed(1)}h
-          </div>
-          <div className="text-xs text-gray-500 mt-1">
-            z {stats.total_hours.toFixed(1)}h całkowitych
           </div>
         </div>
 
