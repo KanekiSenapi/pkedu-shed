@@ -49,22 +49,35 @@ export function AttendanceStats() {
       const data = await response.json();
       const attendanceRecords = data.attendance || [];
 
-      // Filter out wykłady (lectures) - only count attendance for non-lecture classes
-      const nonLectureAttendance = attendanceRecords.filter((record: any) => {
-        const classEntry = filteredEntries.find(
-          entry =>
-            entry.date === record.entry_date &&
-            entry.time === record.entry_time &&
-            entry.class_info.subject === record.subject
-        );
+      // Get all past non-lecture classes (excluding wykłady)
+      const now = new Date();
+      const pastClasses = filteredEntries.filter(entry => {
+        // Check if class is in the past
+        const [endTime] = entry.time.split('-').map(t => t.trim()).reverse();
+        const classDateTime = new Date(`${entry.date}T${endTime}:00`);
+        if (classDateTime > now) return false;
 
-        // Exclude if it's a wykład (lecture)
-        return classEntry && classEntry.class_info.type?.toLowerCase() !== 'wykład';
+        // Exclude wykłady (lectures)
+        return entry.class_info.type?.toLowerCase() !== 'wykład';
       });
 
-      // Calculate stats manually from filtered records
-      const total = nonLectureAttendance.length;
-      const attended = nonLectureAttendance.filter((r: any) => r.attended).length;
+      // For each past class, check if there's an attendance record
+      let attended = 0;
+      for (const classEntry of pastClasses) {
+        const record = attendanceRecords.find((r: any) =>
+          r.entry_date === classEntry.date &&
+          r.entry_time === classEntry.time &&
+          r.subject === classEntry.class_info.subject
+        );
+
+        // If there's a record and attended is true, count it
+        if (record && record.attended) {
+          attended++;
+        }
+        // Otherwise, treat as missed (including when no record exists)
+      }
+
+      const total = pastClasses.length;
       const missed = total - attended;
       const attendance_rate = total > 0 ? (attended / total) * 100 : 0;
 
@@ -147,9 +160,8 @@ export function AttendanceStats() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Attendance Rate */}
         <div className={`p-4 border ${attendanceBgColor}`}>
-          <div className="text-xs text-gray-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+          <div className="text-xs text-gray-600 uppercase tracking-wide mb-1">
             Frekwencja
-            <span className="text-gray-400 cursor-help" title="Statystyki liczą tylko zaznaczone zajęcia (bez wykładów)">ⓘ</span>
           </div>
           <div className={`text-3xl font-bold ${attendanceColor}`}>
             {stats.attendance_rate.toFixed(1)}%
