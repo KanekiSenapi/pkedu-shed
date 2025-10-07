@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 import Image from 'next/image';
 import { useSchedule } from '@/lib/use-schedule';
 import {
+  syncLoadUserPreferences,
   syncSaveUserPreferences,
   type UserRole,
   type StudentPreferences,
@@ -80,7 +81,16 @@ export default function LoginPage() {
         toast.error('Nieprawidłowy email lub hasło');
       } else if (result?.ok) {
         toast.success('Zalogowano pomyślnie');
-        router.push('/dashboard');
+
+        // Check if user has preferences
+        const prefs = await syncLoadUserPreferences();
+
+        // If no preferences, redirect to settings for first-time setup
+        if (!prefs) {
+          router.push('/settings');
+        } else {
+          router.push('/dashboard');
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -115,10 +125,22 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (data.success) {
-        toast.success('Konto utworzone! Zaloguj się');
-        setTab('login');
-        setName('');
-        setPassword('');
+        toast.success('Konto utworzone! Logowanie...');
+
+        // Auto-login after successful registration
+        const loginResult = await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (loginResult?.error) {
+          toast.error('Błąd podczas automatycznego logowania');
+          setTab('login');
+        } else if (loginResult?.ok) {
+          // Redirect to settings for first-time setup
+          router.push('/settings');
+        }
       } else {
         toast.error(data.error || 'Błąd podczas rejestracji');
       }

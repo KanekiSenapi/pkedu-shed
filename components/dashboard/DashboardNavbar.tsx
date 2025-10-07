@@ -146,7 +146,7 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
                   <button
                     onClick={() => {
                       setShowDropdown(false);
-                      router.push('/begin');
+                      router.push(session ? '/settings' : '/login');
                     }}
                     className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-200"
                   >
