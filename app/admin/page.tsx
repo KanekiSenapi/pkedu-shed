@@ -46,6 +46,7 @@ export default function AdminPage() {
   const [systemInfo, setSystemInfo] = useState<any>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [localStorageHash, setLocalStorageHash] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -75,11 +76,12 @@ export default function AdminPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [usersRes, reportsRes, statsRes, systemRes] = await Promise.all([
+      const [usersRes, reportsRes, statsRes, systemRes, notificationsRes] = await Promise.all([
         fetch('/api/admin/users'),
         fetch('/api/admin/bug-reports'),
         fetch('/api/admin/login-stats'),
         fetch('/api/admin/system-info'),
+        fetch('/api/notifications'),
       ]);
 
       if (usersRes.ok) {
@@ -100,6 +102,11 @@ export default function AdminPage() {
       if (systemRes.ok) {
         const systemData = await systemRes.json();
         setSystemInfo(systemData);
+      }
+
+      if (notificationsRes.ok) {
+        const notificationsData = await notificationsRes.json();
+        setNotifications(notificationsData.notifications || []);
       }
     } catch (error) {
       console.error('Error loading admin data:', error);
@@ -184,6 +191,25 @@ export default function AdminPage() {
       alert('Błąd podczas uruchamiania aktualizacji');
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleDeleteNotification = async (id: number) => {
+    if (!confirm('Czy na pewno chcesz usunąć to powiadomienie?')) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/notifications?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        await loadData();
+      } else {
+        const data = await res.json();
+        alert(`Błąd: ${data.error || 'Nieznany błąd'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      alert('Błąd podczas usuwania powiadomienia');
     }
   };
 
@@ -535,23 +561,106 @@ export default function AdminPage() {
 
         {/* Notifications Tab */}
         {activeTab === 'notifications' && (
-          <div className="bg-white border border-gray-200">
-            <div className="border-b border-gray-200 p-4 flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-900">Zarządzanie powiadomieniami</h3>
-              <button
-                onClick={() => setShowNotificationCreator(true)}
-                className="px-4 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors"
-              >
-                + Nowe powiadomienie
-              </button>
+          <div className="space-y-6">
+            <div className="bg-white border border-gray-200">
+              <div className="border-b border-gray-200 p-4 flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-900">Zarządzanie powiadomieniami</h3>
+                <button
+                  onClick={() => setShowNotificationCreator(true)}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors"
+                >
+                  + Nowe powiadomienie
+                </button>
+              </div>
+              <div className="p-6">
+                <p className="text-sm text-gray-600">
+                  Powiadomienia można tworzyć jako globalne (dla wszystkich) lub targetowane (dla konkretnego roku/grup).
+                </p>
+                <p className="text-sm text-gray-600 mt-2">
+                  Typy: Info (niebieskie), Sukces (zielone), Ostrzeżenie (pomarańczowe), Błąd (czerwone)
+                </p>
+              </div>
             </div>
-            <div className="p-6">
-              <p className="text-sm text-gray-600">
-                Powiadomienia można tworzyć jako globalne (dla wszystkich) lub targetowane (dla konkretnego roku/grup).
-              </p>
-              <p className="text-sm text-gray-600 mt-2">
-                Typy: Info (niebieskie), Sukces (zielone), Ostrzeżenie (pomarańczowe), Błąd (czerwone)
-              </p>
+
+            {/* Notifications List */}
+            <div className="bg-white border border-gray-200">
+              <div className="border-b border-gray-200 p-4">
+                <h3 className="text-sm font-medium text-gray-900">Historia powiadomień ({notifications.length})</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        ID
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Typ
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Tytuł
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Wiadomość
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Target
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Data utworzenia
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Akcje
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {notifications.map((notif: any) => (
+                      <tr key={notif.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          #{notif.id}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className={`px-2 py-1 text-xs font-medium ${
+                            notif.type === 'success' ? 'bg-green-100 text-green-800' :
+                            notif.type === 'error' ? 'bg-red-100 text-red-800' :
+                            notif.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {notif.type}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {notif.title}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {notif.message}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {notif.target_rok ? `Rok ${notif.target_rok}` : 'Wszyscy'}
+                          {notif.target_groups && ` (${notif.target_groups})`}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-500">
+                          {formatDate(notif.created_at)}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <button
+                            onClick={() => handleDeleteNotification(notif.id)}
+                            className="text-red-600 hover:text-red-800 text-xs"
+                          >
+                            Usuń
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {notifications.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  Brak powiadomień
+                </div>
+              )}
             </div>
           </div>
         )}

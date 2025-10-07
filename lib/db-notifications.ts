@@ -74,6 +74,17 @@ export async function cleanupOldNotifications(keepLast = 100) {
 }
 
 /**
+ * Delete a specific notification by ID
+ */
+export async function deleteNotification(id: number) {
+  const db = turso;
+  await db.execute({
+    sql: 'DELETE FROM notifications WHERE id = ?',
+    args: [id],
+  });
+}
+
+/**
  * Clear all notifications
  */
 export async function clearAllNotifications() {
