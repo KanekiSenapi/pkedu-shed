@@ -145,14 +145,6 @@ export function UpcomingDaysCalendar({ entries }: UpcomingDaysCalendarProps) {
                 <span className="text-xs text-blue-600">• {getTimeUntil(day.date)}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 border border-blue-200">
-                  {day.entries.length}{' '}
-                  {day.entries.length === 1
-                    ? 'blok zajęć'
-                    : day.entries.length < 5
-                      ? 'bloki zajęć'
-                      : 'bloków zajęć'}
-                </span>
                 {dayHasFreeTimeGap(day.entries) && (
                   <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium border border-orange-300">
                     okienko

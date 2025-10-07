@@ -25,6 +25,18 @@ export function AttendanceStats() {
     if (session && schedule) {
       fetchStats();
     }
+
+    // Listen for attendance updates
+    const handleAttendanceUpdate = () => {
+      if (session && schedule) {
+        fetchStats();
+      }
+    };
+
+    window.addEventListener('attendanceUpdated', handleAttendanceUpdate);
+    return () => {
+      window.removeEventListener('attendanceUpdated', handleAttendanceUpdate);
+    };
   }, [session, schedule]);
 
   const fetchStats = async () => {

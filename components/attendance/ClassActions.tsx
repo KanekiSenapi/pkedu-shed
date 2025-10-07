@@ -90,6 +90,9 @@ export function ClassActions({ date, time, subject }: ClassActionsProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date, time, subject, attended: newAttended }),
       });
+
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent('attendanceUpdated'));
     } catch (error) {
       console.error('Failed to save attendance:', error);
     } finally {
