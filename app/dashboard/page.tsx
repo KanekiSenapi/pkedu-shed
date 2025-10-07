@@ -90,11 +90,11 @@ export default function DashboardPage() {
     return hours * 60 + minutes;
   };
 
-  const hasFreeTimeGap = (currentEntry: ScheduleEntry, index: number): { hasgap: boolean; duration: number } => {
+  const hasFreeTimeGap = (currentEntry: ScheduleEntry, index: number, classList: ScheduleEntry[]): { hasgap: boolean; duration: number } => {
     if (index === 0) return { hasgap: false, duration: 0 };
 
-    const previousEntry = upcomingClasses[index - 1];
-    if (previousEntry.date !== currentEntry.date) return { hasgap: false, duration: 0 };
+    const previousEntry = classList[index - 1];
+    if (!previousEntry || previousEntry.date !== currentEntry.date) return { hasgap: false, duration: 0 };
 
     const gapStart = timeToMinutes(previousEntry.end_time);
     const gapEnd = timeToMinutes(currentEntry.start_time);
@@ -206,7 +206,7 @@ export default function DashboardPage() {
               <div className="space-y-3">
                 {displayedClasses.map((entry, index) => {
                   const isToday = entry.date === new Date().toISOString().split('T')[0];
-                  const freeTimeGap = hasFreeTimeGap(entry, index);
+                  const freeTimeGap = hasFreeTimeGap(entry, index, displayedClasses);
                   const isPast = classesView === 'past';
 
                   return (
