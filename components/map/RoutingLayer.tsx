@@ -38,7 +38,6 @@ export function RoutingLayer({ start, end }: RoutingLayerProps) {
         ],
         routeWhileDragging: false,
         addWaypoints: false,
-        draggableWaypoints: false,
         fitSelectedRoutes: true,
         showAlternatives: false,
         lineOptions: {
@@ -51,8 +50,7 @@ export function RoutingLayer({ start, end }: RoutingLayerProps) {
           serviceUrl: 'https://router.project-osrm.org/route/v1',
           profile: 'foot' // Walking route
         }),
-        createMarker: () => null, // Don't create default markers
-      });
+      } as any);
 
       routingControl.addTo(map);
       routingControlRef.current = routingControl;

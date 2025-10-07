@@ -290,14 +290,6 @@ export function BuildingMappingControls({
             >
               Dalej →
             </button>
-            <button
-              onClick={() => {
-                setCurrentEntrance(null);
-              }}
-              className="px-4 py-2 bg-gray-200 text-gray-700 text-sm hover:bg-gray-300"
-            >
-              Wyczyść
-            </button>
           </div>
         </div>
       )}

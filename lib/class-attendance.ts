@@ -125,7 +125,7 @@ export async function markAttendance(
     });
 
     return {
-      id: result.lastInsertRowid as number,
+      id: Number(result.lastInsertRowid),
       user_id: userId,
       entry_date: date,
       entry_time: time,
