@@ -596,22 +596,10 @@ export function isWeekend(day: string): boolean {
 
 /**
  * Generates a unique ID for a schedule entry
+ * Uses crypto.randomUUID() to ensure uniqueness across multiple schedule loads
  */
-export function generateEntryId(
-  date: string,
-  time: string,
-  group: string,
-  subject: string,
-  stopien?: string,
-  rok?: number,
-  semestr?: number
-): string {
-  // Include stopień, rok, semestr to avoid ID conflicts between different degrees
-  const parts = [date, time, group, subject];
-  if (stopien) parts.push(stopien);
-  if (rok) parts.push(String(rok));
-  if (semestr) parts.push(String(semestr));
-
-  const normalized = parts.join('-').toLowerCase().replace(/\s+/g, '-');
-  return Buffer.from(normalized).toString('base64');
+export function generateEntryId(): string {
+  // Use UUID v4 to guarantee uniqueness
+  // Each entry gets a unique ID even if the same schedule is loaded multiple times
+  return crypto.randomUUID();
 }
