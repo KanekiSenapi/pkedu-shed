@@ -107,3 +107,60 @@ export async function DELETE(request: Request) {
     );
   }
 }
+
+/**
+ * PATCH /api/admin/schedules?id=...&action=activate
+ * Set a specific schedule as active (rollback functionality)
+ */
+export async function PATCH(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const action = searchParams.get('action');
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: 'Schedule ID is required' },
+        { status: 400 }
+      );
+    }
+
+    if (action !== 'activate') {
+      return NextResponse.json(
+        { success: false, error: 'Invalid action' },
+        { status: 400 }
+      );
+    }
+
+    // Check if schedule exists
+    const scheduleResult = await turso.execute({
+      sql: 'SELECT id FROM schedules WHERE id = ?',
+      args: [id],
+    });
+
+    if (scheduleResult.rows.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Schedule not found' },
+        { status: 404 }
+      );
+    }
+
+    // Update created_at to current timestamp to make it the newest (active)
+    const now = new Date().toISOString();
+    await turso.execute({
+      sql: 'UPDATE schedules SET created_at = ? WHERE id = ?',
+      args: [now, id],
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Schedule activated successfully'
+    });
+  } catch (error) {
+    console.error('Error activating schedule:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to activate schedule' },
+      { status: 500 }
+    );
+  }
+}

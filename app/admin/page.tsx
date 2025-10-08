@@ -245,6 +245,26 @@ export default function AdminPage() {
     }
   };
 
+  const handleActivateSchedule = async (id: string) => {
+    if (!confirm('Czy na pewno chcesz przywrócić ten harmonogram jako aktywny? Wszyscy użytkownicy zobaczą ten plan zajęć.')) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/schedules?id=${id}&action=activate`, { method: 'PATCH' });
+      if (res.ok) {
+        await loadData();
+        alert('Harmonogram został ustawiony jako aktywny');
+      } else {
+        const data = await res.json();
+        alert(`Błąd: ${data.error || 'Nieznany błąd'}`);
+      }
+    } catch (error) {
+      console.error('Error activating schedule:', error);
+      alert('Błąd podczas aktywacji harmonogramu');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white border-b border-gray-200">
@@ -903,12 +923,21 @@ export default function AdminPage() {
                           </td>
                           <td className="px-4 py-3 text-sm">
                             {!isActive && (
-                              <button
-                                onClick={() => handleDeleteSchedule(schedule.id)}
-                                className="text-red-600 hover:text-red-800 text-xs"
-                              >
-                                Usuń
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleActivateSchedule(schedule.id)}
+                                  className="text-green-600 hover:text-green-800 text-xs"
+                                >
+                                  Ustaw jako aktywny
+                                </button>
+                                <span className="text-gray-300">|</span>
+                                <button
+                                  onClick={() => handleDeleteSchedule(schedule.id)}
+                                  className="text-red-600 hover:text-red-800 text-xs"
+                                >
+                                  Usuń
+                                </button>
+                              </div>
                             )}
                           </td>
                         </tr>
