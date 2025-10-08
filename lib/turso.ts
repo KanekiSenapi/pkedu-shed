@@ -310,6 +310,13 @@ export async function initDatabase() {
     // Column already exists
   }
 
+  // Migration: Add tryb column to subjects
+  try {
+    await turso.execute(`ALTER TABLE subjects ADD COLUMN tryb TEXT NOT NULL DEFAULT 'stacjonarne'`);
+  } catch (error) {
+    // Column already exists
+  }
+
   // Class notes table
   await turso.execute(`
     CREATE TABLE IF NOT EXISTS class_notes (
