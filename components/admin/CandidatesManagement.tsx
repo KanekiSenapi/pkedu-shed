@@ -209,12 +209,31 @@ export function CandidatesManagement() {
     }
   };
 
+  const cleanSubjectName = (name: string): string => {
+    // Słowa do usunięcia z nazw przedmiotów
+    const wordsToRemove = ['wykład', 'wykłady', 'ćwiczenia', 'ćwiczenie', 'laboratorium', 'lab', 'projekt', 'projekty', 'seminarium'];
+
+    const words = name.trim().split(/\s+/);
+    const cleaned = words.filter(word => {
+      const wordLower = word.toLowerCase();
+      return !wordsToRemove.includes(wordLower);
+    });
+
+    return cleaned.join(' ');
+  };
+
   const generateAbbreviation = (fullName: string): string => {
     // Małe słówka które powinny być małymi literami w skrócie
     const smallWords = ['i', 'w', 'a', 'z', 'do', 'na', 'po', 'o', 'od', 'dla'];
+    // Słowa do pominięcia przy generowaniu skrótu
+    const skipWords = ['wykład', 'wykłady', 'ćwiczenia', 'ćwiczenie', 'laboratorium', 'lab', 'projekt', 'projekty', 'seminarium'];
 
     const words = fullName.trim().split(/\s+/);
     const abbreviation = words
+      .filter(word => {
+        const wordLower = word.toLowerCase();
+        return !skipWords.includes(wordLower);
+      })
       .map(word => {
         const firstLetter = word[0];
         const wordLower = word.toLowerCase();
@@ -236,14 +255,15 @@ export function CandidatesManagement() {
     const hasMultipleWords = candidateValue.trim().includes(' ');
 
     if (hasMultipleWords) {
-      // Więcej niż 1 wyraz = to pełna nazwa, wygeneruj skrót
+      // Więcej niż 1 wyraz = to pełna nazwa, wyczyść i wygeneruj skrót
+      const cleanedName = cleanSubjectName(candidateValue);
       const generatedAbbr = generateAbbreviation(candidateValue);
 
       setFormData({
         type: 'subject',
         candidateValue,
         valueType: 'fullName',
-        fullName: candidateValue,
+        fullName: cleanedName,
         abbreviations: generatedAbbr,
         context,
       });
