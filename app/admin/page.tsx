@@ -10,6 +10,7 @@ import { ScheduleChangesViewer } from '@/components/admin/ScheduleChangesViewer'
 import { InstructorManagement } from '@/components/admin/InstructorManagement';
 import { SubjectManagement } from '@/components/admin/SubjectManagement';
 import { CandidatesManagement } from '@/components/admin/CandidatesManagement';
+import { ParserTester } from '@/components/admin/ParserTester';
 
 interface User {
   id: string;
@@ -39,7 +40,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [reports, setReports] = useState<BugReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'users' | 'reports' | 'stats' | 'notifications' | 'changes' | 'system' | 'instructors' | 'subjects' | 'candidates'>('reports');
+  const [activeTab, setActiveTab] = useState<'users' | 'reports' | 'stats' | 'notifications' | 'changes' | 'system' | 'instructors' | 'subjects' | 'candidates' | 'parser-tester'>('reports');
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showNotificationCreator, setShowNotificationCreator] = useState(false);
@@ -424,6 +425,16 @@ export default function AdminPage() {
             }`}
           >
             Kandydaci
+          </button>
+          <button
+            onClick={() => setActiveTab('parser-tester')}
+            className={`px-4 py-2 text-sm border transition-colors ${
+              activeTab === 'parser-tester'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            Parser Tester
           </button>
         </div>
 
@@ -1010,6 +1021,11 @@ export default function AdminPage() {
         {/* Candidates Management */}
         <div className={activeTab === 'candidates' ? 'block' : 'hidden'}>
           <CandidatesManagement />
+        </div>
+
+        {/* Parser Tester */}
+        <div className={activeTab === 'parser-tester' ? 'block' : 'hidden'}>
+          <ParserTester />
         </div>
       </main>
 
