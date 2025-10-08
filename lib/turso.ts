@@ -179,6 +179,7 @@ export async function initDatabase() {
     CREATE TABLE IF NOT EXISTS subjects (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
+      abbreviations TEXT NOT NULL DEFAULT '[]',
       kierunek TEXT NOT NULL,
       stopien TEXT NOT NULL,
       rok INTEGER NOT NULL,
@@ -313,6 +314,13 @@ export async function initDatabase() {
   // Migration: Add tryb column to subjects
   try {
     await turso.execute(`ALTER TABLE subjects ADD COLUMN tryb TEXT NOT NULL DEFAULT 'stacjonarne'`);
+  } catch (error) {
+    // Column already exists
+  }
+
+  // Migration: Add abbreviations column to subjects
+  try {
+    await turso.execute(`ALTER TABLE subjects ADD COLUMN abbreviations TEXT NOT NULL DEFAULT '[]'`);
   } catch (error) {
     // Column already exists
   }

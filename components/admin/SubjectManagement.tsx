@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 interface Subject {
   id: string;
   name: string;
+  abbreviations: string[];
   kierunek: string;
   stopien: string;
   rok: number;
@@ -27,6 +28,7 @@ export function SubjectManagement() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
+    abbreviations: '',
     kierunek: 'Informatyka',
     stopien: 'I',
     rok: 1,
@@ -91,8 +93,18 @@ export function SubjectManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const abbreviationsArray = formData.abbreviations
+      .split(',')
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
     if (!formData.name) {
       toast.error('Podaj nazwę przedmiotu');
+      return;
+    }
+
+    if (abbreviationsArray.length === 0) {
+      toast.error('Podaj przynajmniej jeden skrót');
       return;
     }
 
@@ -100,8 +112,8 @@ export function SubjectManagement() {
       const url = '/api/admin/subjects';
       const method = editingId ? 'PUT' : 'POST';
       const body = editingId
-        ? { id: editingId, ...formData }
-        : formData;
+        ? { id: editingId, ...formData, abbreviations: abbreviationsArray }
+        : { ...formData, abbreviations: abbreviationsArray };
 
       const res = await fetch(url, {
         method,
@@ -114,6 +126,7 @@ export function SubjectManagement() {
         toast.success(editingId ? 'Zaktualizowano' : 'Dodano przedmiot');
         setFormData({
           name: '',
+          abbreviations: '',
           kierunek: 'Informatyka',
           stopien: 'I',
           rok: 1,
@@ -134,6 +147,7 @@ export function SubjectManagement() {
     setEditingId(subject.id);
     setFormData({
       name: subject.name,
+      abbreviations: subject.abbreviations.join(', '),
       kierunek: subject.kierunek,
       stopien: subject.stopien,
       rok: subject.rok,
@@ -166,6 +180,7 @@ export function SubjectManagement() {
     setEditingId(null);
     setFormData({
       name: '',
+      abbreviations: '',
       kierunek: 'Informatyka',
       stopien: 'I',
       rok: 1,
@@ -289,6 +304,23 @@ export function SubjectManagement() {
                 placeholder="Programowanie obiektowe"
                 required
               />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Skróty (oddzielone przecinkami)
+              </label>
+              <input
+                type="text"
+                value={formData.abbreviations}
+                onChange={(e) => setFormData({ ...formData, abbreviations: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 text-gray-900 focus:outline-none focus:border-blue-500"
+                placeholder="PO, ProgOb, Prog.Obiekt."
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Może być wiele skrótów używanych w planie zajęć
+              </p>
             </div>
 
             <div>
@@ -469,6 +501,9 @@ export function SubjectManagement() {
                   Przedmiot
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  Skróty
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
                   Kierunek
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
@@ -496,6 +531,9 @@ export function SubjectManagement() {
                 <tr key={subject.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm text-gray-900">
                     {subject.name}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {subject.abbreviations.join(', ')}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {subject.kierunek}

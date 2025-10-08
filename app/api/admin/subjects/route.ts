@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
     const subjects = result.rows.map((row: any) => ({
       id: row.id,
       name: row.name,
+      abbreviations: JSON.parse(row.abbreviations || '[]'),
       kierunek: row.kierunek,
       stopien: row.stopien,
       rok: row.rok,
@@ -65,11 +66,18 @@ export async function GET(request: NextRequest) {
 // POST - Create new subject
 export async function POST(request: NextRequest) {
   try {
-    const { name, kierunek, stopien, rok, semestr, tryb } = await request.json();
+    const { name, abbreviations, kierunek, stopien, rok, semestr, tryb } = await request.json();
 
     if (!name || !kierunek || !stopien || rok === undefined || semestr === undefined || !tryb) {
       return NextResponse.json(
         { success: false, error: 'All fields are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!Array.isArray(abbreviations) || abbreviations.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'At least one abbreviation is required' },
         { status: 400 }
       );
     }
@@ -79,10 +87,10 @@ export async function POST(request: NextRequest) {
 
     await turso.execute({
       sql: `
-        INSERT INTO subjects (id, name, kierunek, stopien, rok, semestr, tryb, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO subjects (id, name, abbreviations, kierunek, stopien, rok, semestr, tryb, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
-      args: [id, name, kierunek, stopien, rok, semestr, tryb, now, now],
+      args: [id, name, JSON.stringify(abbreviations), kierunek, stopien, rok, semestr, tryb, now, now],
     });
 
     return NextResponse.json({
@@ -90,6 +98,7 @@ export async function POST(request: NextRequest) {
       subject: {
         id,
         name,
+        abbreviations,
         kierunek,
         stopien,
         rok,
@@ -111,11 +120,18 @@ export async function POST(request: NextRequest) {
 // PUT - Update subject
 export async function PUT(request: NextRequest) {
   try {
-    const { id, name, kierunek, stopien, rok, semestr, tryb } = await request.json();
+    const { id, name, abbreviations, kierunek, stopien, rok, semestr, tryb } = await request.json();
 
     if (!id || !name || !kierunek || !stopien || rok === undefined || semestr === undefined || !tryb) {
       return NextResponse.json(
         { success: false, error: 'All fields are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!Array.isArray(abbreviations) || abbreviations.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'At least one abbreviation is required' },
         { status: 400 }
       );
     }
@@ -125,10 +141,10 @@ export async function PUT(request: NextRequest) {
     await turso.execute({
       sql: `
         UPDATE subjects
-        SET name = ?, kierunek = ?, stopien = ?, rok = ?, semestr = ?, tryb = ?, updated_at = ?
+        SET name = ?, abbreviations = ?, kierunek = ?, stopien = ?, rok = ?, semestr = ?, tryb = ?, updated_at = ?
         WHERE id = ?
       `,
-      args: [name, kierunek, stopien, rok, semestr, tryb, now, id],
+      args: [name, JSON.stringify(abbreviations), kierunek, stopien, rok, semestr, tryb, now, id],
     });
 
     return NextResponse.json({
@@ -136,6 +152,7 @@ export async function PUT(request: NextRequest) {
       subject: {
         id,
         name,
+        abbreviations,
         kierunek,
         stopien,
         rok,
