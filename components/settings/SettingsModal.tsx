@@ -113,6 +113,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     await syncSaveUserPreferences(preferences);
     onClose();
     router.push('/dashboard/student');
+    router.refresh();
   };
 
   const handleInstructorSave = async () => {
@@ -127,6 +128,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     await syncSaveUserPreferences(preferences);
     onClose();
     router.push('/dashboard/instructor');
+    router.refresh();
   };
 
   if (!isOpen) return null;
