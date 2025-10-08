@@ -43,6 +43,12 @@ export async function saveScheduleToDB(schedule: ParsedSchedule): Promise<void> 
   // Insert all entries
   const entriesStart = Date.now();
   let totalEntries = 0;
+  let batchNumber = 0;
+  const BATCH_SIZE = 100;
+  const PROGRESS_LOG_INTERVAL = 500; // Log every 500 entries
+
+  console.log(`[DB] Starting to insert entries (total: ${schedule.sections.reduce((acc, s) => acc + s.entries.length, 0)})`);
+
   for (const section of schedule.sections) {
     for (const entry of section.entries) {
       await turso.execute({
@@ -74,9 +80,19 @@ export async function saveScheduleToDB(schedule: ParsedSchedule): Promise<void> 
         ],
       });
       totalEntries++;
+
+      // Log progress every PROGRESS_LOG_INTERVAL entries
+      if (totalEntries % PROGRESS_LOG_INTERVAL === 0) {
+        const elapsed = Date.now() - entriesStart;
+        const rate = totalEntries / (elapsed / 1000);
+        console.log(`[DB] Progress: ${totalEntries} entries inserted in ${elapsed}ms (${rate.toFixed(1)} entries/sec)`);
+      }
     }
   }
-  console.log(`[DB] Inserted ${totalEntries} entries in ${Date.now() - entriesStart}ms`);
+
+  const entriesElapsed = Date.now() - entriesStart;
+  const rate = totalEntries / (entriesElapsed / 1000);
+  console.log(`[DB] Inserted ${totalEntries} entries in ${entriesElapsed}ms (${rate.toFixed(1)} entries/sec, avg ${(entriesElapsed / totalEntries).toFixed(1)}ms per entry)`);
 
   // If there was a previous schedule, compute and save changes
   if (previousSchedule) {

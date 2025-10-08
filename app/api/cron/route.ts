@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // Max timeout for schedule update
+export const maxDuration = 300; // 5 minutes timeout (needed for large files with I and II stopień)
 
 /**
  * GET /api/cron

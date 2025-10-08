@@ -22,15 +22,28 @@ export const PARSER_VERSION = "4";
  * Parses an Excel file buffer and extracts all schedule data
  */
 export function parseExcelSchedule(buffer: Buffer): ParsedSchedule {
+  const parseStart = Date.now();
+  console.log(`[Parser] Starting Excel parsing (${buffer.length} bytes)...`);
+
+  const workbookStart = Date.now();
   const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: false });
+  console.log(`[Parser] Workbook loaded in ${Date.now() - workbookStart}ms (${workbook.SheetNames.length} sheets)`);
+
   const sections: ScheduleSection[] = [];
 
   // Process each worksheet
-  workbook.SheetNames.forEach(sheetName => {
+  workbook.SheetNames.forEach((sheetName, index) => {
+    const sheetStart = Date.now();
+    console.log(`[Parser] Processing sheet ${index + 1}/${workbook.SheetNames.length}: ${sheetName}`);
+
     const worksheet = workbook.Sheets[sheetName];
     const sheetSections = parseWorksheet(worksheet);
     sections.push(...sheetSections);
+
+    console.log(`[Parser] Sheet ${sheetName} parsed in ${Date.now() - sheetStart}ms (${sheetSections.length} sections, ${sheetSections.reduce((acc, s) => acc + s.entries.length, 0)} entries)`);
   });
+
+  console.log(`[Parser] TOTAL PARSING TIME: ${Date.now() - parseStart}ms (${sections.length} sections, ${sections.reduce((acc, s) => acc + s.entries.length, 0)} entries)`);
 
   return {
     sections,

@@ -9,7 +9,7 @@ import {
 } from '@/lib/schedule-db';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // 60 seconds timeout
+export const maxDuration = 300; // 5 minutes timeout (needed for large files with I and II stopień)
 
 /**
  * GET /api/schedule/fetch
