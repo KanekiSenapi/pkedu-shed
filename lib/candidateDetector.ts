@@ -394,12 +394,12 @@ export async function detectMissingRelations(): Promise<RelationCandidate[]> {
       const instructorParts = instructorAbbr.split('/').map((i: string) => i.trim());
 
       // Find matching subject in context - check both exact match and lowercase
+      // NOTE: Ignoring 'tryb' (stacjonarne/niestacjonarne) as it's always niestacjonarne
       let matchingSubjects = subjectsByAbbr.get(subjectAbbr)?.filter((s: any) =>
         s.kierunek === row.kierunek &&
         s.stopien === row.stopien &&
         s.rok === row.rok &&
-        s.semestr === row.semestr &&
-        s.tryb === row.tryb
+        s.semestr === row.semestr
       ) || [];
 
       // If no exact match, try case-insensitive
@@ -408,8 +408,7 @@ export async function detectMissingRelations(): Promise<RelationCandidate[]> {
           s.kierunek === row.kierunek &&
           s.stopien === row.stopien &&
           s.rok === row.rok &&
-          s.semestr === row.semestr &&
-          s.tryb === row.tryb
+          s.semestr === row.semestr
         ) || [];
       }
 
