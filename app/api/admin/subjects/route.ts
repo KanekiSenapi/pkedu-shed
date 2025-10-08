@@ -82,6 +82,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check for duplicate subjects with same name and context
+    const existingResult = await turso.execute({
+      sql: `
+        SELECT id, name, abbreviations FROM subjects
+        WHERE kierunek = ? AND stopien = ? AND rok = ? AND semestr = ? AND tryb = ?
+      `,
+      args: [kierunek, stopien, rok, semestr, tryb],
+    });
+
+    for (const row of existingResult.rows) {
+      // Check if name matches (case-insensitive)
+      if (String(row.name).toLowerCase() === name.toLowerCase()) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Przedmiot "${name}" już istnieje w tym kontekście (${kierunek} ${stopien}st. R${rok} S${semestr} ${tryb})`
+          },
+          { status: 400 }
+        );
+      }
+
+      // Check if any abbreviation matches
+      const existingAbbrs = JSON.parse(String(row.abbreviations || '[]'));
+      const matchingAbbr = abbreviations.find(abbr =>
+        existingAbbrs.some((existing: string) => existing.toLowerCase() === abbr.toLowerCase())
+      );
+
+      if (matchingAbbr) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Skrót "${matchingAbbr}" już istnieje dla przedmiotu "${row.name}" w tym kontekście`
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const id = randomUUID();
     const now = new Date().toISOString();
 
