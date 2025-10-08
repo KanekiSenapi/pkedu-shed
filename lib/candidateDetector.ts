@@ -66,11 +66,15 @@ export async function detectInstructorCandidates(): Promise<InstructorCandidate[
     // Get all existing instructors with full data
     const instructorsResult = await turso.execute('SELECT id, full_name, abbreviations FROM instructors');
     const existingAbbrs = new Set<string>();
+    const existingFullNames = new Set<string>();
     const instructorsMap = new Map<string, { id: string; full_name: string; abbreviations: string[] }>();
 
     instructorsResult.rows.forEach((row: any) => {
       const abbrs = JSON.parse(row.abbreviations || '[]');
       abbrs.forEach((abbr: string) => existingAbbrs.add(abbr));
+
+      // Also track full names (case-insensitive)
+      existingFullNames.add(String(row.full_name).toLowerCase());
 
       // Store instructor data for matching
       instructorsMap.set(row.id, {
@@ -116,8 +120,8 @@ export async function detectInstructorCandidates(): Promise<InstructorCandidate[
     scheduleResult.rows.forEach((row: any) => {
       const abbr = row.instructor;
 
-      // Skip if already exists in instructors or is ignored
-      if (existingAbbrs.has(abbr) || ignoredAbbrs.has(abbr)) {
+      // Skip if already exists in instructors (abbreviation or full name) or is ignored
+      if (existingAbbrs.has(abbr) || existingFullNames.has(abbr.toLowerCase()) || ignoredAbbrs.has(abbr)) {
         return;
       }
 
@@ -168,9 +172,10 @@ export async function detectInstructorCandidates(): Promise<InstructorCandidate[
       for (const instructor of instructorsMap.values()) {
         const fullNameLower = instructor.full_name.toLowerCase();
 
-        // Check if the candidate is contained in the full name
+        // Check if the candidate is contained in the full name (but not an exact match)
         // e.g., "Dominika Cywicka" is in "dr inż. Dominika Cywicka"
-        if (fullNameLower.includes(candidateLower)) {
+        // But skip if it's an exact match (already filtered above, but double-check)
+        if (fullNameLower.includes(candidateLower) && candidateLower.length < fullNameLower.length) {
           candidate.possibleMatch = {
             id: instructor.id,
             full_name: instructor.full_name,
