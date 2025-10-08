@@ -14,6 +14,7 @@ interface Subject {
   tryb: string;
   created_at: string;
   updated_at: string;
+  instructorCount?: number;
 }
 
 interface Instructor {
@@ -551,12 +552,17 @@ export function SubjectManagement() {
                     {subject.tryb === 'niestacjonarne' ? 'Niestacj.' : 'Stacj.'}
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    <button
-                      onClick={() => handleManageInstructors(subject.id)}
-                      className="text-purple-600 hover:text-purple-700 text-xs"
-                    >
-                      Zarządzaj
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600 text-xs">
+                        {subject.instructorCount || 0}
+                      </span>
+                      <button
+                        onClick={() => handleManageInstructors(subject.id)}
+                        className="text-purple-600 hover:text-purple-700 text-xs"
+                      >
+                        Zarządzaj
+                      </button>
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-sm text-right space-x-2">
                     <button

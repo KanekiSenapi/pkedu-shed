@@ -40,6 +40,17 @@ export async function GET(request: NextRequest) {
 
     const result = await turso.execute({ sql: query, args });
 
+    // Get instructor counts for all subjects
+    const instructorCounts = await turso.execute({
+      sql: 'SELECT subject_id, COUNT(*) as count FROM subject_instructors GROUP BY subject_id',
+      args: [],
+    });
+
+    const countMap = new Map<string, number>();
+    instructorCounts.rows.forEach((row: any) => {
+      countMap.set(row.subject_id, Number(row.count));
+    });
+
     const subjects = result.rows.map((row: any) => ({
       id: row.id,
       name: row.name,
@@ -51,6 +62,7 @@ export async function GET(request: NextRequest) {
       tryb: row.tryb || 'stacjonarne',
       created_at: row.created_at,
       updated_at: row.updated_at,
+      instructorCount: countMap.get(row.id) || 0,
     }));
 
     return NextResponse.json({ success: true, subjects });
