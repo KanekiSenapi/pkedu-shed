@@ -215,10 +215,10 @@ export default function AdminPage() {
 
     setActionLoading('force');
     try {
-      const token = process.env.NEXT_PUBLIC_CRON_SECRET || '';
-      const res = await fetch(`/api/schedule/fetch?force=true&token=${token}`, { method: 'GET' });
+      const res = await fetch('/api/admin/force-update', { method: 'POST' });
       if (res.ok) {
-        alert('Wymuszono aktualizację planu!');
+        const data = await res.json();
+        alert(data.message || 'Wymuszono aktualizację planu!');
         await loadData();
       } else {
         const data = await res.json();
