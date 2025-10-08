@@ -445,7 +445,7 @@ export async function findMatchingRelationsForInstructor(instructorId: string): 
       return [];
     }
 
-    const instructorAbbrs = JSON.parse(instructorResult.rows[0].abbreviations || '[]');
+    const instructorAbbrs = JSON.parse(String(instructorResult.rows[0].abbreviations || '[]'));
 
     // Get all subjects
     const subjectsResult = await turso.execute(
