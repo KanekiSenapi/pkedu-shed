@@ -541,6 +541,96 @@ export function CandidatesManagement() {
     setSelectedRelations(newSelected);
   };
 
+  const toggleSubjectSelection = (abbreviation: string, context: any) => {
+    const key = `${abbreviation}:::${context.kierunek}-${context.stopien}-${context.rok}-${context.semestr}-${context.tryb}`;
+    const newSelected = new Set(selectedSubjects);
+
+    if (newSelected.has(key)) {
+      newSelected.delete(key);
+    } else {
+      newSelected.add(key);
+    }
+
+    setSelectedSubjects(newSelected);
+  };
+
+  const handleBulkAddWithTryb = async (tryb: 'stacjonarne' | 'niestacjonarne') => {
+    if (selectedSubjects.size === 0) return;
+
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const key of selectedSubjects) {
+        const [abbreviation, contextStr] = key.split(':::');
+        const [kierunek, stopien, rok, semestr, oldTryb] = contextStr.split('-');
+
+        // Find the candidate subject
+        const candidate = data?.subjects.find(s =>
+          s.abbreviation === abbreviation &&
+          s.context.kierunek === kierunek &&
+          s.context.stopien === stopien &&
+          s.context.rok === parseInt(rok) &&
+          s.context.semestr === parseInt(semestr) &&
+          s.context.tryb === oldTryb
+        );
+
+        if (!candidate) continue;
+
+        // Treat candidate as full name if it has spaces
+        const hasMultipleWords = abbreviation.trim().includes(' ');
+        let subjectName: string;
+        let subjectAbbrs: string[];
+
+        if (hasMultipleWords) {
+          const cleanedName = cleanSubjectName(abbreviation);
+          const generatedAbbr = generateAbbreviation(abbreviation);
+          subjectName = cleanedName;
+          subjectAbbrs = [generatedAbbr];
+        } else {
+          // Single word - ask user or skip
+          errorCount++;
+          continue;
+        }
+
+        // Add subject with the selected tryb
+        const res = await fetch('/api/admin/subjects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: subjectName,
+            abbreviations: subjectAbbrs,
+            kierunek,
+            stopien,
+            rok: parseInt(rok),
+            semestr: parseInt(semestr),
+            tryb, // Use the selected tryb
+          }),
+        });
+
+        const result = await res.json();
+        if (result.success) {
+          successCount++;
+        } else {
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`Dodano ${successCount} przedmiotów z trybem: ${tryb}`);
+        setSelectedSubjects(new Set());
+        loadCandidates();
+      }
+
+      if (errorCount > 0) {
+        toast.error(`Błąd przy ${errorCount} przedmiotach`);
+      }
+    } catch (error) {
+      console.error('Error adding subjects with tryb:', error);
+      toast.error('Błąd podczas dodawania przedmiotów');
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8">Ładowanie kandydatów...</div>;
   }
@@ -754,6 +844,32 @@ export function CandidatesManagement() {
         {/* Subjects Tab */}
         {activeTab === 'subjects' && (
           <div className="p-6">
+            {selectedSubjects.size > 0 && (
+              <div className="mb-4 flex items-center gap-4">
+                <span className="text-sm text-gray-600">
+                  Zaznaczono: {selectedSubjects.size}
+                </span>
+                <button
+                  onClick={() => handleBulkAddWithTryb('stacjonarne')}
+                  className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm"
+                >
+                  Dodaj jako stacjonarne
+                </button>
+                <button
+                  onClick={() => handleBulkAddWithTryb('niestacjonarne')}
+                  className="px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 transition-colors text-sm"
+                >
+                  Dodaj jako niestacjonarne
+                </button>
+                <button
+                  onClick={() => setSelectedSubjects(new Set())}
+                  className="text-sm text-gray-600 hover:text-gray-800"
+                >
+                  Anuluj
+                </button>
+              </div>
+            )}
+
             {filteredSubjects.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 {searchQuery ? 'Brak wyników wyszukiwania' : 'Nie znaleziono nowych przedmiotów ✓'}
@@ -763,6 +879,32 @@ export function CandidatesManagement() {
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
+                      <th className="px-4 py-3 text-left">
+                        <input
+                          type="checkbox"
+                          checked={filteredSubjects.length > 0 && filteredSubjects.every(s =>
+                            selectedSubjects.has(`${s.abbreviation}:::${s.context.kierunek}-${s.context.stopien}-${s.context.rok}-${s.context.semestr}-${s.context.tryb}`)
+                          )}
+                          onChange={() => {
+                            const allSelected = filteredSubjects.every(s =>
+                              selectedSubjects.has(`${s.abbreviation}:::${s.context.kierunek}-${s.context.stopien}-${s.context.rok}-${s.context.semestr}-${s.context.tryb}`)
+                            );
+                            const newSelected = new Set(selectedSubjects);
+
+                            filteredSubjects.forEach(s => {
+                              const key = `${s.abbreviation}:::${s.context.kierunek}-${s.context.stopien}-${s.context.rok}-${s.context.semestr}-${s.context.tryb}`;
+                              if (allSelected) {
+                                newSelected.delete(key);
+                              } else {
+                                newSelected.add(key);
+                              }
+                            });
+
+                            setSelectedSubjects(newSelected);
+                          }}
+                          className="w-4 h-4 cursor-pointer"
+                        />
+                      </th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
                         Alias
                       </th>
@@ -781,46 +923,57 @@ export function CandidatesManagement() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {filteredSubjects.map((subject, idx) => (
-                      <tr key={`${subject.abbreviation}-${idx}`} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm font-mono text-gray-900">
-                          {subject.abbreviation}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {subject.context.kierunek} {subject.context.stopien}st. R{subject.context.rok} S{subject.context.semestr}
-                          {subject.context.tryb === 'niestacjonarne' && ' (Niestacj.)'}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {subject.occurrences}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {subject.sampleClasses[0] && (
-                            <>
-                              {subject.sampleClasses[0].date} {subject.sampleClasses[0].time}
-                              <br />
-                              {subject.sampleClasses[0].instructor} ({subject.sampleClasses[0].group})
-                            </>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-right space-x-2">
-                          <button
-                            onClick={() => handleAddSubject(subject.abbreviation, subject.context)}
-                            className="text-green-600 hover:text-green-700"
-                          >
-                            Dodaj
-                          </button>
-                          <button
-                            onClick={() => {
-                              const contextStr = `${subject.context.kierunek}-${subject.context.stopien}-${subject.context.rok}-${subject.context.semestr}-${subject.context.tryb}`;
-                              handleIgnore('subject', subject.abbreviation, contextStr);
-                            }}
-                            className="text-gray-600 hover:text-gray-700"
-                          >
-                            Ignoruj
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {filteredSubjects.map((subject, idx) => {
+                      const key = `${subject.abbreviation}:::${subject.context.kierunek}-${subject.context.stopien}-${subject.context.rok}-${subject.context.semestr}-${subject.context.tryb}`;
+                      return (
+                        <tr key={`${subject.abbreviation}-${idx}`} className="hover:bg-gray-50">
+                          <td className="px-4 py-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedSubjects.has(key)}
+                              onChange={() => toggleSubjectSelection(subject.abbreviation, subject.context)}
+                              className="w-4 h-4 cursor-pointer"
+                            />
+                          </td>
+                          <td className="px-4 py-3 text-sm font-mono text-gray-900">
+                            {subject.abbreviation}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {subject.context.kierunek} {subject.context.stopien}st. R{subject.context.rok} S{subject.context.semestr}
+                            {subject.context.tryb === 'niestacjonarne' && ' (Niestacj.)'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {subject.occurrences}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {subject.sampleClasses[0] && (
+                              <>
+                                {subject.sampleClasses[0].date} {subject.sampleClasses[0].time}
+                                <br />
+                                {subject.sampleClasses[0].instructor} ({subject.sampleClasses[0].group})
+                              </>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right space-x-2">
+                            <button
+                              onClick={() => handleAddSubject(subject.abbreviation, subject.context)}
+                              className="text-green-600 hover:text-green-700"
+                            >
+                              Dodaj
+                            </button>
+                            <button
+                              onClick={() => {
+                                const contextStr = `${subject.context.kierunek}-${subject.context.stopien}-${subject.context.rok}-${subject.context.semestr}-${subject.context.tryb}`;
+                                handleIgnore('subject', subject.abbreviation, contextStr);
+                              }}
+                              className="text-gray-600 hover:text-gray-700"
+                            >
+                              Ignoruj
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
