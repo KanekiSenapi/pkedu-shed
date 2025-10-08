@@ -393,4 +393,24 @@ export async function initDatabase() {
   await turso.execute(`
     CREATE INDEX IF NOT EXISTS idx_homework_user_completed ON class_homework(user_id, completed)
   `);
+
+  // Candidate ignores table - for ignoring false positive candidates
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS candidate_ignores (
+      id TEXT PRIMARY KEY,
+      type TEXT NOT NULL,
+      value TEXT NOT NULL,
+      context TEXT,
+      reason TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_candidate_ignores_type ON candidate_ignores(type)
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_candidate_ignores_value ON candidate_ignores(value)
+  `);
 }
