@@ -385,15 +385,13 @@ export async function detectMissingRelations(): Promise<RelationCandidate[]> {
 
     const candidatesMap = new Map<string, RelationCandidate>();
 
+    let debugCounter = 0;
     scheduleResult.rows.forEach((row: any) => {
       const subjectAbbr = row.subject;
       const instructorAbbr = row.instructor;
-      const relationKey = `${subjectAbbr}:::${instructorAbbr}`;
 
-      // Skip if ignored
-      if (ignoredRelations.has(relationKey)) {
-        return;
-      }
+      // Split instructors by "/" to handle multiple instructors
+      const instructorParts = instructorAbbr.split('/').map((i: string) => i.trim());
 
       // Find matching subject in context - check both exact match and lowercase
       let matchingSubjects = subjectsByAbbr.get(subjectAbbr)?.filter((s: any) =>
@@ -415,53 +413,75 @@ export async function detectMissingRelations(): Promise<RelationCandidate[]> {
         ) || [];
       }
 
-      // Find matching instructor - check both exact match and lowercase
-      let matchingInstructor = instructorsByAbbr.get(instructorAbbr);
-      if (!matchingInstructor) {
-        matchingInstructor = instructorsByAbbr.get(instructorAbbr.toLowerCase());
+      // Find matching instructors for each part
+      const matchingInstructors: any[] = [];
+      for (const part of instructorParts) {
+        const relationKey = `${subjectAbbr}:::${part}`;
+
+        // Skip if ignored
+        if (ignoredRelations.has(relationKey)) {
+          continue;
+        }
+
+        let instructor = instructorsByAbbr.get(part);
+        if (!instructor) {
+          instructor = instructorsByAbbr.get(part.toLowerCase());
+        }
+
+        if (instructor) {
+          matchingInstructors.push(instructor);
+        }
+
+        // Debug first 5 pairs
+        if (debugCounter < 5) {
+          console.log(`[Pair ${debugCounter + 1}] Subject: "${subjectAbbr}" -> Found: ${matchingSubjects.length > 0}, Instructor part: "${part}" -> Found: ${!!instructor}`);
+          debugCounter++;
+        }
       }
 
-      // Only include if BOTH exist in database but relation is missing
-      if (matchingSubjects.length > 0 && matchingInstructor) {
-        matchingSubjects.forEach((subject: any) => {
-          const relKey = `${subject.id}:::${matchingInstructor.id}`;
+      // Create relations for each matching instructor
+      if (matchingSubjects.length > 0 && matchingInstructors.length > 0) {
+        matchingInstructors.forEach((matchingInstructor) => {
+          matchingSubjects.forEach((subject: any) => {
+            const relKey = `${subject.id}:::${matchingInstructor.id}`;
 
-          // Skip if relation already exists
-          if (existingRelations.has(relKey)) {
-            return;
-          }
+            // Skip if relation already exists
+            if (existingRelations.has(relKey)) {
+              return;
+            }
 
-          const candidateKey = `${subjectAbbr}-${instructorAbbr}-${subject.id}`;
+            const candidateKey = `${subject.id}-${matchingInstructor.id}`;
 
-          if (!candidatesMap.has(candidateKey)) {
-            candidatesMap.set(candidateKey, {
-              subjectAbbr,
-              instructorAbbr,
-              subjectId: subject.id,
-              instructorId: matchingInstructor.id,
-              subjectName: subject.name,
-              instructorName: matchingInstructor.full_name,
-              occurrences: 0,
-              contexts: [],
-            });
-          }
+            if (!candidatesMap.has(candidateKey)) {
+              candidatesMap.set(candidateKey, {
+                subjectAbbr,
+                instructorAbbr,
+                subjectId: subject.id,
+                instructorId: matchingInstructor.id,
+                subjectName: subject.name,
+                instructorName: matchingInstructor.full_name,
+                occurrences: 0,
+                contexts: [],
+              });
+            }
 
-          const candidate = candidatesMap.get(candidateKey)!;
-          candidate.occurrences += Number(row.count);
+            const candidate = candidatesMap.get(candidateKey)!;
+            candidate.occurrences += Number(row.count);
 
-          // Add context
-          const contextKey = `${row.kierunek}-${row.stopien}-${row.rok}-${row.semestr}-${row.tryb}`;
-          if (!candidate.contexts.some(c =>
-            `${c.kierunek}-${c.stopien}-${c.rok}-${c.semestr}-${c.tryb}` === contextKey
-          )) {
-            candidate.contexts.push({
-              kierunek: row.kierunek,
-              stopien: row.stopien,
-              rok: row.rok,
-              semestr: row.semestr,
-              tryb: row.tryb,
-            });
-          }
+            // Add context
+            const contextKey = `${row.kierunek}-${row.stopien}-${row.rok}-${row.semestr}-${row.tryb}`;
+            if (!candidate.contexts.some(c =>
+              `${c.kierunek}-${c.stopien}-${c.rok}-${c.semestr}-${c.tryb}` === contextKey
+            )) {
+              candidate.contexts.push({
+                kierunek: row.kierunek,
+                stopien: row.stopien,
+                rok: row.rok,
+                semestr: row.semestr,
+                tryb: row.tryb,
+              });
+            }
+          });
         });
       }
     });
