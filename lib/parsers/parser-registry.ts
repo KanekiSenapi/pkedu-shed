@@ -1,5 +1,6 @@
 import { ScheduleParser } from './base-parser';
 import { V1BasicParser } from './v1-basic-parser';
+import { V3DatabaseAwareParser } from './v3-db-aware-parser';
 
 /**
  * Registry of all available schedule parsers
@@ -15,6 +16,10 @@ class ParserRegistry {
     // Register V1 Basic Parser
     const v1Parser = new V1BasicParser();
     this.parsers.set(v1Parser.version, v1Parser);
+
+    // Register V3 Database-Aware Parser
+    const v3Parser = new V3DatabaseAwareParser();
+    this.parsers.set(v3Parser.version, v3Parser);
   }
 
   /**
