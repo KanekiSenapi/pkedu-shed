@@ -44,6 +44,9 @@ export function SubjectManagement() {
   const [selectedInstructorsToAdd, setSelectedInstructorsToAdd] = useState<Set<string>>(new Set());
   const [instructorSearchQuery, setInstructorSearchQuery] = useState('');
 
+  // Multi-select for subjects
+  const [selectedSubjects, setSelectedSubjects] = useState<Set<string>>(new Set());
+
   // Filters
   const [filters, setFilters] = useState({
     kierunek: '',
@@ -280,6 +283,66 @@ export function SubjectManagement() {
     }
   };
 
+  const toggleSubjectSelection = (subjectId: string) => {
+    const newSelected = new Set(selectedSubjects);
+    if (newSelected.has(subjectId)) {
+      newSelected.delete(subjectId);
+    } else {
+      newSelected.add(subjectId);
+    }
+    setSelectedSubjects(newSelected);
+  };
+
+  const handleBulkChangeTryb = async (newTryb: 'stacjonarne' | 'niestacjonarne') => {
+    if (selectedSubjects.size === 0) return;
+    if (!confirm(`Zmienić tryb dla ${selectedSubjects.size} przedmiotów na ${newTryb}?`)) return;
+
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const subjectId of selectedSubjects) {
+        const subject = subjects.find(s => s.id === subjectId);
+        if (!subject) continue;
+
+        const res = await fetch('/api/admin/subjects', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: subject.id,
+            name: subject.name,
+            abbreviations: subject.abbreviations,
+            kierunek: subject.kierunek,
+            stopien: subject.stopien,
+            rok: subject.rok,
+            semestr: subject.semestr,
+            tryb: newTryb,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          successCount++;
+        } else {
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`Zmieniono tryb dla ${successCount} przedmiotów`);
+        setSelectedSubjects(new Set());
+        loadSubjects();
+      }
+
+      if (errorCount > 0) {
+        toast.error(`Błąd przy ${errorCount} przedmiotach`);
+      }
+    } catch (error) {
+      console.error('Error changing tryb:', error);
+      toast.error('Błąd podczas zmiany trybu');
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8">Ładowanie...</div>;
   }
@@ -490,14 +553,62 @@ export function SubjectManagement() {
       {/* List */}
       <div className="bg-white border border-gray-200">
         <div className="p-4 border-b border-gray-200">
-          <h2 className="text-lg font-bold text-gray-900">
-            Lista przedmiotów ({subjects.length})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-gray-900">
+              Lista przedmiotów ({subjects.length})
+            </h2>
+            {selectedSubjects.size > 0 && (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600">
+                  Zaznaczono: {selectedSubjects.size}
+                </span>
+                <button
+                  onClick={() => handleBulkChangeTryb('stacjonarne')}
+                  className="px-3 py-1.5 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm"
+                >
+                  Zmień na stacjonarne
+                </button>
+                <button
+                  onClick={() => handleBulkChangeTryb('niestacjonarne')}
+                  className="px-3 py-1.5 bg-purple-600 text-white hover:bg-purple-700 transition-colors text-sm"
+                >
+                  Zmień na niestacjonarne
+                </button>
+                <button
+                  onClick={() => setSelectedSubjects(new Set())}
+                  className="text-sm text-gray-600 hover:text-gray-800"
+                >
+                  Anuluj
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
+                <th className="px-4 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={subjects.length > 0 && subjects.every(s => selectedSubjects.has(s.id))}
+                    onChange={() => {
+                      const allSelected = subjects.every(s => selectedSubjects.has(s.id));
+                      const newSelected = new Set(selectedSubjects);
+
+                      subjects.forEach(s => {
+                        if (allSelected) {
+                          newSelected.delete(s.id);
+                        } else {
+                          newSelected.add(s.id);
+                        }
+                      });
+
+                      setSelectedSubjects(newSelected);
+                    }}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                </th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
                   Przedmiot
                 </th>
@@ -530,6 +641,14 @@ export function SubjectManagement() {
             <tbody className="divide-y divide-gray-200">
               {subjects.map((subject) => (
                 <tr key={subject.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedSubjects.has(subject.id)}
+                      onChange={() => toggleSubjectSelection(subject.id)}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-900">
                     {subject.name}
                   </td>
