@@ -16,7 +16,7 @@ import {
  * Parser version - increase this when parser logic changes
  * This ensures clients get updates even if the source Excel file hasn't changed
  */
-export const PARSER_VERSION = "2";
+export const PARSER_VERSION = "3";
 
 /**
  * Parses an Excel file buffer and extracts all schedule data
@@ -337,7 +337,15 @@ function parseEntries(
               const actualTime = classInfo.overrideTime || timeRange;
 
               const entry: ScheduleEntry = {
-                id: generateEntryId(currentDate!, `${actualTime.start}-${actualTime.end}`, groupLabel, classInfo.subject),
+                id: generateEntryId(
+                  currentDate!,
+                  `${actualTime.start}-${actualTime.end}`,
+                  groupLabel,
+                  classInfo.subject,
+                  config.stopien,
+                  config.rok,
+                  config.semestr
+                ),
                 date: currentDate!,
                 day: currentDay! as DayOfWeek,
                 time: `${actualTime.start}-${actualTime.end}`,
@@ -365,7 +373,15 @@ function parseEntries(
               const actualTime = classInfo.overrideTime || timeRange;
 
               const entry: ScheduleEntry = {
-                id: generateEntryId(currentDate!, `${actualTime.start}-${actualTime.end}`, group, classInfo.subject),
+                id: generateEntryId(
+                  currentDate!,
+                  `${actualTime.start}-${actualTime.end}`,
+                  group,
+                  classInfo.subject,
+                  config.stopien,
+                  config.rok,
+                  config.semestr
+                ),
                 date: currentDate!,
                 day: currentDay! as DayOfWeek,
                 time: `${actualTime.start}-${actualTime.end}`,

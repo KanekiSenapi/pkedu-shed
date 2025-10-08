@@ -601,8 +601,17 @@ export function generateEntryId(
   date: string,
   time: string,
   group: string,
-  subject: string
+  subject: string,
+  stopien?: string,
+  rok?: number,
+  semestr?: number
 ): string {
-  const normalized = `${date}-${time}-${group}-${subject}`.toLowerCase().replace(/\s+/g, '-');
+  // Include stopień, rok, semestr to avoid ID conflicts between different degrees
+  const parts = [date, time, group, subject];
+  if (stopien) parts.push(stopien);
+  if (rok) parts.push(String(rok));
+  if (semestr) parts.push(String(semestr));
+
+  const normalized = parts.join('-').toLowerCase().replace(/\s+/g, '-');
   return Buffer.from(normalized).toString('base64');
 }
