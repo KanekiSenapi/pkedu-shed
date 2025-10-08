@@ -61,6 +61,25 @@ export function InstructorManagement() {
       return;
     }
 
+    // Check for duplicates (skip when editing)
+    if (!editingId) {
+      const existingAbbrs = new Set(instructors.flatMap(i => i.abbreviations));
+      const existingNames = new Set(instructors.map(i => i.full_name.toLowerCase()));
+
+      // Check if any abbreviation already exists
+      const duplicateAbbr = abbreviationsArray.find(abbr => existingAbbrs.has(abbr));
+      if (duplicateAbbr) {
+        toast.error(`Skrót "${duplicateAbbr}" jest już używany przez innego wykładowcę`);
+        return;
+      }
+
+      // Check if name already exists
+      if (existingNames.has(formData.full_name.toLowerCase())) {
+        toast.error('Wykładowca o tym nazwisku już istnieje w bazie');
+        return;
+      }
+    }
+
     try {
       const url = '/api/admin/instructors';
       const method = editingId ? 'PUT' : 'POST';

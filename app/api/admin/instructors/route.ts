@@ -39,6 +39,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check for duplicate name
+    const existingName = await turso.execute({
+      sql: 'SELECT id FROM instructors WHERE LOWER(full_name) = LOWER(?)',
+      args: [full_name],
+    });
+
+    if (existingName.rows.length > 0) {
+      return NextResponse.json(
+        { success: false, error: 'Instructor with this name already exists' },
+        { status: 409 }
+      );
+    }
+
+    // Check for duplicate abbreviations
+    const allInstructors = await turso.execute('SELECT abbreviations FROM instructors');
+    const existingAbbrs = new Set(
+      allInstructors.rows.flatMap(row =>
+        JSON.parse(row.abbreviations as string) as string[]
+      )
+    );
+
+    const duplicateAbbr = abbreviations.find(abbr => existingAbbrs.has(abbr));
+    if (duplicateAbbr) {
+      return NextResponse.json(
+        { success: false, error: `Abbreviation "${duplicateAbbr}" is already in use` },
+        { status: 409 }
+      );
+    }
+
     const id = randomUUID();
     const now = new Date().toISOString();
 
