@@ -5,8 +5,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/login', '/browse', '/begin'],
-        disallow: ['/api/', '/admin/', '/dashboard/', '/settings/'],
+        allow: ['/', '/login', '/browse', '/map'],
+        disallow: ['/api/', '/admin/', '/dashboard/', '/settings/', '/begin'],
       },
     ],
     sitemap: 'https://plan.pk.edu.pl/sitemap.xml',
