@@ -184,24 +184,49 @@ export default function AdminPage() {
     }
   };
 
-  const handleCronTrigger = async () => {
-    if (!confirm('Czy na pewno chcesz wymusić aktualizację planu zajęć?')) {
+  const handleScheduleLoad = async () => {
+    if (!confirm('Sprawdzić i pobrać plan zajęć z PK? (aktualizuje tylko jeśli plik się zmienił)')) {
       return;
     }
 
-    setActionLoading('cron');
+    setActionLoading('load');
     try {
       const res = await fetch('/api/cron', { method: 'GET' });
       if (res.ok) {
-        alert('Aktualizacja planu rozpoczęta!');
+        const data = await res.json();
+        alert(data.cached ? 'Plan jest aktualny' : 'Plan zaktualizowany!');
         await loadData();
       } else {
         const data = await res.json();
         alert(`Błąd: ${data.error || 'Nieznany błąd'}`);
       }
     } catch (error) {
-      console.error('Error triggering cron:', error);
-      alert('Błąd podczas uruchamiania aktualizacji');
+      console.error('Error loading schedule:', error);
+      alert('Błąd podczas ładowania planu');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleForceUpdate = async () => {
+    if (!confirm('Wymusić aktualizację planu? (parsuje i zapisuje nawet jeśli plik się nie zmienił)\n\nUżyj gdy zmienił się parser ale nie plik.')) {
+      return;
+    }
+
+    setActionLoading('force');
+    try {
+      const token = process.env.NEXT_PUBLIC_CRON_SECRET || '';
+      const res = await fetch(`/api/schedule/fetch?force=true&token=${token}`, { method: 'GET' });
+      if (res.ok) {
+        alert('Wymuszono aktualizację planu!');
+        await loadData();
+      } else {
+        const data = await res.json();
+        alert(`Błąd: ${data.error || 'Nieznany błąd'}`);
+      }
+    } catch (error) {
+      console.error('Error forcing update:', error);
+      alert('Błąd podczas wymuszania aktualizacji');
     } finally {
       setActionLoading(null);
     }
@@ -820,17 +845,34 @@ export default function AdminPage() {
               <div className="p-6 space-y-4">
                 <div className="flex flex-col gap-3">
                   <button
-                    onClick={handleCronTrigger}
-                    disabled={actionLoading === 'cron'}
+                    onClick={handleScheduleLoad}
+                    disabled={actionLoading === 'load'}
                     className="px-4 py-3 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left"
                   >
-                    {actionLoading === 'cron' ? (
-                      <span>⏳ Aktualizowanie planu zajęć...</span>
+                    {actionLoading === 'load' ? (
+                      <span>⏳ Ładowanie planu zajęć...</span>
+                    ) : (
+                      <div>
+                        <div className="font-medium">📥 Załaduj plan zajęć</div>
+                        <div className="text-xs text-blue-100 mt-1">
+                          Pobiera plik z PK i aktualizuje tylko jeśli się zmienił
+                        </div>
+                      </div>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={handleForceUpdate}
+                    disabled={actionLoading === 'force'}
+                    className="px-4 py-3 bg-purple-600 text-white text-sm hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left"
+                  >
+                    {actionLoading === 'force' ? (
+                      <span>⏳ Wymuszanie aktualizacji...</span>
                     ) : (
                       <div>
                         <div className="font-medium">🔄 Wymuś aktualizację planu</div>
-                        <div className="text-xs text-blue-100 mt-1">
-                          Pobiera najnowszy plik z PK i aktualizuje bazę danych
+                        <div className="text-xs text-purple-100 mt-1">
+                          Parsuje i zapisuje nawet jeśli plik się nie zmienił (przydatne gdy zmienił się parser)
                         </div>
                       </div>
                     )}
