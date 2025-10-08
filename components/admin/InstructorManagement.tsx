@@ -20,6 +20,16 @@ export function InstructorManagement() {
     abbreviations: '',
   });
 
+  // Bulk import
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+  const [bulkPreview, setBulkPreview] = useState<Array<{
+    abbreviations: string[];
+    full_name: string;
+    isDuplicate: boolean;
+    duplicateType: 'abbr' | 'name' | null;
+  }>>([]);
+
   useEffect(() => {
     loadInstructors();
   }, []);
@@ -111,12 +121,195 @@ export function InstructorManagement() {
     setFormData({ full_name: '', abbreviations: '' });
   };
 
+  const parseBulkText = (text: string) => {
+    const lines = text.split('\n').filter(line => line.trim());
+    const parsed = lines.map(line => {
+      // Format: "SKRÓT    Imię Nazwisko z tytułami"
+      const parts = line.trim().split(/\s+/);
+      if (parts.length < 2) return null;
+
+      const abbreviation = parts[0].trim();
+      const full_name = parts.slice(1).join(' ').trim();
+
+      if (!abbreviation || !full_name) return null;
+
+      return {
+        abbreviations: [abbreviation],
+        full_name,
+        isDuplicate: false,
+        duplicateType: null as 'abbr' | 'name' | null,
+      };
+    }).filter(Boolean) as typeof bulkPreview;
+
+    // Check for duplicates
+    const existingAbbrs = new Set(instructors.flatMap(i => i.abbreviations));
+    const existingNames = new Set(instructors.map(i => i.full_name.toLowerCase()));
+
+    parsed.forEach(item => {
+      // Check if abbreviation exists
+      if (item.abbreviations.some(abbr => existingAbbrs.has(abbr))) {
+        item.isDuplicate = true;
+        item.duplicateType = 'abbr';
+      }
+      // Check if name exists
+      else if (existingNames.has(item.full_name.toLowerCase())) {
+        item.isDuplicate = true;
+        item.duplicateType = 'name';
+      }
+    });
+
+    setBulkPreview(parsed);
+  };
+
+  const handleBulkImport = async () => {
+    const toImport = bulkPreview.filter(item => !item.isDuplicate);
+
+    if (toImport.length === 0) {
+      toast.error('Brak nowych wykładowców do dodania');
+      return;
+    }
+
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const item of toImport) {
+        try {
+          const res = await fetch('/api/admin/instructors', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              full_name: item.full_name,
+              abbreviations: item.abbreviations,
+            }),
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch (error) {
+          errorCount++;
+        }
+      }
+
+      toast.success(`Dodano ${successCount} wykładowców`);
+      if (errorCount > 0) {
+        toast.error(`Błędów: ${errorCount}`);
+      }
+
+      // Reset and reload
+      setBulkText('');
+      setBulkPreview([]);
+      setShowBulkImport(false);
+      loadInstructors();
+    } catch (error) {
+      toast.error('Błąd importu');
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8">Ładowanie...</div>;
   }
 
   return (
     <div className="space-y-6">
+      {/* Bulk Import Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setShowBulkImport(!showBulkImport)}
+          className="px-4 py-2 bg-green-600 text-white hover:bg-green-700 transition-colors"
+        >
+          {showBulkImport ? 'Zamknij import masowy' : 'Import masowy'}
+        </button>
+      </div>
+
+      {/* Bulk Import Section */}
+      {showBulkImport && (
+        <div className="bg-white border border-gray-200 p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            Import masowy wykładowców
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Wklej listę (format: SKRÓT    Imię Nazwisko)
+              </label>
+              <textarea
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 text-gray-900 focus:outline-none focus:border-blue-500 font-mono text-sm"
+                rows={10}
+                placeholder="OB    dr Olaf Bar&#10;MB    dr hab. inż. Michał Bereta, prof. PK&#10;JB    dr inż. Jerzy Białas"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => parseBulkText(bulkText)}
+                className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              >
+                Sprawdź
+              </button>
+              {bulkPreview.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleBulkImport}
+                  className="px-4 py-2 bg-green-600 text-white hover:bg-green-700 transition-colors"
+                  disabled={bulkPreview.filter(i => !i.isDuplicate).length === 0}
+                >
+                  Importuj ({bulkPreview.filter(i => !i.isDuplicate).length})
+                </button>
+              )}
+            </div>
+
+            {/* Preview */}
+            {bulkPreview.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-sm font-bold text-gray-900 mb-2">
+                  Podgląd ({bulkPreview.length} wykładowców)
+                </h3>
+                <div className="border border-gray-200 max-h-64 overflow-y-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 sticky top-0">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Status</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Skrót</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700">Imię i nazwisko</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {bulkPreview.map((item, idx) => (
+                        <tr key={idx} className={item.isDuplicate ? 'bg-red-50' : 'bg-white'}>
+                          <td className="px-3 py-2">
+                            {item.isDuplicate ? (
+                              <span className="text-xs text-red-600 font-medium">
+                                Duplikat {item.duplicateType === 'abbr' ? 'skrótu' : 'nazwiska'}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-green-600 font-medium">OK</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 font-mono text-xs">{item.abbreviations.join(', ')}</td>
+                          <td className="px-3 py-2 text-xs">{item.full_name}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {bulkPreview.some(i => i.isDuplicate) && (
+                  <p className="text-xs text-red-600 mt-2">
+                    ⚠️ Wykładowcy oznaczeni jako duplikaty nie zostaną zaimportowani
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Form */}
       <div className="bg-white border border-gray-200 p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">
