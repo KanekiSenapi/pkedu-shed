@@ -53,10 +53,10 @@ export default function HomePage() {
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Link
-                href="/browse"
+                href="/dashboard"
                 className="px-8 py-4 bg-blue-600 text-white text-lg font-medium hover:bg-blue-700 transition-colors"
               >
-                Zobacz Plan Zajęć
+                Wejdź jako Gość
               </Link>
               <Link
                 href="/login"
@@ -235,10 +235,10 @@ export default function HomePage() {
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link
-              href="/browse"
+              href="/dashboard"
               className="px-8 py-4 bg-white text-blue-600 text-lg font-medium hover:bg-gray-100 transition-colors"
             >
-              Przeglądaj Plan Bez Logowania
+              Wejdź jako Gość
             </Link>
             <Link
               href="/login"
@@ -265,8 +265,8 @@ export default function HomePage() {
               <h3 className="text-white font-bold mb-4">Szybkie Linki</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="/browse" className="hover:text-white transition-colors">
-                    Przeglądaj Plan
+                  <Link href="/dashboard" className="hover:text-white transition-colors">
+                    Dashboard
                   </Link>
                 </li>
                 <li>
