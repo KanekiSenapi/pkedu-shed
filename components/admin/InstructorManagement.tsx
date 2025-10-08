@@ -30,6 +30,9 @@ export function InstructorManagement() {
     duplicateType: 'abbr' | 'name' | null;
   }>>([]);
 
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     loadInstructors();
   }, []);
@@ -138,6 +141,62 @@ export function InstructorManagement() {
   const cancelEdit = () => {
     setEditingId(null);
     setFormData({ full_name: '', abbreviations: '' });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === instructors.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(instructors.map(i => i.id)));
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    if (!confirm(`Usunąć ${selectedIds.size} wykładowców?`)) return;
+
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const id of selectedIds) {
+        try {
+          const res = await fetch(`/api/admin/instructors?id=${id}`, {
+            method: 'DELETE',
+          });
+
+          const data = await res.json();
+          if (data.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch (error) {
+          errorCount++;
+        }
+      }
+
+      toast.success(`Usunięto ${successCount} wykładowców`);
+      if (errorCount > 0) {
+        toast.error(`Błędów: ${errorCount}`);
+      }
+
+      setSelectedIds(new Set());
+      loadInstructors();
+    } catch (error) {
+      toast.error('Błąd usuwania');
+    }
   };
 
   const parseBulkText = (text: string) => {
@@ -389,14 +448,43 @@ export function InstructorManagement() {
       {/* List */}
       <div className="bg-white border border-gray-200">
         <div className="p-4 border-b border-gray-200">
-          <h2 className="text-lg font-bold text-gray-900">
-            Lista wykładowców ({instructors.length})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-gray-900">
+              Lista wykładowców ({instructors.length})
+            </h2>
+            {selectedIds.size > 0 && (
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600">
+                  Zaznaczono: {selectedIds.size}
+                </span>
+                <button
+                  onClick={handleBulkDelete}
+                  className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 transition-colors text-sm"
+                >
+                  Usuń zaznaczone
+                </button>
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  className="text-sm text-gray-600 hover:text-gray-800"
+                >
+                  Anuluj
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
+                <th className="px-4 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={instructors.length > 0 && selectedIds.size === instructors.length}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                </th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
                   Imię i nazwisko
                 </th>
@@ -411,6 +499,14 @@ export function InstructorManagement() {
             <tbody className="divide-y divide-gray-200">
               {instructors.map((instructor) => (
                 <tr key={instructor.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(instructor.id)}
+                      onChange={() => handleSelectOne(instructor.id)}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-900">
                     {instructor.full_name}
                   </td>
