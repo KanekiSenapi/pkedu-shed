@@ -305,6 +305,8 @@ export async function detectMissingRelations(): Promise<RelationCandidate[]> {
       existingRelations.add(`${row.subject_id}:::${row.instructor_id}`);
     });
 
+    console.log('[detectMissingRelations] Existing relations:', existingRelations.size);
+
     // Get all subjects and instructors
     const subjectsResult = await turso.execute(
       'SELECT id, name, abbreviations, kierunek, stopien, rok, semestr, tryb FROM subjects'
@@ -312,6 +314,9 @@ export async function detectMissingRelations(): Promise<RelationCandidate[]> {
     const instructorsResult = await turso.execute(
       'SELECT id, full_name, abbreviations FROM instructors'
     );
+
+    console.log('[detectMissingRelations] Subjects in DB:', subjectsResult.rows.length);
+    console.log('[detectMissingRelations] Instructors in DB:', instructorsResult.rows.length);
 
     // Build maps for quick lookup - by aliases AND by name
     const subjectsByAbbr = new Map<string, any[]>();
@@ -375,6 +380,8 @@ export async function detectMissingRelations(): Promise<RelationCandidate[]> {
       `,
       args: [],
     });
+
+    console.log('[detectMissingRelations] Schedule pairs found:', scheduleResult.rows.length);
 
     const candidatesMap = new Map<string, RelationCandidate>();
 
@@ -458,6 +465,8 @@ export async function detectMissingRelations(): Promise<RelationCandidate[]> {
         });
       }
     });
+
+    console.log('[detectMissingRelations] Missing relations found:', candidatesMap.size);
 
     return Array.from(candidatesMap.values()).sort((a, b) => b.occurrences - a.occurrences);
   } catch (error) {
