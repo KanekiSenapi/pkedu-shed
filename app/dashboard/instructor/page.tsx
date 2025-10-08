@@ -21,6 +21,7 @@ import { InstructorStats } from '@/components/dashboard/instructor/InstructorSta
 import { SubjectOverview } from '@/components/dashboard/instructor/SubjectOverview';
 import { InstructorUpcomingClasses } from '@/components/dashboard/instructor/InstructorUpcomingClasses';
 import { NextClassCountdown } from '@/components/dashboard/NextClassCountdown';
+import { ScheduleCalendar } from '@/components/calendar/ScheduleCalendar';
 
 export default function InstructorDashboard() {
   const router = useRouter();
@@ -108,12 +109,17 @@ export default function InstructorDashboard() {
         )}
 
         {/* Grid layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Upcoming classes */}
           <InstructorUpcomingClasses classes={upcomingClasses} />
 
           {/* Subject overview */}
           <SubjectOverview subjects={groupedSubjects} />
+        </div>
+
+        {/* Full Calendar */}
+        <div className="mb-6">
+          <ScheduleCalendar entries={filteredEntries} />
         </div>
 
         {/* No classes message */}
