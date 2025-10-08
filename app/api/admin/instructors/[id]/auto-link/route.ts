@@ -6,10 +6,10 @@ import { randomUUID } from 'crypto';
 // POST - Auto-link instructor to subjects based on schedule data
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const instructorId = params.id;
+    const { id: instructorId } = await params;
 
     if (!instructorId) {
       return NextResponse.json(
