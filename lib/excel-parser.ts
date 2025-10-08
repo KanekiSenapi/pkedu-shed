@@ -203,12 +203,6 @@ function findSections(degreeRow: any[], headerRow: any[], groupRow: any[]): Sect
       }
 
       if (groups.length > 0) {
-        // Ignoruj I stopień
-        if (stopien === 'I') {
-          console.log(`[Parser] Skipping I stopień section: ${kierunek} rok ${rok} sem ${semestr} (${tryb})`);
-          continue;
-        }
-
         configs.push({
           kierunek,
           stopien,
