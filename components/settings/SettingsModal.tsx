@@ -132,8 +132,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className="bg-white max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 shadow-lg">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
           <div>
