@@ -59,6 +59,75 @@ export interface RelationCandidate {
 }
 
 /**
+ * Fuzzy match instructor names based on word comparison
+ * Matches abbreviated names like "dr inż. D. Żelasko" to "dr inż. Dariusz Żelasko"
+ */
+function fuzzyMatchInstructorNames(candidate: string, existing: string): boolean {
+  // Tokenize both names into words (split by spaces and dots)
+  const candidateWords = candidate
+    .toLowerCase()
+    .split(/[\s.]+/)
+    .filter(w => w.length > 0);
+
+  const existingWords = existing
+    .toLowerCase()
+    .split(/[\s.]+/)
+    .filter(w => w.length > 0);
+
+  // Academic titles that should match
+  const titles = ['dr', 'inż', 'prof', 'mgr', 'hab', 'phd'];
+
+  // Extract titles from both
+  const candidateTitles = candidateWords.filter(w => titles.includes(w));
+  const existingTitles = existingWords.filter(w => titles.includes(w));
+
+  // Extract non-title words (potential names)
+  const candidateNames = candidateWords.filter(w => !titles.includes(w) && w.length > 0);
+  const existingNames = existingWords.filter(w => !titles.includes(w) && w.length > 0);
+
+  // If candidate has titles, they must all match
+  if (candidateTitles.length > 0) {
+    const allTitlesMatch = candidateTitles.every(title => existingTitles.includes(title));
+    if (!allTitlesMatch) {
+      return false;
+    }
+  }
+
+  // Find the last name (usually the longest word)
+  const candidateLastName = candidateNames.reduce((longest, word) =>
+    word.length > longest.length ? word : longest, '');
+  const existingLastName = existingNames.reduce((longest, word) =>
+    word.length > longest.length ? word : longest, '');
+
+  // Last name must match
+  if (candidateLastName && existingLastName && candidateLastName !== existingLastName) {
+    return false;
+  }
+
+  // Check for abbreviated first names (single letter followed by optional dot)
+  // e.g., "D" or "D." should match "Dariusz"
+  for (const candidateName of candidateNames) {
+    if (candidateName.length === 1) {
+      // Single letter - check if any existing name starts with it
+      const hasMatchingInitial = existingNames.some(existingName =>
+        existingName.length > 1 && existingName[0] === candidateName
+      );
+      if (hasMatchingInitial) {
+        return true;
+      }
+    }
+  }
+
+  // If we have at least one matching name word (besides titles), consider it a match
+  const matchingNames = candidateNames.filter(cn => existingNames.includes(cn));
+  if (matchingNames.length > 0) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Detect instructor abbreviations from schedule that don't exist in instructors table
  */
 export async function detectInstructorCandidates(): Promise<InstructorCandidate[]> {
@@ -162,7 +231,7 @@ export async function detectInstructorCandidates(): Promise<InstructorCandidate[
       }
     });
 
-    // Find possible matches for each candidate
+    // Find possible matches for each candidate using fuzzy matching
     const candidates = Array.from(candidatesMap.values());
 
     candidates.forEach(candidate => {
@@ -174,8 +243,18 @@ export async function detectInstructorCandidates(): Promise<InstructorCandidate[
 
         // Check if the candidate is contained in the full name (but not an exact match)
         // e.g., "Dominika Cywicka" is in "dr inż. Dominika Cywicka"
-        // But skip if it's an exact match (already filtered above, but double-check)
         if (fullNameLower.includes(candidateLower) && candidateLower.length < fullNameLower.length) {
+          candidate.possibleMatch = {
+            id: instructor.id,
+            full_name: instructor.full_name,
+            abbreviations: instructor.abbreviations,
+          };
+          break; // Found a match, stop searching
+        }
+
+        // Fuzzy word-based matching
+        // e.g., "dr inż. D. Żelasko" should match "dr inż. Dariusz Żelasko"
+        if (fuzzyMatchInstructorNames(candidate.abbreviation, instructor.full_name)) {
           candidate.possibleMatch = {
             id: instructor.id,
             full_name: instructor.full_name,
