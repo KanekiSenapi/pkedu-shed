@@ -33,6 +33,9 @@ export function InstructorManagement() {
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+  // Search
+  const [searchQuery, setSearchQuery] = useState('');
+
   useEffect(() => {
     loadInstructors();
   }, []);
@@ -144,10 +147,32 @@ export function InstructorManagement() {
   };
 
   const handleSelectAll = () => {
-    if (selectedIds.size === instructors.length) {
-      setSelectedIds(new Set());
+    // Filter instructors based on current search query
+    const filtered = instructors.filter(instructor => {
+      if (!searchQuery) return true;
+
+      const query = searchQuery.toLowerCase();
+      const nameMatch = instructor.full_name.toLowerCase().includes(query);
+      const abbrMatch = instructor.abbreviations.some(abbr =>
+        abbr.toLowerCase().includes(query)
+      );
+
+      return nameMatch || abbrMatch;
+    });
+
+    const filteredIds = filtered.map(i => i.id);
+    const allFilteredSelected = filteredIds.every(id => selectedIds.has(id));
+
+    if (allFilteredSelected) {
+      // Deselect all filtered instructors
+      const newSelected = new Set(selectedIds);
+      filteredIds.forEach(id => newSelected.delete(id));
+      setSelectedIds(newSelected);
     } else {
-      setSelectedIds(new Set(instructors.map(i => i.id)));
+      // Select all filtered instructors
+      const newSelected = new Set(selectedIds);
+      filteredIds.forEach(id => newSelected.add(id));
+      setSelectedIds(newSelected);
     }
   };
 
@@ -291,6 +316,19 @@ export function InstructorManagement() {
   if (loading) {
     return <div className="text-center py-8">Ładowanie...</div>;
   }
+
+  // Filter instructors based on search query
+  const filteredInstructors = instructors.filter(instructor => {
+    if (!searchQuery) return true;
+
+    const query = searchQuery.toLowerCase();
+    const nameMatch = instructor.full_name.toLowerCase().includes(query);
+    const abbrMatch = instructor.abbreviations.some(abbr =>
+      abbr.toLowerCase().includes(query)
+    );
+
+    return nameMatch || abbrMatch;
+  });
 
   return (
     <div className="space-y-6">
@@ -447,10 +485,10 @@ export function InstructorManagement() {
 
       {/* List */}
       <div className="bg-white border border-gray-200">
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-200 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-gray-900">
-              Lista wykładowców ({instructors.length})
+              Lista wykładowców ({filteredInstructors.length}{searchQuery ? ` z ${instructors.length}` : ''})
             </h2>
             {selectedIds.size > 0 && (
               <div className="flex items-center gap-4">
@@ -472,6 +510,17 @@ export function InstructorManagement() {
               </div>
             )}
           </div>
+
+          {/* Search */}
+          <div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Szukaj po nazwisku lub skrócie..."
+              className="w-full px-3 py-2 border border-gray-300 text-gray-900 text-sm focus:outline-none focus:border-blue-500"
+            />
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -480,7 +529,7 @@ export function InstructorManagement() {
                 <th className="px-4 py-3 text-left">
                   <input
                     type="checkbox"
-                    checked={instructors.length > 0 && selectedIds.size === instructors.length}
+                    checked={filteredInstructors.length > 0 && filteredInstructors.every(i => selectedIds.has(i.id))}
                     onChange={handleSelectAll}
                     className="w-4 h-4 cursor-pointer"
                   />
@@ -497,7 +546,7 @@ export function InstructorManagement() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {instructors.map((instructor) => (
+              {filteredInstructors.map((instructor) => (
                 <tr key={instructor.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <input
@@ -531,9 +580,9 @@ export function InstructorManagement() {
               ))}
             </tbody>
           </table>
-          {instructors.length === 0 && (
+          {filteredInstructors.length === 0 && (
             <div className="text-center py-8 text-gray-500">
-              Brak wykładowców
+              {searchQuery ? 'Brak wyników wyszukiwania' : 'Brak wykładowców'}
             </div>
           )}
         </div>
