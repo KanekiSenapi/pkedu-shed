@@ -68,7 +68,7 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
           <div className="flex items-center space-x-4">
             <Image
               src="/images/logo.png"
-              alt="Plan PK Logo"
+              alt="Logo Plan Zajęć Politechnika Krakowska"
               width={32}
               height={32}
               className="object-contain"

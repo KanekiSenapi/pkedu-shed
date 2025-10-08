@@ -219,7 +219,7 @@ export default function LoginPage() {
           <div className="mb-8 flex items-center gap-4">
             <Image
               src="/images/logo.png"
-              alt="Plan PK Logo"
+              alt="Logo Plan Zajęć Politechnika Krakowska"
               width={64}
               height={64}
               className="object-contain"
