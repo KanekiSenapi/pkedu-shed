@@ -413,6 +413,22 @@ export async function detectMissingRelations(): Promise<RelationCandidate[]> {
         ) || [];
       }
 
+      // Debug context mismatch for first subject
+      if (debugCounter === 0) {
+        const subjectsInMap = subjectsByAbbr.get(subjectAbbr.toLowerCase());
+        if (subjectsInMap && subjectsInMap.length > 0 && matchingSubjects.length === 0) {
+          console.log('[Context Mismatch] Subject found in map but context doesn\'t match:');
+          console.log('  Schedule context:', { kierunek: row.kierunek, stopien: row.stopien, rok: row.rok, semestr: row.semestr, tryb: row.tryb });
+          console.log('  DB subjects:', subjectsInMap.map((s: any) => ({
+            kierunek: s.kierunek,
+            stopien: s.stopien,
+            rok: s.rok,
+            semestr: s.semestr,
+            tryb: s.tryb
+          })));
+        }
+      }
+
       // Find matching instructors for each part
       const matchingInstructors: any[] = [];
       for (const part of instructorParts) {
