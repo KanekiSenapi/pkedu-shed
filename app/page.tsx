@@ -47,10 +47,18 @@ export default function HomePage() {
             <h2 className="text-5xl font-bold text-gray-900 mb-6">
               Kiedy Mam Zajęcia? Sprawdź Plan Zajęć PK
             </h2>
-            <p className="text-xl text-gray-600 mb-8">
+            <p className="text-xl text-gray-600 mb-6">
               Przeglądaj rozkład zajęć i harmonogram dla wszystkich kierunków Politechniki Krakowskiej.
               Kalendarz, powiadomienia o zmianach, mapa kampusu - wszystko w jednym miejscu.
             </p>
+
+            {/* Pilot Notice */}
+            <div className="bg-blue-50 border border-blue-200 px-6 py-4 mb-8 inline-block">
+              <p className="text-sm text-blue-800">
+                <span className="font-semibold">Program pilotażowy:</span> Obecnie dostępne tylko dla{' '}
+                <span className="font-semibold">Wydziału Informatyki i Telekomunikacji</span>
+              </p>
+            </div>
             <div className="flex gap-4 justify-center flex-wrap">
               <Link
                 href="/login?mode=guest"
