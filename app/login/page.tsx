@@ -44,6 +44,7 @@ function LoginPageContent() {
   const [rok, setRok] = useState<number | null>(null);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [selectedInstructor, setSelectedInstructor] = useState<string>('');
+  const [instructorsFromDB, setInstructorsFromDB] = useState<Array<{ id: string; full_name: string }>>([]);
 
   // Get available options from schedule
   const availableStopnie = [...new Set(schedule?.sections.map(s => s.stopien) || [])];
@@ -60,14 +61,25 @@ function LoginPageContent() {
         .filter(g => !g.includes(',')) || []
     ),
   ].sort();
-  const instructors = [
-    ...new Set(
-      schedule?.sections
-        .flatMap(s => s.entries)
-        .map(e => e.class_info.instructor)
-        .filter((i): i is string => Boolean(i)) || []
-    ),
-  ].sort();
+
+  // Load instructors from database when guest mode is active
+  useEffect(() => {
+    if (mode === 'guest' && guestStep === 'instructor') {
+      loadInstructors();
+    }
+  }, [mode, guestStep]);
+
+  const loadInstructors = async () => {
+    try {
+      const res = await fetch('/api/admin/instructors');
+      const data = await res.json();
+      if (data.success) {
+        setInstructorsFromDB(data.instructors);
+      }
+    } catch (error) {
+      console.error('Error loading instructors:', error);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -559,12 +571,15 @@ function LoginPageContent() {
                   className="w-full p-3 border border-gray-300 focus:border-blue-500 focus:outline-none bg-white"
                 >
                   <option value="">Wybierz prowadzącego...</option>
-                  {instructors.map(instructor => (
-                    <option key={instructor} value={instructor}>
-                      {instructor}
+                  {instructorsFromDB.map(instructor => (
+                    <option key={instructor.id} value={instructor.full_name}>
+                      {instructor.full_name}
                     </option>
                   ))}
                 </select>
+                {instructorsFromDB.length === 0 && (
+                  <p className="text-xs text-gray-500 mt-2">Ładowanie listy prowadzących...</p>
+                )}
               </div>
 
               <button
