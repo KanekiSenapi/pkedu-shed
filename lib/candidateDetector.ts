@@ -424,3 +424,98 @@ export async function detectMissingRelations(): Promise<RelationCandidate[]> {
     return [];
   }
 }
+
+/**
+ * Find all matching relations for a specific instructor
+ * Used after adding a new instructor to auto-link with subjects
+ */
+export async function findMatchingRelationsForInstructor(instructorId: string): Promise<Array<{
+  subjectId: string;
+  subjectName: string;
+  occurrences: number;
+}>> {
+  try {
+    // Get instructor data
+    const instructorResult = await turso.execute({
+      sql: 'SELECT abbreviations FROM instructors WHERE id = ?',
+      args: [instructorId],
+    });
+
+    if (instructorResult.rows.length === 0) {
+      return [];
+    }
+
+    const instructorAbbrs = JSON.parse(instructorResult.rows[0].abbreviations || '[]');
+
+    // Get all subjects
+    const subjectsResult = await turso.execute(
+      'SELECT id, name, abbreviations, kierunek, stopien, rok, semestr, tryb FROM subjects'
+    );
+
+    // Build subject lookup by abbreviation and context
+    const subjectsByAbbrAndContext = new Map<string, any>();
+    subjectsResult.rows.forEach((row: any) => {
+      const abbrs = JSON.parse(row.abbreviations || '[]');
+      const context = `${row.kierunek}-${row.stopien}-${row.rok}-${row.semestr}-${row.tryb}`;
+
+      abbrs.forEach((abbr: string) => {
+        const key = `${abbr}:::${context}`;
+        subjectsByAbbrAndContext.set(key, row);
+      });
+    });
+
+    // Get existing relations for this instructor
+    const existingRelResult = await turso.execute({
+      sql: 'SELECT subject_id FROM subject_instructors WHERE instructor_id = ?',
+      args: [instructorId],
+    });
+    const existingSubjectIds = new Set(existingRelResult.rows.map((r: any) => r.subject_id));
+
+    // Find matching entries in schedule
+    const matchingSubjects = new Map<string, { subjectId: string; subjectName: string; occurrences: number }>();
+
+    for (const instructorAbbr of instructorAbbrs) {
+      const scheduleResult = await turso.execute({
+        sql: `
+          SELECT
+            subject,
+            kierunek,
+            stopien,
+            rok,
+            semestr,
+            tryb,
+            COUNT(*) as count
+          FROM schedule_entries
+          WHERE instructor = ?
+          GROUP BY subject, kierunek, stopien, rok, semestr, tryb
+        `,
+        args: [instructorAbbr],
+      });
+
+      scheduleResult.rows.forEach((row: any) => {
+        const context = `${row.kierunek}-${row.stopien}-${row.rok}-${row.semestr}-${row.tryb}`;
+        const key = `${row.subject}:::${context}`;
+
+        const matchingSubject = subjectsByAbbrAndContext.get(key);
+
+        if (matchingSubject && !existingSubjectIds.has(matchingSubject.id)) {
+          if (!matchingSubjects.has(matchingSubject.id)) {
+            matchingSubjects.set(matchingSubject.id, {
+              subjectId: matchingSubject.id,
+              subjectName: matchingSubject.name,
+              occurrences: 0,
+            });
+          }
+
+          const entry = matchingSubjects.get(matchingSubject.id)!;
+          entry.occurrences += Number(row.count);
+        }
+      });
+    }
+
+    return Array.from(matchingSubjects.values()).sort((a, b) => b.occurrences - a.occurrences);
+  } catch (error) {
+    console.error('Error finding matching relations for instructor:', error);
+    return [];
+  }
+}

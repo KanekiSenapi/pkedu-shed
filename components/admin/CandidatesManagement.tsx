@@ -179,6 +179,17 @@ export function CandidatesManagement() {
       const result = await res.json();
       if (result.success) {
         toast.success('Dodano skrót do istniejącego wykładowcy');
+
+        // Auto-link to subjects with new abbreviation
+        const autoLinkRes = await fetch(`/api/admin/instructors/${instructorId}/auto-link`, {
+          method: 'POST',
+        });
+
+        const autoLinkResult = await autoLinkRes.json();
+        if (autoLinkResult.success && autoLinkResult.linked > 0) {
+          toast.success(`Automatycznie połączono z ${autoLinkResult.linked} przedmiotami`);
+        }
+
         loadCandidates();
       } else {
         toast.error(result.error || 'Błąd');
@@ -215,6 +226,18 @@ export function CandidatesManagement() {
         if (result.success) {
           toast.success('Dodano wykładowcę');
           setShowAddForm(false);
+
+          // Auto-link to subjects
+          const instructorId = result.instructor.id;
+          const autoLinkRes = await fetch(`/api/admin/instructors/${instructorId}/auto-link`, {
+            method: 'POST',
+          });
+
+          const autoLinkResult = await autoLinkRes.json();
+          if (autoLinkResult.success && autoLinkResult.linked > 0) {
+            toast.success(`Automatycznie połączono z ${autoLinkResult.linked} przedmiotami`);
+          }
+
           loadCandidates();
         } else {
           toast.error(result.error || 'Błąd');
