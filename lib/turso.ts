@@ -159,6 +159,39 @@ export async function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)
   `);
 
+  // Instructors table - for managing instructor names and abbreviations
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS instructors (
+      id TEXT PRIMARY KEY,
+      full_name TEXT NOT NULL,
+      abbreviations TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_instructors_name ON instructors(full_name)
+  `);
+
+  // Subjects table - for managing subjects assigned to specific year/semester
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS subjects (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      kierunek TEXT NOT NULL,
+      stopien TEXT NOT NULL,
+      rok INTEGER NOT NULL,
+      semestr INTEGER NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_subjects_filters ON subjects(kierunek, stopien, rok, semestr)
+  `);
+
   // User preferences table
   await turso.execute(`
     CREATE TABLE IF NOT EXISTS user_preferences (
