@@ -19,6 +19,11 @@ interface InstructorCandidate {
     subject: string;
     group: string;
   }>;
+  possibleMatch?: {
+    id: string;
+    full_name: string;
+    abbreviations: string[];
+  };
 }
 
 interface SubjectCandidate {
@@ -134,6 +139,53 @@ export function CandidatesManagement() {
       context: null,
     });
     setShowAddForm(true);
+  };
+
+  const handleAddToExistingInstructor = async (instructorId: string, abbreviation: string, fullName: string) => {
+    if (!confirm(`Dodać skrót "${abbreviation}" do wykładowcy "${fullName}"?`)) {
+      return;
+    }
+
+    try {
+      // First, get current abbreviations
+      const getRes = await fetch('/api/admin/instructors');
+      const getData = await getRes.json();
+
+      if (!getData.success) {
+        toast.error('Błąd ładowania wykładowcy');
+        return;
+      }
+
+      const instructor = getData.instructors.find((i: any) => i.id === instructorId);
+      if (!instructor) {
+        toast.error('Nie znaleziono wykładowcy');
+        return;
+      }
+
+      // Add new abbreviation
+      const updatedAbbrs = [...instructor.abbreviations, abbreviation];
+
+      // Update instructor
+      const res = await fetch('/api/admin/instructors', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: instructorId,
+          full_name: instructor.full_name,
+          abbreviations: updatedAbbrs,
+        }),
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        toast.success('Dodano skrót do istniejącego wykładowcy');
+        loadCandidates();
+      } else {
+        toast.error(result.error || 'Błąd');
+      }
+    } catch (error) {
+      toast.error('Błąd aktualizacji');
+    }
   };
 
   const handleAddSubject = (abbreviation: string, context: any) => {
@@ -383,6 +435,9 @@ export function CandidatesManagement() {
                         Skrót
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                        Możliwe dopasowanie
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
                         Wystąpienia
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
@@ -398,9 +453,21 @@ export function CandidatesManagement() {
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {filteredInstructors.map((instructor) => (
-                      <tr key={instructor.abbreviation} className="hover:bg-gray-50">
+                      <tr key={instructor.abbreviation} className={instructor.possibleMatch ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'}>
                         <td className="px-4 py-3 text-sm font-mono text-gray-900">
                           {instructor.abbreviation}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {instructor.possibleMatch ? (
+                            <div>
+                              <div className="font-medium text-blue-900">{instructor.possibleMatch.full_name}</div>
+                              <div className="text-xs text-blue-700 font-mono">
+                                {instructor.possibleMatch.abbreviations.join(', ')}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
                           {instructor.occurrences}
@@ -418,12 +485,33 @@ export function CandidatesManagement() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-sm text-right space-x-2">
-                          <button
-                            onClick={() => handleAddInstructor(instructor.abbreviation)}
-                            className="text-green-600 hover:text-green-700"
-                          >
-                            Dodaj
-                          </button>
+                          {instructor.possibleMatch ? (
+                            <>
+                              <button
+                                onClick={() => handleAddToExistingInstructor(
+                                  instructor.possibleMatch!.id,
+                                  instructor.abbreviation,
+                                  instructor.possibleMatch!.full_name
+                                )}
+                                className="text-blue-600 hover:text-blue-700 font-medium"
+                              >
+                                Dodaj skrót
+                              </button>
+                              <button
+                                onClick={() => handleAddInstructor(instructor.abbreviation)}
+                                className="text-green-600 hover:text-green-700"
+                              >
+                                Dodaj nowy
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => handleAddInstructor(instructor.abbreviation)}
+                              className="text-green-600 hover:text-green-700"
+                            >
+                              Dodaj
+                            </button>
+                          )}
                           <button
                             onClick={() => handleIgnore('instructor', instructor.abbreviation)}
                             className="text-gray-600 hover:text-gray-700"

@@ -16,6 +16,11 @@ export interface InstructorCandidate {
     subject: string;
     group: string;
   }>;
+  possibleMatch?: {
+    id: string;
+    full_name: string;
+    abbreviations: string[];
+  };
 }
 
 export interface SubjectCandidate {
@@ -58,13 +63,21 @@ export interface RelationCandidate {
  */
 export async function detectInstructorCandidates(): Promise<InstructorCandidate[]> {
   try {
-    // Get all existing instructor abbreviations
-    const instructorsResult = await turso.execute('SELECT abbreviations FROM instructors');
+    // Get all existing instructors with full data
+    const instructorsResult = await turso.execute('SELECT id, full_name, abbreviations FROM instructors');
     const existingAbbrs = new Set<string>();
+    const instructorsMap = new Map<string, { id: string; full_name: string; abbreviations: string[] }>();
 
     instructorsResult.rows.forEach((row: any) => {
       const abbrs = JSON.parse(row.abbreviations || '[]');
       abbrs.forEach((abbr: string) => existingAbbrs.add(abbr));
+
+      // Store instructor data for matching
+      instructorsMap.set(row.id, {
+        id: row.id,
+        full_name: row.full_name,
+        abbreviations: abbrs,
+      });
     });
 
     // Get all ignored candidates
@@ -145,7 +158,30 @@ export async function detectInstructorCandidates(): Promise<InstructorCandidate[
       }
     });
 
-    return Array.from(candidatesMap.values()).sort((a, b) => b.occurrences - a.occurrences);
+    // Find possible matches for each candidate
+    const candidates = Array.from(candidatesMap.values());
+
+    candidates.forEach(candidate => {
+      const candidateLower = candidate.abbreviation.toLowerCase();
+
+      // Check if candidate matches any existing instructor's full name
+      for (const instructor of instructorsMap.values()) {
+        const fullNameLower = instructor.full_name.toLowerCase();
+
+        // Check if the candidate is contained in the full name
+        // e.g., "Dominika Cywicka" is in "dr inż. Dominika Cywicka"
+        if (fullNameLower.includes(candidateLower)) {
+          candidate.possibleMatch = {
+            id: instructor.id,
+            full_name: instructor.full_name,
+            abbreviations: instructor.abbreviations,
+          };
+          break; // Found a match, stop searching
+        }
+      }
+    });
+
+    return candidates.sort((a, b) => b.occurrences - a.occurrences);
   } catch (error) {
     console.error('Error detecting instructor candidates:', error);
     return [];
