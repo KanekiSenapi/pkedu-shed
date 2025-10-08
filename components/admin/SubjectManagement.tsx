@@ -296,7 +296,15 @@ export function SubjectManagement() {
               </label>
               <select
                 value={formData.rok}
-                onChange={(e) => setFormData({ ...formData, rok: parseInt(e.target.value) })}
+                onChange={(e) => {
+                  const newRok = parseInt(e.target.value);
+                  setFormData({
+                    ...formData,
+                    rok: newRok,
+                    // Auto-adjust semester to match new year (rok 1 = sem 1, rok 2 = sem 3, etc.)
+                    semestr: (newRok - 1) * 2 + 1
+                  });
+                }}
                 className="w-full px-3 py-2 border border-gray-300 text-gray-900 focus:outline-none focus:border-blue-500"
               >
                 {[1, 2, 3, 4, 5].map(r => (
@@ -314,8 +322,12 @@ export function SubjectManagement() {
                 onChange={(e) => setFormData({ ...formData, semestr: parseInt(e.target.value) })}
                 className="w-full px-3 py-2 border border-gray-300 text-gray-900 focus:outline-none focus:border-blue-500"
               >
-                <option value={1}>Semestr 1 (zimowy)</option>
-                <option value={2}>Semestr 2 (letni)</option>
+                <option value={(formData.rok - 1) * 2 + 1}>
+                  Semestr {(formData.rok - 1) * 2 + 1} (zimowy)
+                </option>
+                <option value={(formData.rok - 1) * 2 + 2}>
+                  Semestr {(formData.rok - 1) * 2 + 2} (letni)
+                </option>
               </select>
             </div>
 
@@ -394,8 +406,11 @@ export function SubjectManagement() {
             className="px-3 py-2 border border-gray-300 text-sm text-gray-900 focus:outline-none focus:border-blue-500"
           >
             <option value="">Wszystkie semestry</option>
-            <option value="1">Semestr 1</option>
-            <option value="2">Semestr 2</option>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => (
+              <option key={s} value={s}>
+                Semestr {s} {s % 2 === 1 ? '(zimowy)' : '(letni)'}
+              </option>
+            ))}
           </select>
 
           <select
