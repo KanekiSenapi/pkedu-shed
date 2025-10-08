@@ -50,6 +50,8 @@ export default function AdminPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [localStorageHash, setLocalStorageHash] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [schedules, setSchedules] = useState<any[]>([]);
+  const [activeScheduleId, setActiveScheduleId] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -80,12 +82,13 @@ export default function AdminPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [usersRes, reportsRes, statsRes, systemRes, notificationsRes] = await Promise.all([
+      const [usersRes, reportsRes, statsRes, systemRes, notificationsRes, schedulesRes] = await Promise.all([
         fetch('/api/admin/users'),
         fetch('/api/admin/bug-reports'),
         fetch('/api/admin/login-stats'),
         fetch('/api/admin/system-info'),
         fetch('/api/notifications'),
+        fetch('/api/admin/schedules'),
       ]);
 
       if (usersRes.ok) {
@@ -111,6 +114,12 @@ export default function AdminPage() {
       if (notificationsRes.ok) {
         const notificationsData = await notificationsRes.json();
         setNotifications(notificationsData.notifications || []);
+      }
+
+      if (schedulesRes.ok) {
+        const schedulesData = await schedulesRes.json();
+        setSchedules(schedulesData.schedules || []);
+        setActiveScheduleId(schedulesData.activeScheduleId || null);
       }
     } catch (error) {
       console.error('Error loading admin data:', error);
@@ -214,6 +223,25 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Error deleting notification:', error);
       alert('Błąd podczas usuwania powiadomienia');
+    }
+  };
+
+  const handleDeleteSchedule = async (id: string) => {
+    if (!confirm('Czy na pewno chcesz usunąć ten harmonogram? Zostaną usunięte wszystkie powiązane wpisy.')) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/schedules?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        await loadData();
+      } else {
+        const data = await res.json();
+        alert(`Błąd: ${data.error || 'Nieznany błąd'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting schedule:', error);
+      alert('Błąd podczas usuwania harmonogramu');
     }
   };
 
@@ -810,6 +838,90 @@ export default function AdminPage() {
                   ⚠️ Te operacje są nieodwracalne. Upewnij się przed wykonaniem!
                 </div>
               </div>
+            </div>
+
+            {/* Schedules List */}
+            <div className="bg-white border border-gray-200">
+              <div className="border-b border-gray-200 p-4">
+                <h3 className="text-sm font-medium text-gray-900">Lista harmonogramów ({schedules.length})</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Status
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Hash pliku
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Nazwa pliku
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Liczba wpisów
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Ostatnia aktualizacja
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Data utworzenia
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Akcje
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {schedules.map((schedule) => {
+                      const isActive = schedule.id === activeScheduleId;
+                      return (
+                        <tr key={schedule.id} className={isActive ? 'bg-green-50' : 'hover:bg-gray-50'}>
+                          <td className="px-4 py-3 text-sm">
+                            {isActive ? (
+                              <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                                AKTYWNY
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-xs">-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-xs font-mono text-gray-900 break-all max-w-xs">
+                            {schedule.file_hash}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {schedule.file_name || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {schedule.entries_count.toLocaleString('pl-PL')}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-500">
+                            {formatDate(schedule.last_updated)}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-500">
+                            {formatDate(schedule.created_at)}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {!isActive && (
+                              <button
+                                onClick={() => handleDeleteSchedule(schedule.id)}
+                                className="text-red-600 hover:text-red-800 text-xs"
+                              >
+                                Usuń
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {schedules.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  Brak harmonogramów
+                </div>
+              )}
             </div>
           </div>
         </div>

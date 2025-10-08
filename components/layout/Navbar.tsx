@@ -24,7 +24,7 @@ export function Navbar() {
           {/* Logo/Brand */}
           <div className="flex items-center space-x-4">
             <h1 className="text-lg font-bold text-gray-900">
-              Plan Zajęć
+              Wirtualny Student
             </h1>
             <div className="hidden md:flex items-center space-x-3">
               <div className="h-3 w-px bg-gray-300"></div>
