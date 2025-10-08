@@ -198,19 +198,25 @@ export async function detectInstructorCandidates(): Promise<InstructorCandidate[
  */
 export async function detectSubjectCandidates(): Promise<SubjectCandidate[]> {
   try {
-    // Get all existing subjects with their abbreviations and context
+    // Get all existing subjects with their abbreviations, names and context
     const subjectsResult = await turso.execute(
-      'SELECT abbreviations, kierunek, stopien, rok, semestr, tryb FROM subjects'
+      'SELECT name, abbreviations, kierunek, stopien, rok, semestr, tryb FROM subjects'
     );
 
-    // Build a set of existing abbreviations per context
+    // Build a set of existing abbreviations per context AND full names per context
     const existingSubjects = new Set<string>();
+    const existingSubjectNames = new Set<string>();
+
     subjectsResult.rows.forEach((row: any) => {
       const abbrs = JSON.parse(row.abbreviations || '[]');
       const context = `${row.kierunek}-${row.stopien}-${row.rok}-${row.semestr}-${row.tryb}`;
+
       abbrs.forEach((abbr: string) => {
         existingSubjects.add(`${abbr}:::${context}`);
       });
+
+      // Track full names per context (case-insensitive)
+      existingSubjectNames.add(`${String(row.name).toLowerCase()}:::${context}`);
     });
 
     // Get ignored candidates
@@ -252,9 +258,10 @@ export async function detectSubjectCandidates(): Promise<SubjectCandidate[]> {
       const abbr = row.subject;
       const context = `${row.kierunek}-${row.stopien}-${row.rok}-${row.semestr}-${row.tryb}`;
       const key = `${abbr}:::${context}`;
+      const nameKey = `${abbr.toLowerCase()}:::${context}`;
 
-      // Skip if already exists or is ignored
-      if (existingSubjects.has(key) || ignoredSubjects.has(key)) {
+      // Skip if already exists (as abbreviation or full name) or is ignored
+      if (existingSubjects.has(key) || existingSubjectNames.has(nameKey) || ignoredSubjects.has(key)) {
         return;
       }
 
