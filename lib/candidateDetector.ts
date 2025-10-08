@@ -204,15 +204,19 @@ export async function detectSubjectCandidates(): Promise<SubjectCandidate[]> {
     );
 
     // Build a set of existing abbreviations per context AND full names per context
+    // NOTE: Ignoring 'tryb' (stacjonarne/niestacjonarne) as it should always be niestacjonarne
     const existingSubjects = new Set<string>();
     const existingSubjectNames = new Set<string>();
 
     subjectsResult.rows.forEach((row: any) => {
       const abbrs = JSON.parse(row.abbreviations || '[]');
-      const context = `${row.kierunek}-${row.stopien}-${row.rok}-${row.semestr}-${row.tryb}`;
+      const context = `${row.kierunek}-${row.stopien}-${row.rok}-${row.semestr}`;
 
       abbrs.forEach((abbr: string) => {
+        // Add exact match
         existingSubjects.add(`${abbr}:::${context}`);
+        // Add case-insensitive match for aliases
+        existingSubjects.add(`${abbr.toLowerCase()}:::${context}`);
       });
 
       // Track full names per context (case-insensitive)
@@ -256,12 +260,13 @@ export async function detectSubjectCandidates(): Promise<SubjectCandidate[]> {
 
     scheduleResult.rows.forEach((row: any) => {
       const abbr = row.subject;
-      const context = `${row.kierunek}-${row.stopien}-${row.rok}-${row.semestr}-${row.tryb}`;
+      const context = `${row.kierunek}-${row.stopien}-${row.rok}-${row.semestr}`;
       const key = `${abbr}:::${context}`;
-      const nameKey = `${abbr.toLowerCase()}:::${context}`;
+      const lowerKey = `${abbr.toLowerCase()}:::${context}`;
+      const ignoreKey = `${abbr}:::${row.kierunek}-${row.stopien}-${row.rok}-${row.semestr}-${row.tryb}`;
 
-      // Skip if already exists (as abbreviation or full name) or is ignored
-      if (existingSubjects.has(key) || existingSubjectNames.has(nameKey) || ignoredSubjects.has(key)) {
+      // Skip if already exists (as abbreviation, case-insensitive abbreviation, or full name) or is ignored
+      if (existingSubjects.has(key) || existingSubjects.has(lowerKey) || existingSubjectNames.has(lowerKey) || ignoredSubjects.has(ignoreKey)) {
         return;
       }
 
