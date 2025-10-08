@@ -209,15 +209,56 @@ export function CandidatesManagement() {
     }
   };
 
+  const generateAbbreviation = (fullName: string): string => {
+    // Małe słówka które powinny być małymi literami w skrócie
+    const smallWords = ['i', 'w', 'a', 'z', 'do', 'na', 'po', 'o', 'od', 'dla'];
+
+    const words = fullName.trim().split(/\s+/);
+    const abbreviation = words
+      .map(word => {
+        const firstLetter = word[0];
+        const wordLower = word.toLowerCase();
+
+        // Jeśli to małe słówko, użyj małej litery
+        if (smallWords.includes(wordLower)) {
+          return firstLetter.toLowerCase();
+        }
+
+        // W przeciwnym razie wielka litera
+        return firstLetter.toUpperCase();
+      })
+      .join('');
+
+    return abbreviation;
+  };
+
   const handleAddSubject = (candidateValue: string, context: any) => {
-    setFormData({
-      type: 'subject',
-      candidateValue,
-      valueType: 'abbreviation',
-      fullName: '',
-      abbreviations: '',
-      context,
-    });
+    const hasMultipleWords = candidateValue.trim().includes(' ');
+
+    if (hasMultipleWords) {
+      // Więcej niż 1 wyraz = to pełna nazwa, wygeneruj skrót
+      const generatedAbbr = generateAbbreviation(candidateValue);
+
+      setFormData({
+        type: 'subject',
+        candidateValue,
+        valueType: 'fullName',
+        fullName: candidateValue,
+        abbreviations: generatedAbbr,
+        context,
+      });
+    } else {
+      // Pojedynczy wyraz = to prawdopodobnie skrót
+      setFormData({
+        type: 'subject',
+        candidateValue,
+        valueType: 'abbreviation',
+        fullName: '',
+        abbreviations: '',
+        context,
+      });
+    }
+
     setSuggestions([]);
     setShowAddForm(true);
   };
@@ -363,11 +404,16 @@ export function CandidatesManagement() {
           // candidateValue is full name
           subjectName = formData.candidateValue;
 
-          // Parse abbreviations from input (optional)
-          const abbrsArray = formData.abbreviations
-            .split('|')
-            .map(s => s.trim())
-            .filter(s => s.length > 0);
+          // Parse abbreviations from input
+          if (!formData.abbreviations || formData.abbreviations.trim() === '') {
+            toast.error('Podaj przynajmniej jeden alias');
+            return;
+          }
+
+          // If abbreviations contains '|', split by it; otherwise treat as single value
+          const abbrsArray = formData.abbreviations.includes('|')
+            ? formData.abbreviations.split('|').map(s => s.trim()).filter(s => s.length > 0)
+            : [formData.abbreviations.trim()];
 
           if (abbrsArray.length === 0) {
             toast.error('Podaj przynajmniej jeden alias');
