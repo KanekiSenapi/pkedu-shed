@@ -313,24 +313,39 @@ export async function detectMissingRelations(): Promise<RelationCandidate[]> {
       'SELECT id, full_name, abbreviations FROM instructors'
     );
 
-    // Build maps for quick lookup
+    // Build maps for quick lookup - by aliases AND by name
     const subjectsByAbbr = new Map<string, any[]>();
     subjectsResult.rows.forEach((row: any) => {
       const abbrs = JSON.parse(row.abbreviations || '[]');
+
+      // Add by aliases
       abbrs.forEach((abbr: string) => {
         if (!subjectsByAbbr.has(abbr)) {
           subjectsByAbbr.set(abbr, []);
         }
         subjectsByAbbr.get(abbr)!.push(row);
       });
+
+      // Add by name (case-insensitive)
+      const nameLower = String(row.name).toLowerCase();
+      if (!subjectsByAbbr.has(nameLower)) {
+        subjectsByAbbr.set(nameLower, []);
+      }
+      subjectsByAbbr.get(nameLower)!.push(row);
     });
 
     const instructorsByAbbr = new Map<string, any>();
     instructorsResult.rows.forEach((row: any) => {
       const abbrs = JSON.parse(row.abbreviations || '[]');
+
+      // Add by aliases
       abbrs.forEach((abbr: string) => {
         instructorsByAbbr.set(abbr, row);
       });
+
+      // Add by full_name (case-insensitive)
+      const nameLower = String(row.full_name).toLowerCase();
+      instructorsByAbbr.set(nameLower, row);
     });
 
     // Get ignored relation candidates
@@ -373,8 +388,8 @@ export async function detectMissingRelations(): Promise<RelationCandidate[]> {
         return;
       }
 
-      // Find matching subject in context
-      const matchingSubjects = subjectsByAbbr.get(subjectAbbr)?.filter((s: any) =>
+      // Find matching subject in context - check both exact match and lowercase
+      let matchingSubjects = subjectsByAbbr.get(subjectAbbr)?.filter((s: any) =>
         s.kierunek === row.kierunek &&
         s.stopien === row.stopien &&
         s.rok === row.rok &&
@@ -382,8 +397,22 @@ export async function detectMissingRelations(): Promise<RelationCandidate[]> {
         s.tryb === row.tryb
       ) || [];
 
-      // Find matching instructor
-      const matchingInstructor = instructorsByAbbr.get(instructorAbbr);
+      // If no exact match, try case-insensitive
+      if (matchingSubjects.length === 0) {
+        matchingSubjects = subjectsByAbbr.get(subjectAbbr.toLowerCase())?.filter((s: any) =>
+          s.kierunek === row.kierunek &&
+          s.stopien === row.stopien &&
+          s.rok === row.rok &&
+          s.semestr === row.semestr &&
+          s.tryb === row.tryb
+        ) || [];
+      }
+
+      // Find matching instructor - check both exact match and lowercase
+      let matchingInstructor = instructorsByAbbr.get(instructorAbbr);
+      if (!matchingInstructor) {
+        matchingInstructor = instructorsByAbbr.get(instructorAbbr.toLowerCase());
+      }
 
       // Only include if BOTH exist in database but relation is missing
       if (matchingSubjects.length > 0 && matchingInstructor) {
@@ -464,16 +493,22 @@ export async function findMatchingRelationsForInstructor(instructorId: string): 
       'SELECT id, name, abbreviations, kierunek, stopien, rok, semestr, tryb FROM subjects'
     );
 
-    // Build subject lookup by abbreviation and context
+    // Build subject lookup by abbreviation, name and context
     const subjectsByAbbrAndContext = new Map<string, any>();
     subjectsResult.rows.forEach((row: any) => {
       const abbrs = JSON.parse(row.abbreviations || '[]');
       const context = `${row.kierunek}-${row.stopien}-${row.rok}-${row.semestr}-${row.tryb}`;
 
+      // Add by aliases
       abbrs.forEach((abbr: string) => {
         const key = `${abbr}:::${context}`;
         subjectsByAbbrAndContext.set(key, row);
       });
+
+      // Add by name (case-insensitive)
+      const nameLower = String(row.name).toLowerCase();
+      const nameKey = `${nameLower}:::${context}`;
+      subjectsByAbbrAndContext.set(nameKey, row);
     });
 
     // Get existing relations for this instructor
@@ -507,8 +542,13 @@ export async function findMatchingRelationsForInstructor(instructorId: string): 
       scheduleResult.rows.forEach((row: any) => {
         const context = `${row.kierunek}-${row.stopien}-${row.rok}-${row.semestr}-${row.tryb}`;
         const key = `${row.subject}:::${context}`;
+        const keyLower = `${row.subject.toLowerCase()}:::${context}`;
 
-        const matchingSubject = subjectsByAbbrAndContext.get(key);
+        // Try exact match first, then case-insensitive
+        let matchingSubject = subjectsByAbbrAndContext.get(key);
+        if (!matchingSubject) {
+          matchingSubject = subjectsByAbbrAndContext.get(keyLower);
+        }
 
         if (matchingSubject && !existingSubjectIds.has(matchingSubject.id)) {
           if (!matchingSubjects.has(matchingSubject.id)) {
