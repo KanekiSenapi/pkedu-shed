@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: `Skrót "${matchingAbbr}" już istnieje dla przedmiotu "${row.name}" w tym kontekście`
+            error: `Alias "${matchingAbbr}" już istnieje dla przedmiotu "${row.name}" w tym kontekście`
           },
           { status: 400 }
         );

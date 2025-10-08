@@ -304,12 +304,12 @@ export function CandidatesManagement() {
 
           // Parse abbreviations from input (optional)
           const abbrsArray = formData.abbreviations
-            .split(',')
+            .split('|')
             .map(s => s.trim())
             .filter(s => s.length > 0);
 
           if (abbrsArray.length === 0) {
-            toast.error('Podaj przynajmniej jeden skrót');
+            toast.error('Podaj przynajmniej jeden alias');
             return;
           }
 
@@ -365,12 +365,12 @@ export function CandidatesManagement() {
 
           // Parse abbreviations from input (optional)
           const abbrsArray = formData.abbreviations
-            .split(',')
+            .split('|')
             .map(s => s.trim())
             .filter(s => s.length > 0);
 
           if (abbrsArray.length === 0) {
-            toast.error('Podaj przynajmniej jeden skrót');
+            toast.error('Podaj przynajmniej jeden alias');
             return;
           }
 
@@ -589,7 +589,7 @@ export function CandidatesManagement() {
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                        Skrót
+                        Alias
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
                         Możliwe dopasowanie
@@ -619,7 +619,7 @@ export function CandidatesManagement() {
                             <div>
                               <div className="font-medium text-blue-900">{instructor.possibleMatch.full_name}</div>
                               <div className="text-xs text-blue-700 font-mono">
-                                {instructor.possibleMatch.abbreviations.join(', ')}
+                                {instructor.possibleMatch.abbreviations.join(' | ')}
                               </div>
                             </div>
                           ) : (
@@ -652,7 +652,7 @@ export function CandidatesManagement() {
                                 )}
                                 className="text-blue-600 hover:text-blue-700 font-medium"
                               >
-                                Dodaj skrót
+                                Dodaj alias
                               </button>
                               <button
                                 onClick={() => handleAddInstructor(instructor.abbreviation)}
@@ -698,7 +698,7 @@ export function CandidatesManagement() {
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                        Skrót
+                        Alias
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
                         Kontekst
@@ -924,7 +924,7 @@ export function CandidatesManagement() {
                       }}
                       className="mr-2"
                     />
-                    <span className="text-sm text-gray-900">Skrót/Inicjały</span>
+                    <span className="text-sm text-gray-900">Alias</span>
                   </label>
                   <label className="flex items-center cursor-pointer">
                     <input
@@ -962,18 +962,18 @@ export function CandidatesManagement() {
               ) : (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Skróty (oddzielone przecinkami)
+                    Aliansy (oddzielone |)
                   </label>
                   <input
                     type="text"
                     value={formData.abbreviations}
                     onChange={(e) => setFormData({ ...formData, abbreviations: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 text-gray-900 focus:outline-none focus:border-blue-500"
-                    placeholder={formData.type === 'instructor' ? 'TL, dr T.L.' : 'PO, ProgOb'}
+                    placeholder={formData.type === 'instructor' ? 'TL | dr T.L.' : 'PO | ProgOb'}
                     required
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Podaj skróty używane w planie zajęć
+                    Podaj aliansy używane w planie zajęć
                   </p>
                 </div>
               )}
@@ -990,7 +990,7 @@ export function CandidatesManagement() {
                         <div className="flex-1">
                           <div className="text-sm font-medium text-gray-900">{suggestion.name}</div>
                           <div className="text-xs text-gray-600 font-mono">
-                            {suggestion.abbreviations.join(', ')}
+                            {suggestion.abbreviations.join(' | ')}
                           </div>
                         </div>
                         <button
@@ -1039,7 +1039,7 @@ export function CandidatesManagement() {
                           }}
                           className="ml-3 px-3 py-1 bg-blue-600 text-white text-xs hover:bg-blue-700 transition-colors"
                         >
-                          Dodaj jako skrót
+                          Dodaj jako alias
                         </button>
                       </div>
                     ))}

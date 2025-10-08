@@ -94,7 +94,7 @@ export function SubjectManagement() {
     e.preventDefault();
 
     const abbreviationsArray = formData.abbreviations
-      .split(',')
+      .split('|')
       .map(s => s.trim())
       .filter(s => s.length > 0);
 
@@ -104,7 +104,7 @@ export function SubjectManagement() {
     }
 
     if (abbreviationsArray.length === 0) {
-      toast.error('Podaj przynajmniej jeden skrót');
+      toast.error('Podaj przynajmniej jeden alias');
       return;
     }
 
@@ -147,7 +147,7 @@ export function SubjectManagement() {
     setEditingId(subject.id);
     setFormData({
       name: subject.name,
-      abbreviations: subject.abbreviations.join(', '),
+      abbreviations: subject.abbreviations.join(' | '),
       kierunek: subject.kierunek,
       stopien: subject.stopien,
       rok: subject.rok,
@@ -308,18 +308,18 @@ export function SubjectManagement() {
 
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Skróty (oddzielone przecinkami)
+                Aliansy (oddzielone |)
               </label>
               <input
                 type="text"
                 value={formData.abbreviations}
                 onChange={(e) => setFormData({ ...formData, abbreviations: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 text-gray-900 focus:outline-none focus:border-blue-500"
-                placeholder="PO, ProgOb, Prog.Obiekt."
+                placeholder="PO | ProgOb | Prog.Obiekt."
                 required
               />
               <p className="text-xs text-gray-500 mt-1">
-                Może być wiele skrótów używanych w planie zajęć
+                Może być wiele aliansów używanych w planie zajęć
               </p>
             </div>
 
@@ -501,7 +501,7 @@ export function SubjectManagement() {
                   Przedmiot
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                  Skróty
+                  Aliansy
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
                   Kierunek
@@ -533,7 +533,7 @@ export function SubjectManagement() {
                     {subject.name}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600">
-                    {subject.abbreviations.join(', ')}
+                    {subject.abbreviations.join(' | ')}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {subject.kierunek}
@@ -654,7 +654,7 @@ export function SubjectManagement() {
                         <div className="flex-1">
                           <div className="text-sm text-gray-900">{instructor.full_name}</div>
                           <div className="text-xs text-gray-500">
-                            {instructor.abbreviations.join(', ')}
+                            {instructor.abbreviations.join(' | ')}
                           </div>
                         </div>
                       </label>
@@ -692,7 +692,7 @@ export function SubjectManagement() {
                             {instructor.full_name}
                           </div>
                           <div className="text-xs text-gray-500">
-                            Skróty: {instructor.abbreviations.join(', ')}
+                            Aliansy: {instructor.abbreviations.join(' | ')}
                           </div>
                         </div>
                         <button
