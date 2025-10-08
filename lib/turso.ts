@@ -183,13 +183,14 @@ export async function initDatabase() {
       stopien TEXT NOT NULL,
       rok INTEGER NOT NULL,
       semestr INTEGER NOT NULL,
+      tryb TEXT NOT NULL DEFAULT 'stacjonarne',
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
 
   await turso.execute(`
-    CREATE INDEX IF NOT EXISTS idx_subjects_filters ON subjects(kierunek, stopien, rok, semestr)
+    CREATE INDEX IF NOT EXISTS idx_subjects_filters ON subjects(kierunek, stopien, rok, semestr, tryb)
   `);
 
   // User preferences table

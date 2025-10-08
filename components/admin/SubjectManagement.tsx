@@ -10,6 +10,7 @@ interface Subject {
   stopien: string;
   rok: number;
   semestr: number;
+  tryb: string;
   created_at: string;
   updated_at: string;
 }
@@ -24,6 +25,7 @@ export function SubjectManagement() {
     stopien: 'I',
     rok: 1,
     semestr: 1,
+    tryb: 'stacjonarne',
   });
 
   // Filters
@@ -32,6 +34,7 @@ export function SubjectManagement() {
     stopien: '',
     rok: '',
     semestr: '',
+    tryb: '',
   });
 
   useEffect(() => {
@@ -45,6 +48,7 @@ export function SubjectManagement() {
       if (filters.stopien) params.append('stopien', filters.stopien);
       if (filters.rok) params.append('rok', filters.rok);
       if (filters.semestr) params.append('semestr', filters.semestr);
+      if (filters.tryb) params.append('tryb', filters.tryb);
 
       const res = await fetch(`/api/admin/subjects?${params}`);
       const data = await res.json();
@@ -88,6 +92,7 @@ export function SubjectManagement() {
           stopien: 'I',
           rok: 1,
           semestr: 1,
+          tryb: 'stacjonarne',
         });
         setEditingId(null);
         loadSubjects();
@@ -107,6 +112,7 @@ export function SubjectManagement() {
       stopien: subject.stopien,
       rok: subject.rok,
       semestr: subject.semestr,
+      tryb: subject.tryb || 'stacjonarne',
     });
   };
 
@@ -138,6 +144,7 @@ export function SubjectManagement() {
       stopien: 'I',
       rok: 1,
       semestr: 1,
+      tryb: 'stacjonarne',
     });
   };
 
@@ -224,6 +231,20 @@ export function SubjectManagement() {
                 <option value={2}>Semestr 2 (letni)</option>
               </select>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tryb studiów
+              </label>
+              <select
+                value={formData.tryb}
+                onChange={(e) => setFormData({ ...formData, tryb: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 text-gray-900 focus:outline-none focus:border-blue-500"
+              >
+                <option value="stacjonarne">Stacjonarne</option>
+                <option value="niestacjonarne">Niestacjonarne</option>
+              </select>
+            </div>
           </div>
 
           <div className="flex gap-2">
@@ -249,7 +270,7 @@ export function SubjectManagement() {
       {/* Filters */}
       <div className="bg-white border border-gray-200 p-4">
         <h3 className="text-sm font-bold text-gray-900 mb-3">Filtry</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <select
             value={filters.kierunek}
             onChange={(e) => setFilters({ ...filters, kierunek: e.target.value })}
@@ -289,6 +310,16 @@ export function SubjectManagement() {
             <option value="1">Semestr 1</option>
             <option value="2">Semestr 2</option>
           </select>
+
+          <select
+            value={filters.tryb}
+            onChange={(e) => setFilters({ ...filters, tryb: e.target.value })}
+            className="px-3 py-2 border border-gray-300 text-sm text-gray-900 focus:outline-none focus:border-blue-500"
+          >
+            <option value="">Wszystkie tryby</option>
+            <option value="stacjonarne">Stacjonarne</option>
+            <option value="niestacjonarne">Niestacjonarne</option>
+          </select>
         </div>
       </div>
 
@@ -318,6 +349,9 @@ export function SubjectManagement() {
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
                   Semestr
                 </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  Tryb
+                </th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">
                   Akcje
                 </th>
@@ -340,6 +374,9 @@ export function SubjectManagement() {
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {subject.semestr}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {subject.tryb === 'niestacjonarne' ? 'Niestacj.' : 'Stacj.'}
                   </td>
                   <td className="px-4 py-3 text-sm text-right space-x-2">
                     <button

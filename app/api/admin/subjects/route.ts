@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const stopien = searchParams.get('stopien');
     const rok = searchParams.get('rok');
     const semestr = searchParams.get('semestr');
+    const tryb = searchParams.get('tryb');
 
     let query = 'SELECT * FROM subjects WHERE 1=1';
     const args: any[] = [];
@@ -30,8 +31,12 @@ export async function GET(request: NextRequest) {
       query += ' AND semestr = ?';
       args.push(parseInt(semestr));
     }
+    if (tryb) {
+      query += ' AND tryb = ?';
+      args.push(tryb);
+    }
 
-    query += ' ORDER BY kierunek, stopien, rok, semestr, name';
+    query += ' ORDER BY kierunek, stopien, rok, semestr, tryb, name';
 
     const result = await turso.execute({ sql: query, args });
 
@@ -42,6 +47,7 @@ export async function GET(request: NextRequest) {
       stopien: row.stopien,
       rok: row.rok,
       semestr: row.semestr,
+      tryb: row.tryb || 'stacjonarne',
       created_at: row.created_at,
       updated_at: row.updated_at,
     }));
@@ -59,9 +65,9 @@ export async function GET(request: NextRequest) {
 // POST - Create new subject
 export async function POST(request: NextRequest) {
   try {
-    const { name, kierunek, stopien, rok, semestr } = await request.json();
+    const { name, kierunek, stopien, rok, semestr, tryb } = await request.json();
 
-    if (!name || !kierunek || !stopien || rok === undefined || semestr === undefined) {
+    if (!name || !kierunek || !stopien || rok === undefined || semestr === undefined || !tryb) {
       return NextResponse.json(
         { success: false, error: 'All fields are required' },
         { status: 400 }
@@ -73,10 +79,10 @@ export async function POST(request: NextRequest) {
 
     await turso.execute({
       sql: `
-        INSERT INTO subjects (id, name, kierunek, stopien, rok, semestr, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO subjects (id, name, kierunek, stopien, rok, semestr, tryb, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
-      args: [id, name, kierunek, stopien, rok, semestr, now, now],
+      args: [id, name, kierunek, stopien, rok, semestr, tryb, now, now],
     });
 
     return NextResponse.json({
@@ -88,6 +94,7 @@ export async function POST(request: NextRequest) {
         stopien,
         rok,
         semestr,
+        tryb,
         created_at: now,
         updated_at: now,
       },
@@ -104,9 +111,9 @@ export async function POST(request: NextRequest) {
 // PUT - Update subject
 export async function PUT(request: NextRequest) {
   try {
-    const { id, name, kierunek, stopien, rok, semestr } = await request.json();
+    const { id, name, kierunek, stopien, rok, semestr, tryb } = await request.json();
 
-    if (!id || !name || !kierunek || !stopien || rok === undefined || semestr === undefined) {
+    if (!id || !name || !kierunek || !stopien || rok === undefined || semestr === undefined || !tryb) {
       return NextResponse.json(
         { success: false, error: 'All fields are required' },
         { status: 400 }
@@ -118,10 +125,10 @@ export async function PUT(request: NextRequest) {
     await turso.execute({
       sql: `
         UPDATE subjects
-        SET name = ?, kierunek = ?, stopien = ?, rok = ?, semestr = ?, updated_at = ?
+        SET name = ?, kierunek = ?, stopien = ?, rok = ?, semestr = ?, tryb = ?, updated_at = ?
         WHERE id = ?
       `,
-      args: [name, kierunek, stopien, rok, semestr, now, id],
+      args: [name, kierunek, stopien, rok, semestr, tryb, now, id],
     });
 
     return NextResponse.json({
@@ -133,6 +140,7 @@ export async function PUT(request: NextRequest) {
         stopien,
         rok,
         semestr,
+        tryb,
         updated_at: now,
       },
     });
