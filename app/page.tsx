@@ -53,7 +53,7 @@ export default function HomePage() {
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Link
-                href="/dashboard"
+                href="/login?mode=guest"
                 className="px-8 py-4 bg-blue-600 text-white text-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 Wejdź jako Gość
@@ -235,7 +235,7 @@ export default function HomePage() {
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link
-              href="/dashboard"
+              href="/login?mode=guest"
               className="px-8 py-4 bg-white text-blue-600 text-lg font-medium hover:bg-gray-100 transition-colors"
             >
               Wejdź jako Gość

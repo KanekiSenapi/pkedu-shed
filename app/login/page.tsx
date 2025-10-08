@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import Image from 'next/image';
 import { useSchedule } from '@/lib/use-schedule';
@@ -20,8 +20,17 @@ type GuestStep = 'role' | 'student' | 'instructor';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { schedule } = useSchedule();
   const [mode, setMode] = useState<Mode>('auth');
+
+  // Check for mode query parameter on mount
+  useEffect(() => {
+    const modeParam = searchParams.get('mode');
+    if (modeParam === 'guest') {
+      setMode('guest');
+    }
+  }, [searchParams]);
   const [tab, setTab] = useState<Tab>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
