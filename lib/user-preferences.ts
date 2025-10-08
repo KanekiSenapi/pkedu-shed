@@ -10,6 +10,7 @@ export interface StudentPreferences {
 export interface InstructorPreferences {
   role: 'instructor';
   fullName: string; // 'dr Tomasz Ligocki'
+  instructorId?: string; // UUID from database (optional for backwards compatibility)
 }
 
 export type UserPreferences = StudentPreferences | InstructorPreferences;

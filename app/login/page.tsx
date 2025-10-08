@@ -214,9 +214,13 @@ function LoginPageContent() {
   const handleInstructorComplete = async () => {
     if (!selectedInstructor) return;
 
+    // Find selected instructor in database list to get ID
+    const instructor = instructorsFromDB.find(i => i.full_name === selectedInstructor);
+
     const preferences: InstructorPreferences = {
       role: 'instructor',
       fullName: selectedInstructor,
+      instructorId: instructor?.id, // Save instructor ID for better filtering
     };
 
     await syncSaveUserPreferences(preferences);
