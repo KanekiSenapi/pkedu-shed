@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import { LandingNavbar } from '@/components/landing/LandingNavbar';
 
 export const metadata: Metadata = {
-  title: 'Plan Zajęć PK - Kiedy Mam Zajęcia | Rozkład Zajęć Politechnika Krakowska',
-  description: 'Portal planu zajęć Politechniki Krakowskiej - sprawdź kiedy mam zajęcia, harmonogram i rozkład zajęć dla wszystkich kierunków. Kalendarz, powiadomienia, mapa kampusu i więcej.',
+  title: 'Wirtualny Student - Plan Zajęć PK | Informatyka Niestacjonarne',
+  description: 'Portal planu zajęć Politechniki Krakowskiej dla studiów niestacjonarnych kierunku Informatyka (WIiT). Kalendarz zajęć, powiadomienia o zmianach, mapa kampusu i więcej.',
   alternates: {
     canonical: '/',
   },
@@ -20,10 +20,10 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Kiedy Mam Zajęcia? Sprawdź Plan Zajęć PK
+              Wirtualny Student - Twój Plan Zajęć PK
             </h2>
             <p className="text-lg text-gray-600 mb-6 max-w-2xl mx-auto">
-              Przeglądaj rozkład zajęć i harmonogram dla wszystkich kierunków Politechniki Krakowskiej.
+              Przeglądaj rozkład zajęć i harmonogram dla studiów niestacjonarnych Informatyki na Politechnice Krakowskiej.
               Kalendarz, powiadomienia o zmianach, mapa kampusu - wszystko w jednym miejscu.
             </p>
 
@@ -185,7 +185,7 @@ export default function HomePage() {
                 </h3>
                 <p className="text-sm text-gray-600">
                   Portal automatycznie pobiera aktualny plan zajęć z systemu Politechniki Krakowskiej
-                  i prezentuje go w przejrzystym kalendarzu. Dane są aktualizowane co godzinę.
+                  i prezentuje go w przejrzystym kalendarzu. Dane są aktualizowane codziennie.
                 </p>
               </div>
 
@@ -204,8 +204,7 @@ export default function HomePage() {
                   Czy portal jest dostępny dla wszystkich kierunków studiów?
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Tak, portal obsługuje wszystkie kierunki, lata i grupy na Politechnice Krakowskiej.
-                  Możesz przeglądać plan zarówno dla studiów stacjonarnych jak i niestacjonarnych.
+                  Obecnie w ramach programu pilotażowego portal jest dostępny tylko dla <strong>studiów niestacjonarnych</strong> na kierunku <strong>Informatyka</strong> (Wydział Informatyki i Telekomunikacji). W przyszłości planujemy rozszerzyć dostępność na inne kierunki i wydziały.
                 </p>
               </div>
 
@@ -230,7 +229,7 @@ export default function HomePage() {
             Zacznij Zarządzać Swoim Planem Zajęć Już Dziś
           </h2>
           <p className="text-base text-gray-400 mb-6 max-w-2xl mx-auto">
-            Dołącz do tysięcy studentów Politechniki Krakowskiej, którzy używają portalu Plan Zajęć PK
+            Dołącz do studentów niestacjonarnej Informatyki, którzy używają portalu Wirtualny Student
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
             <Link
@@ -254,9 +253,9 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             <div>
-              <h3 className="text-white font-bold mb-3 text-sm">Plan Zajęć PK</h3>
+              <h3 className="text-white font-bold mb-3 text-sm">Wirtualny Student</h3>
               <p className="text-xs">
-                Portal planu zajęć dla studentów i pracowników Politechniki Krakowskiej.
+                Portal planu zajęć dla studentów studiów niestacjonarnych kierunku Informatyka na Politechnice Krakowskiej.
                 Sprawdź kiedy mam zajęcia, harmonogram i rozkład zajęć.
               </p>
             </div>
@@ -290,7 +289,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-6 text-center text-xs">
-            <p>&copy; 2025 Plan Zajęć PK. Aplikacja stworzona dla studentów Politechniki Krakowskiej.</p>
+            <p>&copy; 2025 Wirtualny Student. Aplikacja stworzona dla studentów Politechniki Krakowskiej.</p>
           </div>
         </div>
       </footer>
