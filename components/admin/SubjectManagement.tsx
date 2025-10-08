@@ -15,6 +15,12 @@ interface Subject {
   updated_at: string;
 }
 
+interface Instructor {
+  id: string;
+  full_name: string;
+  abbreviations: string[];
+}
+
 export function SubjectManagement() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +34,12 @@ export function SubjectManagement() {
     tryb: 'stacjonarne',
   });
 
+  // Instructor management
+  const [allInstructors, setAllInstructors] = useState<Instructor[]>([]);
+  const [managingInstructorsForSubject, setManagingInstructorsForSubject] = useState<string | null>(null);
+  const [subjectInstructors, setSubjectInstructors] = useState<Instructor[]>([]);
+  const [selectedInstructorToAdd, setSelectedInstructorToAdd] = useState<string>('');
+
   // Filters
   const [filters, setFilters] = useState({
     kierunek: '',
@@ -39,7 +51,20 @@ export function SubjectManagement() {
 
   useEffect(() => {
     loadSubjects();
+    loadAllInstructors();
   }, [filters]);
+
+  const loadAllInstructors = async () => {
+    try {
+      const res = await fetch('/api/admin/instructors');
+      const data = await res.json();
+      if (data.success) {
+        setAllInstructors(data.instructors);
+      }
+    } catch (error) {
+      console.error('Error loading instructors:', error);
+    }
+  };
 
   const loadSubjects = async () => {
     try {
@@ -146,6 +171,68 @@ export function SubjectManagement() {
       semestr: 1,
       tryb: 'stacjonarne',
     });
+  };
+
+  const loadSubjectInstructors = async (subjectId: string) => {
+    try {
+      const res = await fetch(`/api/admin/subjects/${subjectId}/instructors`);
+      const data = await res.json();
+      if (data.success) {
+        setSubjectInstructors(data.instructors);
+      }
+    } catch (error) {
+      toast.error('Błąd ładowania wykładowców');
+    }
+  };
+
+  const handleManageInstructors = async (subjectId: string) => {
+    setManagingInstructorsForSubject(subjectId);
+    await loadSubjectInstructors(subjectId);
+  };
+
+  const handleAddInstructorToSubject = async () => {
+    if (!selectedInstructorToAdd || !managingInstructorsForSubject) return;
+
+    try {
+      const res = await fetch(`/api/admin/subjects/${managingInstructorsForSubject}/instructors`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instructor_id: selectedInstructorToAdd }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Dodano wykładowcę');
+        setSelectedInstructorToAdd('');
+        await loadSubjectInstructors(managingInstructorsForSubject);
+      } else {
+        toast.error(data.error || 'Błąd');
+      }
+    } catch (error) {
+      toast.error('Błąd dodawania');
+    }
+  };
+
+  const handleRemoveInstructorFromSubject = async (instructorId: string) => {
+    if (!managingInstructorsForSubject) return;
+    if (!confirm('Usunąć wykładowcę z tego przedmiotu?')) return;
+
+    try {
+      const res = await fetch(
+        `/api/admin/subjects/${managingInstructorsForSubject}/instructors?instructor_id=${instructorId}`,
+        { method: 'DELETE' }
+      );
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Usunięto');
+        await loadSubjectInstructors(managingInstructorsForSubject);
+      } else {
+        toast.error(data.error || 'Błąd');
+      }
+    } catch (error) {
+      toast.error('Błąd usuwania');
+    }
   };
 
   if (loading) {
@@ -352,6 +439,9 @@ export function SubjectManagement() {
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
                   Tryb
                 </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                  Wykładowcy
+                </th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">
                   Akcje
                 </th>
@@ -378,6 +468,14 @@ export function SubjectManagement() {
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {subject.tryb === 'niestacjonarne' ? 'Niestacj.' : 'Stacj.'}
                   </td>
+                  <td className="px-4 py-3 text-sm">
+                    <button
+                      onClick={() => handleManageInstructors(subject.id)}
+                      className="text-purple-600 hover:text-purple-700 text-xs"
+                    >
+                      Zarządzaj
+                    </button>
+                  </td>
                   <td className="px-4 py-3 text-sm text-right space-x-2">
                     <button
                       onClick={() => handleEdit(subject)}
@@ -403,6 +501,97 @@ export function SubjectManagement() {
           )}
         </div>
       </div>
+
+      {/* Instructor Management Modal */}
+      {managingInstructorsForSubject && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white border border-gray-200 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Wykładowcy przedmiotu
+                </h2>
+                <button
+                  onClick={() => {
+                    setManagingInstructorsForSubject(null);
+                    setSubjectInstructors([]);
+                    setSelectedInstructorToAdd('');
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Add instructor */}
+              <div className="mb-6 p-4 bg-gray-50 border border-gray-200">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Dodaj wykładowcę
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={selectedInstructorToAdd}
+                    onChange={(e) => setSelectedInstructorToAdd(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 text-sm text-gray-900 focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="">Wybierz wykładowcę...</option>
+                    {allInstructors
+                      .filter(i => !subjectInstructors.find(si => si.id === i.id))
+                      .map(instructor => (
+                        <option key={instructor.id} value={instructor.id}>
+                          {instructor.full_name} ({instructor.abbreviations.join(', ')})
+                        </option>
+                      ))}
+                  </select>
+                  <button
+                    onClick={handleAddInstructorToSubject}
+                    disabled={!selectedInstructorToAdd}
+                    className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    Dodaj
+                  </button>
+                </div>
+              </div>
+
+              {/* List of assigned instructors */}
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 mb-3">
+                  Przypisani wykładowcy ({subjectInstructors.length})
+                </h3>
+                {subjectInstructors.length === 0 ? (
+                  <p className="text-sm text-gray-500 py-4">
+                    Brak przypisanych wykładowców
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {subjectInstructors.map(instructor => (
+                      <div
+                        key={instructor.id}
+                        className="flex justify-between items-center p-3 bg-white border border-gray-200"
+                      >
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {instructor.full_name}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Skróty: {instructor.abbreviations.join(', ')}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveInstructorFromSubject(instructor.id)}
+                          className="text-red-600 hover:text-red-700 text-sm"
+                        >
+                          Usuń
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -193,6 +193,30 @@ export async function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_subjects_filters ON subjects(kierunek, stopien, rok, semestr, tryb)
   `);
 
+  // Subject-Instructor relation table (many-to-many)
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS subject_instructors (
+      id TEXT PRIMARY KEY,
+      subject_id TEXT NOT NULL,
+      instructor_id TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+      FOREIGN KEY (instructor_id) REFERENCES instructors(id) ON DELETE CASCADE
+    )
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_subject_instructors_subject ON subject_instructors(subject_id)
+  `);
+
+  await turso.execute(`
+    CREATE INDEX IF NOT EXISTS idx_subject_instructors_instructor ON subject_instructors(instructor_id)
+  `);
+
+  await turso.execute(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_subject_instructor_unique ON subject_instructors(subject_id, instructor_id)
+  `);
+
   // User preferences table
   await turso.execute(`
     CREATE TABLE IF NOT EXISTS user_preferences (
