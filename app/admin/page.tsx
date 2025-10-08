@@ -65,7 +65,8 @@ export default function AdminPage() {
     }
 
     loadData();
-  }, [session, status, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, status]);
 
   useEffect(() => {
     // Read localStorage hash on mount
@@ -343,7 +344,7 @@ export default function AdminPage() {
         </div>
 
         {/* Bug Reports Table */}
-        {activeTab === 'reports' && (
+        <div className={activeTab === 'reports' ? 'block' : 'hidden'}>
           <div className="bg-white border border-gray-200">
             {/* Filters */}
             <div className="border-b border-gray-200 p-4 flex gap-3">
@@ -440,10 +441,10 @@ export default function AdminPage() {
               </div>
             )}
           </div>
-        )}
+        </div>
 
         {/* Users Table */}
-        {activeTab === 'users' && (
+        <div className={activeTab === 'users' ? 'block' : 'hidden'}>
           <div className="bg-white border border-gray-200">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -500,10 +501,11 @@ export default function AdminPage() {
               </div>
             )}
           </div>
-        )}
+        </div>
 
         {/* Login Stats Tab */}
-        {activeTab === 'stats' && loginStats && (
+        <div className={activeTab === 'stats' ? 'block' : 'hidden'}>
+          {loginStats && (
           <div className="space-y-6">
             {/* Top Users */}
             <div className="bg-white border border-gray-200">
@@ -579,10 +581,11 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
-        )}
+          )}
+        </div>
 
         {/* Notifications Tab */}
-        {activeTab === 'notifications' && (
+        <div className={activeTab === 'notifications' ? 'block' : 'hidden'}>
           <div className="space-y-6">
             <div className="bg-white border border-gray-200">
               <div className="border-b border-gray-200 p-4 flex items-center justify-between">
@@ -685,13 +688,15 @@ export default function AdminPage() {
               )}
             </div>
           </div>
-        )}
+        </div>
 
         {/* Schedule Changes Tab */}
-        {activeTab === 'changes' && <ScheduleChangesViewer />}
+        <div className={activeTab === 'changes' ? 'block' : 'hidden'}>
+          <ScheduleChangesViewer />
+        </div>
 
         {/* System Tab */}
-        {activeTab === 'system' && (
+        <div className={activeTab === 'system' ? 'block' : 'hidden'}>
           <div className="space-y-6">
             {/* System Info Card */}
             <div className="bg-white border border-gray-200">
@@ -796,17 +801,17 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Instructors Management */}
-        {activeTab === 'instructors' && (
+        <div className={activeTab === 'instructors' ? 'block' : 'hidden'}>
           <InstructorManagement />
-        )}
+        </div>
 
         {/* Subjects Management */}
-        {activeTab === 'subjects' && (
+        <div className={activeTab === 'subjects' ? 'block' : 'hidden'}>
           <SubjectManagement />
-        )}
+        </div>
       </main>
 
       {/* Bug Report Modal */}

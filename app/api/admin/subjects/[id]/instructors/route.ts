@@ -5,10 +5,10 @@ import { randomUUID } from 'crypto';
 // GET - Get instructors for a subject
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const subjectId = params.id;
+    const { id: subjectId } = await params;
 
     const result = await turso.execute({
       sql: `
@@ -40,10 +40,10 @@ export async function GET(
 // POST - Add instructor to subject
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const subjectId = params.id;
+    const { id: subjectId } = await params;
     const { instructor_id } = await request.json();
 
     if (!instructor_id) {
@@ -90,10 +90,10 @@ export async function POST(
 // DELETE - Remove instructor from subject
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const subjectId = params.id;
+    const { id: subjectId } = await params;
     const { searchParams } = new URL(request.url);
     const instructorId = searchParams.get('instructor_id');
 
