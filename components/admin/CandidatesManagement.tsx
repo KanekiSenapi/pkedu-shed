@@ -83,10 +83,17 @@ export function CandidatesManagement() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     type: '',
-    abbreviation: '',
+    candidateValue: '',
+    valueType: 'abbreviation' as 'abbreviation' | 'fullName',
     fullName: '',
+    abbreviations: '',
     context: null as any,
   });
+  const [suggestions, setSuggestions] = useState<Array<{
+    id: string;
+    name: string;
+    abbreviations: string[];
+  }>>([]);
 
   useEffect(() => {
     loadCandidates();
@@ -131,13 +138,16 @@ export function CandidatesManagement() {
     }
   };
 
-  const handleAddInstructor = (abbreviation: string) => {
+  const handleAddInstructor = (candidateValue: string) => {
     setFormData({
       type: 'instructor',
-      abbreviation,
+      candidateValue,
+      valueType: 'abbreviation',
       fullName: '',
+      abbreviations: '',
       context: null,
     });
+    setSuggestions([]);
     setShowAddForm(true);
   };
 
@@ -199,26 +209,120 @@ export function CandidatesManagement() {
     }
   };
 
-  const handleAddSubject = (abbreviation: string, context: any) => {
+  const handleAddSubject = (candidateValue: string, context: any) => {
     setFormData({
       type: 'subject',
-      abbreviation,
+      candidateValue,
+      valueType: 'abbreviation',
       fullName: '',
+      abbreviations: '',
       context,
     });
+    setSuggestions([]);
     setShowAddForm(true);
+  };
+
+  const handleLiveMatch = async (inputValue: string) => {
+    if (!inputValue || inputValue.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    try {
+      if (formData.type === 'instructor') {
+        const res = await fetch('/api/admin/instructors');
+        const data = await res.json();
+
+        if (data.success) {
+          const matches = data.instructors
+            .filter((i: any) => {
+              const nameLower = i.full_name.toLowerCase();
+              const inputLower = inputValue.toLowerCase();
+              return nameLower.includes(inputLower) && nameLower !== inputLower;
+            })
+            .slice(0, 3)
+            .map((i: any) => ({
+              id: i.id,
+              name: i.full_name,
+              abbreviations: i.abbreviations,
+            }));
+
+          setSuggestions(matches);
+        }
+      } else if (formData.type === 'subject' && formData.context) {
+        const params = new URLSearchParams({
+          kierunek: formData.context.kierunek,
+          stopien: formData.context.stopien,
+          rok: formData.context.rok.toString(),
+          semestr: formData.context.semestr.toString(),
+          tryb: formData.context.tryb,
+        });
+
+        const res = await fetch(`/api/admin/subjects?${params}`);
+        const data = await res.json();
+
+        if (data.success) {
+          const matches = data.subjects
+            .filter((s: any) => {
+              const nameLower = s.name.toLowerCase();
+              const inputLower = inputValue.toLowerCase();
+              return nameLower.includes(inputLower) && nameLower !== inputLower;
+            })
+            .slice(0, 3)
+            .map((s: any) => ({
+              id: s.id,
+              name: s.name,
+              abbreviations: s.abbreviations,
+            }));
+
+          setSuggestions(matches);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+    }
   };
 
   const handleSubmitAdd = async () => {
     try {
       if (formData.type === 'instructor') {
+        // Determine full_name and abbreviations based on valueType
+        let instructorFullName = '';
+        let instructorAbbrs: string[] = [];
+
+        if (formData.valueType === 'abbreviation') {
+          // candidateValue is abbreviation, fullName is from input
+          if (!formData.fullName) {
+            toast.error('Podaj pełne imię i nazwisko');
+            return;
+          }
+          instructorFullName = formData.fullName;
+          instructorAbbrs = [formData.candidateValue];
+        } else {
+          // candidateValue is full name
+          instructorFullName = formData.candidateValue;
+
+          // Parse abbreviations from input (optional)
+          const abbrsArray = formData.abbreviations
+            .split(',')
+            .map(s => s.trim())
+            .filter(s => s.length > 0);
+
+          if (abbrsArray.length === 0) {
+            toast.error('Podaj przynajmniej jeden skrót');
+            return;
+          }
+
+          instructorAbbrs = abbrsArray;
+        }
+
         // Add instructor
         const res = await fetch('/api/admin/instructors', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            full_name: formData.fullName,
-            abbreviations: [formData.abbreviation],
+            full_name: instructorFullName,
+            abbreviations: instructorAbbrs,
           }),
         });
 
@@ -243,13 +347,43 @@ export function CandidatesManagement() {
           toast.error(result.error || 'Błąd');
         }
       } else if (formData.type === 'subject') {
+        // Determine name and abbreviations based on valueType
+        let subjectName = '';
+        let subjectAbbrs: string[] = [];
+
+        if (formData.valueType === 'abbreviation') {
+          // candidateValue is abbreviation, fullName is from input
+          if (!formData.fullName) {
+            toast.error('Podaj pełną nazwę przedmiotu');
+            return;
+          }
+          subjectName = formData.fullName;
+          subjectAbbrs = [formData.candidateValue];
+        } else {
+          // candidateValue is full name
+          subjectName = formData.candidateValue;
+
+          // Parse abbreviations from input (optional)
+          const abbrsArray = formData.abbreviations
+            .split(',')
+            .map(s => s.trim())
+            .filter(s => s.length > 0);
+
+          if (abbrsArray.length === 0) {
+            toast.error('Podaj przynajmniej jeden skrót');
+            return;
+          }
+
+          subjectAbbrs = abbrsArray;
+        }
+
         // Add subject
         const res = await fetch('/api/admin/subjects', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            name: formData.fullName,
-            abbreviations: [formData.abbreviation],
+            name: subjectName,
+            abbreviations: subjectAbbrs,
             ...formData.context,
           }),
         });
@@ -755,38 +889,165 @@ export function CandidatesManagement() {
       {/* Add Form Modal */}
       {showAddForm && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-gray-200 w-full max-w-md p-6">
+          <div className="bg-white border border-gray-200 w-full max-w-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">
-              Dodaj {formData.type === 'instructor' ? 'wykładowcę' : 'przedmiot'}
+              Dodaj: {formData.candidateValue}
             </h2>
 
             <div className="space-y-4">
+              {/* Candidate Value Display */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Skrót
+                  Wartość z planu zajęć
                 </label>
                 <input
                   type="text"
-                  value={formData.abbreviation}
+                  value={formData.candidateValue}
                   disabled
                   className="w-full px-3 py-2 border border-gray-300 text-gray-900 bg-gray-50 font-mono"
                 />
               </div>
 
+              {/* Value Type Selector */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {formData.type === 'instructor' ? 'Imię i nazwisko' : 'Pełna nazwa przedmiotu'}
+                  To jest:
                 </label>
-                <input
-                  type="text"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 text-gray-900 focus:outline-none focus:border-blue-500"
-                  placeholder={formData.type === 'instructor' ? 'Dr Jan Kowalski' : 'Programowanie obiektowe'}
-                  required
-                />
+                <div className="flex gap-4">
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={formData.valueType === 'abbreviation'}
+                      onChange={() => {
+                        setFormData({ ...formData, valueType: 'abbreviation', fullName: '', abbreviations: '' });
+                        setSuggestions([]);
+                      }}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-900">Skrót/Inicjały</span>
+                  </label>
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={formData.valueType === 'fullName'}
+                      onChange={() => {
+                        setFormData({ ...formData, valueType: 'fullName', fullName: '', abbreviations: '' });
+                        setSuggestions([]);
+                      }}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-900">Pełna nazwa</span>
+                  </label>
+                </div>
               </div>
 
+              {/* Conditional Fields */}
+              {formData.valueType === 'abbreviation' ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {formData.type === 'instructor' ? 'Pełne imię i nazwisko' : 'Pełna nazwa przedmiotu'}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.fullName}
+                    onChange={(e) => {
+                      setFormData({ ...formData, fullName: e.target.value });
+                      handleLiveMatch(e.target.value);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 text-gray-900 focus:outline-none focus:border-blue-500"
+                    placeholder={formData.type === 'instructor' ? 'dr Jan Kowalski' : 'Programowanie obiektowe'}
+                    required
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Skróty (oddzielone przecinkami)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.abbreviations}
+                    onChange={(e) => setFormData({ ...formData, abbreviations: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 text-gray-900 focus:outline-none focus:border-blue-500"
+                    placeholder={formData.type === 'instructor' ? 'TL, dr T.L.' : 'PO, ProgOb'}
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Podaj skróty używane w planie zajęć
+                  </p>
+                </div>
+              )}
+
+              {/* Suggestions */}
+              {suggestions.length > 0 && (
+                <div className="border border-blue-200 bg-blue-50 p-3">
+                  <div className="text-sm font-medium text-blue-900 mb-2">
+                    💡 Znaleziono podobne:
+                  </div>
+                  <div className="space-y-2">
+                    {suggestions.map((suggestion) => (
+                      <div key={suggestion.id} className="flex items-center justify-between bg-white p-2 border border-blue-200">
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">{suggestion.name}</div>
+                          <div className="text-xs text-gray-600 font-mono">
+                            {suggestion.abbreviations.join(', ')}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (formData.type === 'instructor') {
+                              await handleAddToExistingInstructor(suggestion.id, formData.candidateValue, suggestion.name);
+                            } else {
+                              // Add to existing subject
+                              try {
+                                const res = await fetch('/api/admin/subjects');
+                                const data = await res.json();
+
+                                if (data.success) {
+                                  const subject = data.subjects.find((s: any) => s.id === suggestion.id);
+                                  if (subject) {
+                                    const updatedAbbrs = [...subject.abbreviations, formData.candidateValue];
+
+                                    const updateRes = await fetch('/api/admin/subjects', {
+                                      method: 'PUT',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        id: suggestion.id,
+                                        name: subject.name,
+                                        abbreviations: updatedAbbrs,
+                                        kierunek: subject.kierunek,
+                                        stopien: subject.stopien,
+                                        rok: subject.rok,
+                                        semestr: subject.semestr,
+                                        tryb: subject.tryb,
+                                      }),
+                                    });
+
+                                    const updateResult = await updateRes.json();
+                                    if (updateResult.success) {
+                                      toast.success('Dodano skrót do istniejącego przedmiotu');
+                                      setShowAddForm(false);
+                                      loadCandidates();
+                                    }
+                                  }
+                                }
+                              } catch (error) {
+                                toast.error('Błąd aktualizacji');
+                              }
+                            }
+                          }}
+                          className="ml-3 px-3 py-1 bg-blue-600 text-white text-xs hover:bg-blue-700 transition-colors"
+                        >
+                          Dodaj jako skrót
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Context Display for Subjects */}
               {formData.type === 'subject' && formData.context && (
                 <div className="p-3 bg-gray-50 border border-gray-200 text-sm">
                   <div className="font-medium text-gray-900 mb-1">Kontekst:</div>
@@ -797,16 +1058,20 @@ export function CandidatesManagement() {
                 </div>
               )}
 
+              {/* Action Buttons */}
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={handleSubmitAdd}
-                  disabled={!formData.fullName}
+                  disabled={formData.valueType === 'abbreviation' ? !formData.fullName : !formData.abbreviations}
                   className="px-4 py-2 bg-green-600 text-white hover:bg-green-700 transition-colors disabled:bg-gray-400"
                 >
-                  Dodaj
+                  Dodaj jako nowy
                 </button>
                 <button
-                  onClick={() => setShowAddForm(false)}
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setSuggestions([]);
+                  }}
                   className="px-4 py-2 bg-gray-300 text-gray-700 hover:bg-gray-400 transition-colors"
                 >
                   Anuluj
