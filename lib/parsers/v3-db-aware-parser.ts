@@ -380,7 +380,7 @@ export class V3DatabaseAwareParser extends ScheduleParser {
 
             const mergeContent = String(row[mergeRange.s.c] || '').trim();
 
-            if (mergeContent && mergeContent !== '---') {
+            if (mergeContent && mergeContent !== '---' && currentDate) {
               const { classInfo, debugInfo } = this.parseClassInfo(
                 mergeContent,
                 config,
@@ -421,7 +421,7 @@ export class V3DatabaseAwareParser extends ScheduleParser {
             }
           } else {
             // Not merged
-            if (cellContent && cellStr !== '' && cellStr !== '---') {
+            if (cellContent && cellStr !== '' && cellStr !== '---' && currentDate) {
               const { classInfo, debugInfo } = this.parseClassInfo(
                 cellStr,
                 config,
