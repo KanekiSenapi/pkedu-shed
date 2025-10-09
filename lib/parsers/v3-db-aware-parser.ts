@@ -243,11 +243,19 @@ export class V3DatabaseAwareParser extends ScheduleParser {
       const headerCell = String(headerRow[idx] || '').toUpperCase();
 
       const rokMatch = headerCell.match(/ROK\s+([IVX]+|\d+)/);
-      const semMatch = headerCell.match(/SEM\s*(\d+)/);
+      const semMatch = headerCell.match(/SEM\s*(\d+)?/);
 
       if (rokMatch && semMatch) {
         let rok = this.romanToNumber(rokMatch[1]);
-        const semestr = parseInt(semMatch[1], 10);
+
+        // If semester number is missing, infer from year (ROK I = sem 1, ROK II = sem 3, etc)
+        let semestr: number;
+        if (semMatch[1]) {
+          semestr = parseInt(semMatch[1], 10);
+        } else {
+          // Default: ROK I → sem 1, ROK II → sem 3, ROK III → sem 5, ROK IV → sem 7
+          semestr = (rok - 1) * 2 + 1;
+        }
 
         const kierunek = this.extractKierunek(headerCell) || 'Informatyka';
 
@@ -279,7 +287,16 @@ export class V3DatabaseAwareParser extends ScheduleParser {
 
             if (/^([A-Z]{1,3}\d+|\d{1,2})$/.test(groupCell)) {
               const alreadyUsed = sectionConfigs.some(c => c.groupColumns[groupCell] === checkIdx);
-              if (!alreadyUsed && !groupColumns[groupCell]) {
+
+              // Filter groups by year: first digit should match rok
+              // Example: ROK I (rok=1) should only take groups 11, 12 (first digit = 1)
+              let matchesYear = true;
+              if (/^\d{1,2}$/.test(groupCell)) {
+                const firstDigit = parseInt(groupCell[0], 10);
+                matchesYear = firstDigit === rok;
+              }
+
+              if (!alreadyUsed && !groupColumns[groupCell] && matchesYear) {
                 groupColumns[groupCell] = checkIdx;
                 groups.push(groupCell);
               }
