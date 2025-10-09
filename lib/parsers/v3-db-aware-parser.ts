@@ -576,12 +576,25 @@ export class V3DatabaseAwareParser extends ScheduleParser {
       // Clean up rightPart: remove leading dots, spaces, etc
       rightPart = rightPart.replace(/^[\.\s]+/, '').trim();
 
-      // Parse LEFT part: [optional time] subject
-      // BUT: if leftPart is empty and rightPart has content in first line,
-      // it means type was on same line as subject (e.g., "Analiza matematyczna ćwiczenia")
-      // In this case, we need to look at the line before type keyword in original content
+      // Parse LEFT part: [optional time] subject [optional instructor without title]
+      // Edge case: "Zaawansowane technologie baz danych Szymon Szomiński wykład"
+      // Last 2-3 words before type might be instructor name (without title)
+      // Heuristic: if last words are Capitalized Words (like "Imię Nazwisko"), it's likely instructor
 
-      if (!leftPart || leftPart.length === 0) {
+      // Check if leftPart ends with potential instructor (2-3 capitalized words)
+      const instructorBeforeTypeMatch = leftPart.match(/^(.+?)\s+([A-ZŻŹĆĄŚĘŁŃÓ][a-zżźćąśęłńó]+(?:\s+[A-ZŻŹĆĄŚĘŁŃÓ][a-zżźćąśęłńó]+){0,2})$/);
+      if (instructorBeforeTypeMatch && instructorBeforeTypeMatch[2]) {
+        // Check if matched part looks like name (2-3 words, all capitalized)
+        const potentialName = instructorBeforeTypeMatch[2];
+        const nameWords = potentialName.split(/\s+/);
+        if (nameWords.length >= 2 && nameWords.length <= 3) {
+          // Likely instructor name before type
+          subjectText = instructorBeforeTypeMatch[1].trim();
+          instructorText = potentialName;
+        } else {
+          subjectText = leftPart;
+        }
+      } else if (!leftPart || leftPart.length === 0) {
         // Type keyword was at the beginning, or subject+type are together
         // Look at the full line containing the type
         const lines = cellContent.split(/\n/);
@@ -650,8 +663,8 @@ export class V3DatabaseAwareParser extends ScheduleParser {
       });
 
       // Split by multiple spaces (4+) or common note patterns to separate instructor from note
-      // Patterns like "Zajęcia dla..." "Uwaga:..." etc indicate start of note
-      const noteSplit = instructorsAndNote.split(/\s{4,}|(?=\s+(?:Zajęcia|Uwaga|Uwagi|Informacja|Info|Dla)[\s:])/i);
+      // Patterns like "Zajęcia dla..." "Uwaga:..." "(Xh)" etc indicate start of note
+      const noteSplit = instructorsAndNote.split(/\s{4,}|(?=\s+(?:Zajęcia|Uwaga|Uwagi|Informacja|Info|Dla|\(\d+h?\))[\s:])/i);
 
       instructorText = noteSplit[0]
         .trim()
@@ -749,7 +762,7 @@ export class V3DatabaseAwareParser extends ScheduleParser {
         });
 
         // Split by multiple spaces (4+) or common note patterns
-        const noteSplit = instructorsAndNote.split(/\s{4,}|(?=\s+(?:Zajęcia|Uwaga|Uwagi|Informacja|Info|Dla)[\s:])/i);
+        const noteSplit = instructorsAndNote.split(/\s{4,}|(?=\s+(?:Zajęcia|Uwaga|Uwagi|Informacja|Info|Dla|\(\d+h?\))[\s:])/i);
 
         // Clean up and remove group/level codes
         instructorText = noteSplit[0]

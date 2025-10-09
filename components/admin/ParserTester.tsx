@@ -340,12 +340,12 @@ export function ParserTester() {
                     </div>
                   </div>
                 </div>
-                <div className="overflow-auto max-h-96 border border-gray-200">
+                <div className="overflow-auto max-h-[600px] border border-gray-200">
                   <table className="text-xs">
                     <tbody>
-                      {excelData.slice(0, 30).map((row, rowIdx) => (
+                      {excelData.map((row, rowIdx) => (
                         <tr key={rowIdx}>
-                          {row.slice(0, 25).map((cell, colIdx) => {
+                          {row.map((cell, colIdx) => {
                             const cellInfo = getCellInfo(rowIdx, colIdx);
                             return (
                               <td
