@@ -40,18 +40,17 @@ export async function saveScheduleToDB(schedule: ParsedSchedule): Promise<void> 
   });
   console.log(`[DB] Schedule record inserted in ${Date.now() - scheduleInsertStart}ms`);
 
-  // Insert all entries
+  // Insert all entries using batch
   const entriesStart = Date.now();
-  let totalEntries = 0;
-  let batchNumber = 0;
-  const BATCH_SIZE = 100;
-  const PROGRESS_LOG_INTERVAL = 500; // Log every 500 entries
+  const totalEntries = schedule.sections.reduce((acc, s) => acc + s.entries.length, 0);
 
-  console.log(`[DB] Starting to insert entries (total: ${schedule.sections.reduce((acc, s) => acc + s.entries.length, 0)})`);
+  console.log(`[DB] Starting to insert entries (total: ${totalEntries})`);
 
+  // Prepare all statements for batch execution
+  const statements = [];
   for (const section of schedule.sections) {
     for (const entry of section.entries) {
-      await turso.execute({
+      statements.push({
         sql: `INSERT INTO schedule_entries (
           id, schedule_id, date, day, time, start_time, end_time, "group",
           subject, type, instructor, room, is_remote, raw_content,
@@ -79,16 +78,12 @@ export async function saveScheduleToDB(schedule: ParsedSchedule): Promise<void> 
           entry.tryb,
         ],
       });
-      totalEntries++;
-
-      // Log progress every PROGRESS_LOG_INTERVAL entries
-      if (totalEntries % PROGRESS_LOG_INTERVAL === 0) {
-        const elapsed = Date.now() - entriesStart;
-        const rate = totalEntries / (elapsed / 1000);
-        console.log(`[DB] Progress: ${totalEntries} entries inserted in ${elapsed}ms (${rate.toFixed(1)} entries/sec)`);
-      }
     }
   }
+
+  // Execute all inserts in a single batch transaction
+  console.log(`[DB] Executing batch insert of ${statements.length} entries...`);
+  await turso.batch(statements, 'write');
 
   const entriesElapsed = Date.now() - entriesStart;
   const rate = totalEntries / (entriesElapsed / 1000);
@@ -281,12 +276,13 @@ async function computeAndSaveChanges(
   }
 
   let changesCount = 0;
+  const changeStatements = [];
 
   // Find added entries
   for (const [key, newEntry] of newEntriesMap) {
     if (!oldEntriesMap.has(key)) {
       const changeId = `change_${Date.now()}_${changesCount++}`;
-      await turso.execute({
+      changeStatements.push({
         sql: `INSERT INTO schedule_changes (
           id, old_schedule_id, new_schedule_id, change_type,
           entry_id, date, "group", subject
@@ -309,7 +305,7 @@ async function computeAndSaveChanges(
   for (const [key, oldEntry] of oldEntriesMap) {
     if (!newEntriesMap.has(key)) {
       const changeId = `change_${Date.now()}_${changesCount++}`;
-      await turso.execute({
+      changeStatements.push({
         sql: `INSERT INTO schedule_changes (
           id, old_schedule_id, new_schedule_id, change_type,
           entry_id, date, "group", subject
@@ -344,7 +340,7 @@ async function computeAndSaveChanges(
       for (const field of fieldsToCompare) {
         if (field.oldVal !== field.newVal) {
           const changeId = `change_${Date.now()}_${changesCount++}`;
-          await turso.execute({
+          changeStatements.push({
             sql: `INSERT INTO schedule_changes (
               id, old_schedule_id, new_schedule_id, change_type,
               entry_id, field_name, old_value, new_value,
@@ -367,6 +363,12 @@ async function computeAndSaveChanges(
         }
       }
     }
+  }
+
+  // Execute all change inserts in batch
+  if (changeStatements.length > 0) {
+    console.log(`Saving ${changeStatements.length} changes in batch...`);
+    await turso.batch(changeStatements, 'write');
   }
 
   console.log(`Saved ${changesCount} changes to database`);
