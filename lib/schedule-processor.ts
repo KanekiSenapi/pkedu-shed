@@ -151,6 +151,7 @@ export function parseClassInfo(cellContent: string): ClassInfo | null {
         is_remote,
         raw: cellContent.trim(),
         overrideTime: overrideTime || undefined,
+        note: undefined,
       };
     }
   }
@@ -170,6 +171,7 @@ export function parseClassInfo(cellContent: string): ClassInfo | null {
     is_remote,
     raw: cellContent.trim(),
     overrideTime: overrideTime || undefined,
+    note: undefined,
   };
 }
 
