@@ -529,34 +529,75 @@ export class V3DatabaseAwareParser extends ScheduleParser {
     let typeIndex = -1;
 
     for (const keyword of typeKeywords) {
-      const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+      // Use lookahead/lookbehind or space boundaries instead of \b (doesn't work well with polish chars)
+      const regex = new RegExp(`(^|\\s)${keyword}($|\\s|\\.)`, 'i');
       const match = cellContent.match(regex);
       if (match && match.index !== undefined) {
-        typeKeyword = match[0];
-        typeIndex = match.index;
+        typeKeyword = match[0].trim().replace(/\.$/, ''); // Remove trailing dot if present
+        // Adjust index to skip leading space if present
+        typeIndex = match.index + (match[1] ? match[1].length : 0);
         break;
       }
     }
 
     if (typeKeyword && typeIndex >= 0) {
       // Split by type keyword
-      const leftPart = cellContent.substring(0, typeIndex).trim();
-      const rightPart = cellContent.substring(typeIndex + typeKeyword.length).trim();
+      let leftPart = cellContent.substring(0, typeIndex).trim();
+      let rightPart = cellContent.substring(typeIndex + typeKeyword.length).trim();
 
       typeText = typeKeyword;
 
+      // Clean up rightPart: remove leading dots, spaces, etc
+      rightPart = rightPart.replace(/^[\.\s]+/, '').trim();
+
       // Parse LEFT part: [optional time] subject
-      const timeMatch = leftPart.match(/^(\d{1,2}:\d{2}-\d{1,2}:\d{2})\s+(.+)$/);
-      if (timeMatch) {
-        const parsedTime = parseTimeRange(timeMatch[1]);
-        if (parsedTime) {
-          overrideTime = parsedTime;
-          subjectText = timeMatch[2].trim();
+      // BUT: if leftPart is empty and rightPart has content in first line,
+      // it means type was on same line as subject (e.g., "Analiza matematyczna ćwiczenia")
+      // In this case, we need to look at the line before type keyword in original content
+
+      if (!leftPart || leftPart.length === 0) {
+        // Type keyword was at the beginning, or subject+type are together
+        // Look at the full line containing the type
+        const lines = cellContent.split(/\n/);
+        const firstLine = lines[0];
+
+        // Extract subject from first line (everything before type keyword)
+        const typeInLineMatch = firstLine.match(new RegExp(`^(.+?)\\s*${typeKeyword}`, 'i'));
+        if (typeInLineMatch) {
+          subjectText = typeInLineMatch[1].trim();
+
+          // Check for time in subject
+          const timeMatch = subjectText.match(/^(\d{1,2}:\d{2}-\d{1,2}:\d{2})\s+(.+)$/);
+          if (timeMatch) {
+            const parsedTime = parseTimeRange(timeMatch[1]);
+            if (parsedTime) {
+              overrideTime = parsedTime;
+              subjectText = timeMatch[2].trim();
+            }
+          }
+
+          // RightPart should be rest of lines after first
+          if (lines.length > 1) {
+            rightPart = lines.slice(1).join('\n').trim();
+            rightPart = rightPart.replace(/^[\.\s]+/, '').trim();
+          }
         } else {
           subjectText = leftPart;
         }
       } else {
-        subjectText = leftPart;
+        // Normal case: leftPart has content
+        const timeMatch = leftPart.match(/^(\d{1,2}:\d{2}-\d{1,2}:\d{2})\s+(.+)$/);
+        if (timeMatch) {
+          const parsedTime = parseTimeRange(timeMatch[1]);
+          if (parsedTime) {
+            overrideTime = parsedTime;
+            subjectText = timeMatch[2].trim();
+          } else {
+            subjectText = leftPart;
+          }
+        } else {
+          subjectText = leftPart;
+        }
       }
 
       // Parse RIGHT part: instructor and room
