@@ -161,6 +161,20 @@ export class V3DatabaseAwareParser extends ScheduleParser {
       .trim();
   }
 
+  private normalizePolishChars(text: string): string {
+    return text
+      .toLowerCase()
+      .replace(/ą/g, 'a')
+      .replace(/ć/g, 'c')
+      .replace(/ę/g, 'e')
+      .replace(/ł/g, 'l')
+      .replace(/ń/g, 'n')
+      .replace(/ó/g, 'o')
+      .replace(/ś/g, 's')
+      .replace(/ź/g, 'z')
+      .replace(/ż/g, 'z');
+  }
+
   private async loadDatabaseEntities() {
     // Load instructors
     const instructorsResult = await turso.execute('SELECT id, full_name, abbreviations FROM instructors');
@@ -559,11 +573,16 @@ export class V3DatabaseAwareParser extends ScheduleParser {
     let typeKeyword: string | null = null;
     let typeIndex = -1;
 
+    // Normalize cell content for type matching (handle typos like "wyklad" instead of "wykład")
+    const normalizedContent = this.normalizePolishChars(cellContent);
+
     // First try full keywords
     for (const keyword of typeKeywords) {
+      const normalizedKeyword = this.normalizePolishChars(keyword);
+
       // Use lookahead/lookbehind or space boundaries instead of \b (doesn't work well with polish chars)
-      const regex = new RegExp(`(^|\\s)${keyword}($|\\s|\\.)`, 'i');
-      const match = cellContent.match(regex);
+      const regex = new RegExp(`(^|\\s)${normalizedKeyword}($|\\s|\\.)`, 'i');
+      const match = normalizedContent.match(regex);
       if (match && match.index !== undefined) {
         const actualIndex = match.index + (match[1] ? match[1].length : 0);
 
@@ -573,9 +592,14 @@ export class V3DatabaseAwareParser extends ScheduleParser {
           continue; // Skip this match, try next keyword
         }
 
-        typeKeyword = match[0].trim().replace(/\.$/, ''); // Remove trailing dot if present
-        typeIndex = actualIndex;
-        break;
+        // Found! Extract original text from cellContent at this position
+        // Find the actual word in original content (might be "wyklad" or "wykład")
+        const originalMatch = cellContent.substring(actualIndex).match(/^(\S+)/);
+        if (originalMatch) {
+          typeKeyword = originalMatch[1].replace(/\.$/, ''); // Remove trailing dot
+          typeIndex = actualIndex;
+          break;
+        }
       }
     }
 
@@ -962,15 +986,17 @@ export class V3DatabaseAwareParser extends ScheduleParser {
     if (!typeText) return null;
 
     const typeLower = typeText.toLowerCase().trim();
+    const typeNormalized = this.normalizePolishChars(typeLower);
 
-    if (typeLower.includes('wykład')) return 'wykład';
-    if (typeLower.includes('lab')) return 'laboratorium';
-    if (typeLower.includes('ćwicz')) return 'ćwiczenia';
-    if (typeLower.includes('projekt')) return 'projekt';
-    if (typeLower === 'p') return 'projekt';
-    if (typeLower === 'w') return 'wykład';
-    if (typeLower === 'l') return 'laboratorium';
-    if (typeLower === 'ć') return 'ćwiczenia';
+    // Check with normalized text (handles "wyklad" → "wyklad", "wykład" → "wyklad")
+    if (typeNormalized.includes('wyklad')) return 'wykład';
+    if (typeNormalized.includes('lab')) return 'laboratorium';
+    if (typeNormalized.includes('cwicz')) return 'ćwiczenia';
+    if (typeNormalized.includes('projekt')) return 'projekt';
+    if (typeNormalized === 'p') return 'projekt';
+    if (typeNormalized === 'w') return 'wykład';
+    if (typeNormalized === 'l') return 'laboratorium';
+    if (typeNormalized === 'c') return 'ćwiczenia';
 
     return null;
   }
