@@ -14,6 +14,7 @@ export interface ClassInfo {
   is_remote: boolean;        // true if "ZDALNIE"
   raw: string;               // original cell text
   overrideTime?: { start: string; end: string }; // optional time override (e.g., "13:45-16:15")
+  note?: string;             // additional info/note after room (e.g., "Zajęcia dla studentów powtarzających przedmiot.")
 }
 
 export interface ScheduleEntry {

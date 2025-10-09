@@ -526,6 +526,7 @@ export class V3DatabaseAwareParser extends ScheduleParser {
     let typeText = '';
     let instructorText = '';
     let roomText = '';
+    let noteText = '';
     let is_remote_flag = false;
 
     // Class type keywords to search for
@@ -636,18 +637,23 @@ export class V3DatabaseAwareParser extends ScheduleParser {
         cleanedRightPart = rightPart.replace(/\b(zdalnie?)\b/gi, '').trim();
       }
 
-      // Extract rooms (pattern: "s. XXX" where s. is at word boundary)
-      const roomMatches = cleanedRightPart.match(/\bs\.\s*[^\s,]+(\s+[A-Z]+)?/gi) || [];
+      // Extract rooms (pattern: "s. XXX YYY" where YYY is room suffix, not a note keyword)
+      // Note keywords: UWAGA, Zajęcia, Informacja, etc (5+ chars or known keywords)
+      const roomRegex = /\bs\.\s*[^\s,]+(?:\s+(?!UWAGA|Zajęcia|Informacja|Info|Dla)[A-Z]+\b)?/gi;
+      const roomMatches = cleanedRightPart.match(roomRegex) || [];
       roomText = roomMatches.join(', ');
 
-      // Remove rooms from text to get instructors
-      let instructorsOnly = cleanedRightPart;
+      // Remove rooms from text to get instructors and potential note
+      let instructorsAndNote = cleanedRightPart;
       roomMatches.forEach(room => {
-        instructorsOnly = instructorsOnly.replace(room, '');
+        instructorsAndNote = instructorsAndNote.replace(room, '');
       });
 
-      // Clean up instructor text
-      instructorText = instructorsOnly
+      // Split by multiple spaces (4+) or common note patterns to separate instructor from note
+      // Patterns like "Zajęcia dla..." "Uwaga:..." etc indicate start of note
+      const noteSplit = instructorsAndNote.split(/\s{4,}|(?=\s+(?:Zajęcia|Uwaga|Uwagi|Informacja|Info|Dla)[\s:])/i);
+
+      instructorText = noteSplit[0]
         .trim()
         .replace(/\s+/g, ' ')
         .replace(/,\s*,/g, ','); // Remove double commas
@@ -661,6 +667,17 @@ export class V3DatabaseAwareParser extends ScheduleParser {
         })
         .filter(p => p.length > 0)
         .join(', ');
+
+      // Everything after instructor is a note
+      noteText = noteSplit.slice(1).join(' ').trim();
+      if (!noteText && instructorsAndNote.length > 50) {
+        // If no split found but text is long, last part might be note
+        // Check if there's text after last recognized instructor/room
+        const afterInstructor = instructorsAndNote.substring(instructorText.length).trim();
+        if (afterInstructor.length > 10) {
+          noteText = afterInstructor;
+        }
+      }
 
     } else {
       // Fallback: no type keyword found
@@ -720,18 +737,22 @@ export class V3DatabaseAwareParser extends ScheduleParser {
           cleanedRemaining = remaining.replace(/\b(zdalnie?)\b/gi, '').trim();
         }
 
-        // Extract rooms (pattern: "s. XXX" where s. is at word boundary)
-        const roomMatches = cleanedRemaining.match(/\bs\.\s*[^\s,]+(\s+[A-Z]+)?/gi) || [];
+        // Extract rooms (pattern: "s. XXX YYY" where YYY is room suffix, not a note keyword)
+        const roomRegex = /\bs\.\s*[^\s,]+(?:\s+(?!UWAGA|Zajęcia|Informacja|Info|Dla)[A-Z]+\b)?/gi;
+        const roomMatches = cleanedRemaining.match(roomRegex) || [];
         roomText = roomMatches.join(', ');
 
-        // Remove rooms from remaining to get instructors
-        let instructorsPart = cleanedRemaining;
+        // Remove rooms from remaining to get instructors and potential note
+        let instructorsAndNote = cleanedRemaining;
         roomMatches.forEach(room => {
-          instructorsPart = instructorsPart.replace(room, '');
+          instructorsAndNote = instructorsAndNote.replace(room, '');
         });
 
+        // Split by multiple spaces (4+) or common note patterns
+        const noteSplit = instructorsAndNote.split(/\s{4,}|(?=\s+(?:Zajęcia|Uwaga|Uwagi|Informacja|Info|Dla)[\s:])/i);
+
         // Clean up and remove group/level codes
-        instructorText = instructorsPart
+        instructorText = noteSplit[0]
           .trim()
           .replace(/\s+/g, ' ')
           .replace(/,\s*,/g, ',');
@@ -744,6 +765,15 @@ export class V3DatabaseAwareParser extends ScheduleParser {
           })
           .filter(p => p.length > 0)
           .join(', ');
+
+        // Extract note from fallback path too
+        noteText = noteSplit.slice(1).join(' ').trim();
+        if (!noteText && instructorsAndNote.length > 50) {
+          const afterInstructor = instructorsAndNote.substring(instructorText.length).trim();
+          if (afterInstructor.length > 10) {
+            noteText = afterInstructor;
+          }
+        }
       }
     }
 
@@ -841,6 +871,7 @@ export class V3DatabaseAwareParser extends ScheduleParser {
       is_remote,
       raw: cellContent,
       overrideTime,
+      note: noteText || undefined,
     };
 
     const avgConfidence = (subjectConfidence + instructorConfidence) / 2;
