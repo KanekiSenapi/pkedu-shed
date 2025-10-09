@@ -152,6 +152,15 @@ export class V3DatabaseAwareParser extends ScheduleParser {
     };
   }
 
+  private normalizeForMatching(text: string): string {
+    return text
+      .toLowerCase()
+      .replace(/\./g, '')      // Remove dots
+      .replace(/,/g, '')       // Remove commas
+      .replace(/\s+/g, ' ')    // Multiple spaces -> single space
+      .trim();
+  }
+
   private async loadDatabaseEntities() {
     // Load instructors
     const instructorsResult = await turso.execute('SELECT id, full_name, abbreviations FROM instructors');
@@ -162,12 +171,12 @@ export class V3DatabaseAwareParser extends ScheduleParser {
         abbreviations: JSON.parse(row.abbreviations || '[]'),
       };
 
-      // Index by full name (case-insensitive)
-      this.instructorsByAlias.set(instructor.full_name.toLowerCase(), instructor);
+      // Index by full name (normalized)
+      this.instructorsByAlias.set(this.normalizeForMatching(instructor.full_name), instructor);
 
-      // Index by each abbreviation (case-insensitive)
+      // Index by each abbreviation (normalized)
       instructor.abbreviations.forEach(abbr => {
-        this.instructorsByAlias.set(abbr.toLowerCase(), instructor);
+        this.instructorsByAlias.set(this.normalizeForMatching(abbr), instructor);
       });
     });
 
@@ -185,20 +194,20 @@ export class V3DatabaseAwareParser extends ScheduleParser {
         tryb: row.tryb,
       };
 
-      // Index by name (case-insensitive)
-      const nameLower = subject.name.toLowerCase();
-      if (!this.subjectsByAlias.has(nameLower)) {
-        this.subjectsByAlias.set(nameLower, []);
+      // Index by name (normalized)
+      const nameNormalized = this.normalizeForMatching(subject.name);
+      if (!this.subjectsByAlias.has(nameNormalized)) {
+        this.subjectsByAlias.set(nameNormalized, []);
       }
-      this.subjectsByAlias.get(nameLower)!.push(subject);
+      this.subjectsByAlias.get(nameNormalized)!.push(subject);
 
-      // Index by each abbreviation (case-insensitive)
+      // Index by each abbreviation (normalized)
       subject.abbreviations.forEach(abbr => {
-        const abbrLower = abbr.toLowerCase();
-        if (!this.subjectsByAlias.has(abbrLower)) {
-          this.subjectsByAlias.set(abbrLower, []);
+        const abbrNormalized = this.normalizeForMatching(abbr);
+        if (!this.subjectsByAlias.has(abbrNormalized)) {
+          this.subjectsByAlias.set(abbrNormalized, []);
         }
-        this.subjectsByAlias.get(abbrLower)!.push(subject);
+        this.subjectsByAlias.get(abbrNormalized)!.push(subject);
       });
     });
   }
@@ -828,7 +837,7 @@ export class V3DatabaseAwareParser extends ScheduleParser {
     let subjectConfidence = 0;
 
     if (subjectText) {
-      const candidates = this.subjectsByAlias.get(subjectText.toLowerCase()) || [];
+      const candidates = this.subjectsByAlias.get(this.normalizeForMatching(subjectText)) || [];
 
       // Filter by context
       const contextMatches = candidates.filter(s =>
@@ -880,7 +889,7 @@ export class V3DatabaseAwareParser extends ScheduleParser {
     let instructorConfidence = 0;
 
     instructorParts.forEach(instrPart => {
-      const instructor = this.instructorsByAlias.get(instrPart.toLowerCase());
+      const instructor = this.instructorsByAlias.get(this.normalizeForMatching(instrPart));
       if (instructor) {
         matchedInstructors.push(instructor);
         instructorConfidence = 1.0;
