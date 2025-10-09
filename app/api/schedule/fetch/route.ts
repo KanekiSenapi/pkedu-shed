@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { downloadSchedule } from '@/lib/scraper';
-import { parseExcelSchedule, PARSER_VERSION } from '@/lib/excel-parser';
 import { calculateHash, createVersionedHash } from '@/lib/cache-manager';
 import {
   saveScheduleToDB,
   loadScheduleFromDB,
   getLatestScheduleHash,
 } from '@/lib/schedule-db';
+import { parserRegistry } from '@/lib/parsers/parser-registry';
+import { getDefaultParserVersion } from '@/lib/system-config';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 minutes timeout (needed for large files with I and II stopień)
@@ -91,11 +92,18 @@ export async function GET(request: Request) {
       }
     }
 
+    // Get parser to use
+    const parserVersion = await getDefaultParserVersion();
+    const parser = parserRegistry.getParser(parserVersion) || parserRegistry.getDefaultParser();
+
+    console.log(`[Fetch] Using parser: ${parser.name} v${parser.version}`);
+
     // Parse the Excel file
     const parseStart = Date.now();
     console.log('[Fetch] Starting Excel parsing...');
-    const schedule = parseExcelSchedule(downloadResult.buffer);
-    schedule.fileHash = createVersionedHash(fileHash, PARSER_VERSION);
+    const parseResult = await parser.parse(downloadResult.buffer);
+    const schedule = parseResult.schedule;
+    schedule.fileHash = createVersionedHash(fileHash, parser.version);
     schedule.fileName = downloadResult.filename;
     console.log(`[Fetch] Parsing completed in ${Date.now() - parseStart}ms (${schedule.sections.length} sections)`);
 

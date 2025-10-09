@@ -78,6 +78,7 @@ export function ParserTester() {
   const [parsers, setParsers] = useState<ParserMetadata[]>([]);
   const [selectedParser, setSelectedParser] = useState<string>('');
   const [defaultParser, setDefaultParser] = useState<string>('');
+  const [systemDefaultParser, setSystemDefaultParser] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<ParseResult | null>(null);
@@ -111,15 +112,47 @@ export function ParserTester() {
           }
         }
       }
+
+      // Load system default parser
+      try {
+        const sysRes = await fetch('/api/admin/parser-default');
+        const sysData = await sysRes.json();
+        if (sysData.success) {
+          setSystemDefaultParser(sysData.version);
+        }
+      } catch (error) {
+        console.error('Error loading system default parser:', error);
+      }
     } catch (error) {
       toast.error('Błąd ładowania parserów');
     }
   };
 
-  const setAsDefault = () => {
+  const setAsDefault = async () => {
+    // Save to localStorage (for UI)
     localStorage.setItem('defaultParserVersion', selectedParser);
     setDefaultParser(selectedParser);
-    toast.success('Ustawiono jako domyślny parser');
+
+    // Save to database (for cron/system)
+    try {
+      const res = await fetch('/api/admin/parser-default', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ version: selectedParser }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setSystemDefaultParser(selectedParser);
+        toast.success('Ustawiono jako domyślny parser (UI i system)');
+      } else {
+        toast.error('Błąd zapisu do bazy: ' + data.error);
+        toast.success('Zapisano lokalnie (tylko UI)');
+      }
+    } catch (error) {
+      console.error('Error setting default parser:', error);
+      toast.success('Zapisano lokalnie (tylko UI)');
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -245,6 +278,11 @@ export function ParserTester() {
             {parsers.find(p => p.version === selectedParser) && (
               <p className="text-xs text-gray-500 mt-1">
                 {parsers.find(p => p.version === selectedParser)?.description}
+              </p>
+            )}
+            {systemDefaultParser && (
+              <p className="text-xs text-blue-600 mt-1 font-medium">
+                Parser systemowy (cron): {parsers.find(p => p.version === systemDefaultParser)?.name || systemDefaultParser} v{systemDefaultParser}
               </p>
             )}
           </div>

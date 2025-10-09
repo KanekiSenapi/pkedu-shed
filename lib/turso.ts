@@ -413,4 +413,23 @@ export async function initDatabase() {
   await turso.execute(`
     CREATE INDEX IF NOT EXISTS idx_candidate_ignores_value ON candidate_ignores(value)
   `);
+
+  // System configuration table
+  await turso.execute(`
+    CREATE TABLE IF NOT EXISTS system_config (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Insert default parser version if not exists
+  try {
+    await turso.execute({
+      sql: `INSERT OR IGNORE INTO system_config (key, value) VALUES (?, ?)`,
+      args: ['default_parser_version', '3.0']
+    });
+  } catch (error) {
+    // Ignore if already exists
+  }
 }
