@@ -509,6 +509,7 @@ export class V3DatabaseAwareParser extends ScheduleParser {
     let typeText = '';
     let instructorText = '';
     let roomText = '';
+    let is_remote_flag = false;
 
     // Class type keywords to search for
     const typeKeywords = [
@@ -559,35 +560,41 @@ export class V3DatabaseAwareParser extends ScheduleParser {
       }
 
       // Parse RIGHT part: instructor and room
-      // First split by TAB, 4+ spaces, or newline
-      let rightParts = rightPart
-        .split(/\t|\n|    +/)
-        .map(p => p.trim())
-        .filter(p => p.length > 0);
+      // Check if ZDALNIE/ZDALNE first
+      const remoteMatch = rightPart.match(/\b(zdalnie?)\b/i);
+      is_remote_flag = !!remoteMatch;
 
-      // If only one part, try to split by room pattern "s. XXX"
-      if (rightParts.length === 1) {
-        const roomSplit = rightParts[0].split(/(\s+s\.?\s*\S+)/i);
-        rightParts = roomSplit.map(p => p.trim()).filter(p => p.length > 0);
+      // Remove ZDALNIE from right part
+      let cleanedRightPart = rightPart;
+      if (remoteMatch) {
+        cleanedRightPart = rightPart.replace(/\b(zdalnie?)\b/gi, '').trim();
       }
 
-      // Separate instructors from rooms
-      // Pattern: "s. XXX" or "s.XXX" = room
-      const instructorParts: string[] = [];
-      const roomParts: string[] = [];
+      // Extract rooms (pattern: "s. XXX" where s. is at word boundary)
+      const roomMatches = cleanedRightPart.match(/\bs\.\s*[^\s,]+(\s+[A-Z]+)?/gi) || [];
+      roomText = roomMatches.join(', ');
 
-      rightParts.forEach(part => {
-        if (/^s\.?\s*\S+$/i.test(part) || /\bs\.?\s*\S+$/i.test(part)) {
-          // This is a room (contains "s. XXX" or "s.XXX" pattern)
-          roomParts.push(part.replace(/^.*\b(s\.?\s*\S+)$/i, '$1'));
-        } else {
-          // This is likely instructor
-          instructorParts.push(part);
-        }
+      // Remove rooms from text to get instructors
+      let instructorsOnly = cleanedRightPart;
+      roomMatches.forEach(room => {
+        instructorsOnly = instructorsOnly.replace(room, '');
       });
 
-      instructorText = instructorParts.join(' ');
-      roomText = roomParts.join(', ');
+      // Clean up instructor text
+      instructorText = instructorsOnly
+        .trim()
+        .replace(/\s+/g, ' ')
+        .replace(/,\s*,/g, ','); // Remove double commas
+
+      // Filter out group/level codes (B2, C1, A1, etc - single letter + number)
+      instructorText = instructorText
+        .split(',')
+        .map(part => {
+          // Remove patterns like "B2", "C1" that are not part of names
+          return part.replace(/\s+[A-Z]\d+\b/g, '').trim();
+        })
+        .filter(p => p.length > 0)
+        .join(', ');
 
     } else {
       // Fallback: no type keyword found
@@ -631,17 +638,39 @@ export class V3DatabaseAwareParser extends ScheduleParser {
         // Rest is instructors and rooms mixed
         const remaining = parts.slice(partIdx).join(' ');
 
-        // Extract rooms first (pattern: s. XXX)
-        const roomMatches = remaining.match(/\bs\.?\s*\S+/gi) || [];
+        // Check if ZDALNIE/ZDALNE
+        const remoteMatch = remaining.match(/\b(zdalnie?)\b/i);
+        is_remote_flag = !!remoteMatch;
+
+        let cleanedRemaining = remaining;
+        if (remoteMatch) {
+          cleanedRemaining = remaining.replace(/\b(zdalnie?)\b/gi, '').trim();
+        }
+
+        // Extract rooms (pattern: "s. XXX" where s. is at word boundary)
+        const roomMatches = cleanedRemaining.match(/\bs\.\s*[^\s,]+(\s+[A-Z]+)?/gi) || [];
         roomText = roomMatches.join(', ');
 
         // Remove rooms from remaining to get instructors
-        let instructorsPart = remaining;
+        let instructorsPart = cleanedRemaining;
         roomMatches.forEach(room => {
           instructorsPart = instructorsPart.replace(room, '');
         });
 
-        instructorText = instructorsPart.trim().replace(/\s+/g, ' ');
+        // Clean up and remove group/level codes
+        instructorText = instructorsPart
+          .trim()
+          .replace(/\s+/g, ' ')
+          .replace(/,\s*,/g, ',');
+
+        // Filter out group/level codes (B2, C1, etc)
+        instructorText = instructorText
+          .split(',')
+          .map(part => {
+            return part.replace(/\s+[A-Z]\d+\b/g, '').trim();
+          })
+          .filter(p => p.length > 0)
+          .join(', ');
       }
     }
 
@@ -723,8 +752,10 @@ export class V3DatabaseAwareParser extends ScheduleParser {
     // Determine class type
     const type = this.parseClassType(typeText);
 
-    // Determine if remote
-    const is_remote = roomText.toUpperCase().includes('ZDALNIE') || roomText.toUpperCase().includes('ZDALNE');
+    // Determine if remote (check both is_remote_flag if it exists, and roomText)
+    const is_remote = (typeof is_remote_flag !== 'undefined' ? is_remote_flag : false) ||
+                      roomText.toUpperCase().includes('ZDALNIE') ||
+                      roomText.toUpperCase().includes('ZDALNE');
 
     // Build ClassInfo
     const classInfo: ClassInfo = {
