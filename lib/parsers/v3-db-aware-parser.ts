@@ -666,12 +666,12 @@ export class V3DatabaseAwareParser extends ScheduleParser {
     const typeLower = typeText.toLowerCase().trim();
 
     if (typeLower.includes('wykład')) return 'wykład';
-    if (typeLower.includes('lab')) return 'lab';
+    if (typeLower.includes('lab')) return 'laboratorium';
     if (typeLower.includes('ćwicz')) return 'ćwiczenia';
     if (typeLower.includes('projekt')) return 'projekt';
     if (typeLower === 'p') return 'projekt';
     if (typeLower === 'w') return 'wykład';
-    if (typeLower === 'l') return 'lab';
+    if (typeLower === 'l') return 'laboratorium';
     if (typeLower === 'ć') return 'ćwiczenia';
 
     return null;
