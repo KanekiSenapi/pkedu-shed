@@ -542,6 +542,7 @@ export class V3DatabaseAwareParser extends ScheduleParser {
     ];
 
     // Try to find class type keyword in content
+    // IMPORTANT: Type keyword cannot be the first word (it's part of subject name then)
     let typeKeyword: string | null = null;
     let typeIndex = -1;
 
@@ -550,9 +551,16 @@ export class V3DatabaseAwareParser extends ScheduleParser {
       const regex = new RegExp(`(^|\\s)${keyword}($|\\s|\\.)`, 'i');
       const match = cellContent.match(regex);
       if (match && match.index !== undefined) {
+        const actualIndex = match.index + (match[1] ? match[1].length : 0);
+
+        // Type keyword CANNOT be at position 0 (first word)
+        // If it is, it's part of subject name (e.g., "Projekt zespołowy")
+        if (actualIndex === 0) {
+          continue; // Skip this match, try next keyword
+        }
+
         typeKeyword = match[0].trim().replace(/\.$/, ''); // Remove trailing dot if present
-        // Adjust index to skip leading space if present
-        typeIndex = match.index + (match[1] ? match[1].length : 0);
+        typeIndex = actualIndex;
         break;
       }
     }
@@ -687,11 +695,18 @@ export class V3DatabaseAwareParser extends ScheduleParser {
         }
       }
 
-      // Edge case: subject followed directly by instructors (no type)
+      // Edge case: subject followed directly by instructors (no type keyword)
       // Example: "J. angielski mgr A. Zając B2, mgr A. Gunia-Tracz C1..."
+      // OR: "Projekt zespołowy P AWoż s. 131" where P is type abbreviation
       if (partIdx < parts.length) {
         subjectText = parts[partIdx++];
-        typeText = ''; // No type found
+
+        // Check if next part is single letter type abbreviation (W, Ć, L, P, S)
+        if (partIdx < parts.length && /^[WĆLPS]$/i.test(parts[partIdx])) {
+          typeText = parts[partIdx++];
+        } else {
+          typeText = ''; // No type found
+        }
 
         // Rest is instructors and rooms mixed
         const remaining = parts.slice(partIdx).join(' ');
