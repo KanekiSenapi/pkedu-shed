@@ -577,6 +577,7 @@ export class V3DatabaseAwareParser extends ScheduleParser {
     const normalizedContent = this.normalizePolishChars(cellContent);
 
     // First try full keywords
+    let fullKeywordMatch: { keyword: string; index: number } | null = null;
     for (const keyword of typeKeywords) {
       const normalizedKeyword = this.normalizePolishChars(keyword);
 
@@ -596,31 +597,55 @@ export class V3DatabaseAwareParser extends ScheduleParser {
         // Find the actual word in original content (might be "wyklad" or "wykład")
         const originalMatch = cellContent.substring(actualIndex).match(/^(\S+)/);
         if (originalMatch) {
-          typeKeyword = originalMatch[1].replace(/\.$/, ''); // Remove trailing dot
-          typeIndex = actualIndex;
+          fullKeywordMatch = {
+            keyword: originalMatch[1].replace(/\.$/, ''), // Remove trailing dot
+            index: actualIndex
+          };
           break;
         }
       }
     }
 
-    // If no full keyword found, try single letter types
-    if (!typeKeyword) {
-      for (const letter of singleLetterTypes) {
-        const regex = new RegExp(`(^|\\s)${letter}($|\\s)`, '');
-        const match = cellContent.match(regex);
-        if (match && match.index !== undefined) {
-          const actualIndex = match.index + (match[1] ? match[1].length : 0);
+    // Check for single letter types
+    let singleLetterMatch: { keyword: string; index: number } | null = null;
+    for (const letter of singleLetterTypes) {
+      const regex = new RegExp(`(^|\\s)${letter}($|\\s)`, '');
+      const match = cellContent.match(regex);
+      if (match && match.index !== undefined) {
+        const actualIndex = match.index + (match[1] ? match[1].length : 0);
 
-          // Type keyword CANNOT be at position 0
-          if (actualIndex === 0) {
-            continue;
-          }
-
-          typeKeyword = letter;
-          typeIndex = actualIndex;
-          break;
+        // Type keyword CANNOT be at position 0
+        if (actualIndex === 0) {
+          continue;
         }
+
+        singleLetterMatch = {
+          keyword: letter,
+          index: actualIndex
+        };
+        break;
       }
+    }
+
+    // Decision logic: Prefer single letter if it appears AFTER full keyword
+    // This handles cases like "Projekt zespołowy P" where "Projekt" is part of subject name
+    if (fullKeywordMatch && singleLetterMatch) {
+      if (singleLetterMatch.index > fullKeywordMatch.index) {
+        // Single letter comes after full keyword - use single letter
+        // Example: "Projekt zespołowy P AWoż" - use "P" not "Projekt"
+        typeKeyword = singleLetterMatch.keyword;
+        typeIndex = singleLetterMatch.index;
+      } else {
+        // Full keyword comes after single letter - use full keyword
+        typeKeyword = fullKeywordMatch.keyword;
+        typeIndex = fullKeywordMatch.index;
+      }
+    } else if (fullKeywordMatch) {
+      typeKeyword = fullKeywordMatch.keyword;
+      typeIndex = fullKeywordMatch.index;
+    } else if (singleLetterMatch) {
+      typeKeyword = singleLetterMatch.keyword;
+      typeIndex = singleLetterMatch.index;
     }
 
     if (typeKeyword && typeIndex >= 0) {
