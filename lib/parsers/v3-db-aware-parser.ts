@@ -710,8 +710,9 @@ export class V3DatabaseAwareParser extends ScheduleParser {
       }
 
       // Extract rooms (pattern: "s. XXX YYY" where YYY is room suffix, not a note keyword)
-      // Note keywords: UWAGA, Zajęcia, Informacja, etc (5+ chars or known keywords)
-      const roomRegex = /\bs\.\s*[^\s,]+(?:\s+(?!UWAGA|Zajęcia|Informacja|Info|Dla)[A-Z]+\b)?/gi;
+      // Examples: "s. 152 SJO", "s. Działownia 1/15", "s. wykładowa KI"
+      // Note keywords: UWAGA, Zajęcia, Informacja, etc
+      const roomRegex = /\bs\.\s*[^\s,]+(?:\s+(?!UWAGA|Zajęcia|Informacja|Info|Dla)[^\s,]+)*(?:\s+(?!UWAGA|Zajęcia|Informacja|Info|Dla)[A-Z]+\b)?/gi;
       const roomMatches = cleanedRightPart.match(roomRegex) || [];
       roomText = roomMatches.join(', ');
 
@@ -817,7 +818,8 @@ export class V3DatabaseAwareParser extends ScheduleParser {
         }
 
         // Extract rooms (pattern: "s. XXX YYY" where YYY is room suffix, not a note keyword)
-        const roomRegex = /\bs\.\s*[^\s,]+(?:\s+(?!UWAGA|Zajęcia|Informacja|Info|Dla)[A-Z]+\b)?/gi;
+        // Examples: "s. 152 SJO", "s. Działownia 1/15", "s. wykładowa KI"
+        const roomRegex = /\bs\.\s*[^\s,]+(?:\s+(?!UWAGA|Zajęcia|Informacja|Info|Dla)[^\s,]+)*(?:\s+(?!UWAGA|Zajęcia|Informacja|Info|Dla)[A-Z]+\b)?/gi;
         const roomMatches = cleanedRemaining.match(roomRegex) || [];
         roomText = roomMatches.join(', ');
 
