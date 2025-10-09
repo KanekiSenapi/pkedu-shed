@@ -380,9 +380,31 @@ export function ParserTester() {
                       <div className="space-y-2 max-h-96 overflow-y-auto">
                         {result.stats.unknownInstructors.map((instructor, idx) => (
                           <div key={idx} className="p-3 bg-yellow-50 border border-yellow-200">
-                            <div className="font-mono text-sm text-gray-900">{instructor.value}</div>
-                            <div className="text-xs text-gray-600 mt-1">
-                              Wystąpień: {instructor.occurrences} | Konteksty: {instructor.contexts.slice(0, 2).join(', ')}
+                            <div className="flex justify-between items-start gap-2">
+                              <div className="flex-1">
+                                <div className="font-mono text-sm text-gray-900">{instructor.value}</div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                  Wystąpień: {instructor.occurrences} | Konteksty: {instructor.contexts.slice(0, 2).join(', ')}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  const data = {
+                                    type: 'unknown_instructor',
+                                    value: instructor.value,
+                                    occurrences: instructor.occurrences,
+                                    contexts: instructor.contexts,
+                                  };
+                                  navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+                                  toast.success('Skopiowano');
+                                }}
+                                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs transition-colors"
+                                title="Kopiuj dane"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                              </button>
                             </div>
                           </div>
                         ))}
@@ -400,9 +422,31 @@ export function ParserTester() {
                       <div className="space-y-2 max-h-96 overflow-y-auto">
                         {result.stats.unknownSubjects.map((subject, idx) => (
                           <div key={idx} className="p-3 bg-yellow-50 border border-yellow-200">
-                            <div className="font-mono text-sm text-gray-900">{subject.value}</div>
-                            <div className="text-xs text-gray-600 mt-1">
-                              Wystąpień: {subject.occurrences} | Konteksty: {subject.contexts.slice(0, 2).join(', ')}
+                            <div className="flex justify-between items-start gap-2">
+                              <div className="flex-1">
+                                <div className="font-mono text-sm text-gray-900">{subject.value}</div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                  Wystąpień: {subject.occurrences} | Konteksty: {subject.contexts.slice(0, 2).join(', ')}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  const data = {
+                                    type: 'unknown_subject',
+                                    value: subject.value,
+                                    occurrences: subject.occurrences,
+                                    contexts: subject.contexts,
+                                  };
+                                  navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+                                  toast.success('Skopiowano');
+                                }}
+                                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs transition-colors"
+                                title="Kopiuj dane"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                              </button>
                             </div>
                           </div>
                         ))}
