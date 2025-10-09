@@ -529,7 +529,7 @@ export class V3DatabaseAwareParser extends ScheduleParser {
     let noteText = '';
     let is_remote_flag = false;
 
-    // Class type keywords to search for
+    // Class type keywords to search for (full words)
     const typeKeywords = [
       'wykład',
       'wykłady',
@@ -542,11 +542,15 @@ export class V3DatabaseAwareParser extends ScheduleParser {
       'seminarium'
     ];
 
+    // Single letter type abbreviations
+    const singleLetterTypes = ['P', 'W', 'Ć', 'L', 'S'];
+
     // Try to find class type keyword in content
     // IMPORTANT: Type keyword cannot be the first word (it's part of subject name then)
     let typeKeyword: string | null = null;
     let typeIndex = -1;
 
+    // First try full keywords
     for (const keyword of typeKeywords) {
       // Use lookahead/lookbehind or space boundaries instead of \b (doesn't work well with polish chars)
       const regex = new RegExp(`(^|\\s)${keyword}($|\\s|\\.)`, 'i');
@@ -566,6 +570,26 @@ export class V3DatabaseAwareParser extends ScheduleParser {
       }
     }
 
+    // If no full keyword found, try single letter types
+    if (!typeKeyword) {
+      for (const letter of singleLetterTypes) {
+        const regex = new RegExp(`(^|\\s)${letter}($|\\s)`, '');
+        const match = cellContent.match(regex);
+        if (match && match.index !== undefined) {
+          const actualIndex = match.index + (match[1] ? match[1].length : 0);
+
+          // Type keyword CANNOT be at position 0
+          if (actualIndex === 0) {
+            continue;
+          }
+
+          typeKeyword = letter;
+          typeIndex = actualIndex;
+          break;
+        }
+      }
+    }
+
     if (typeKeyword && typeIndex >= 0) {
       // Split by type keyword
       let leftPart = cellContent.substring(0, typeIndex).trim();
@@ -577,12 +601,21 @@ export class V3DatabaseAwareParser extends ScheduleParser {
       rightPart = rightPart.replace(/^[\.\s]+/, '').trim();
 
       // Parse LEFT part: [optional time] subject [optional instructor without title]
-      // Edge case: "Zaawansowane technologie baz danych Szymon Szomiński wykład"
-      // Last 2-3 words before type might be instructor name (without title)
-      // Heuristic: if last words are Capitalized Words (like "Imię Nazwisko"), it's likely instructor
+      // First check for time at the beginning
+      const timeMatch = leftPart.match(/^(\d{1,2}:\d{2}-\d{1,2}:\d{2})\s+(.+)$/);
+      let remainingLeft = leftPart;
 
-      // Check if leftPart ends with potential instructor (2-3 capitalized words)
-      const instructorBeforeTypeMatch = leftPart.match(/^(.+?)\s+([A-ZŻŹĆĄŚĘŁŃÓ][a-zżźćąśęłńó]+(?:\s+[A-ZŻŹĆĄŚĘŁŃÓ][a-zżźćąśęłńó]+){0,2})$/);
+      if (timeMatch) {
+        const parsedTime = parseTimeRange(timeMatch[1]);
+        if (parsedTime) {
+          overrideTime = parsedTime;
+          remainingLeft = timeMatch[2].trim();
+        }
+      }
+
+      // Check if remainingLeft ends with potential instructor (2-3 capitalized words)
+      // Edge case: "Zaawansowane technologie baz danych Szymon Szomiński"
+      const instructorBeforeTypeMatch = remainingLeft.match(/^(.+?)\s+([A-ZŻŹĆĄŚĘŁŃÓ][a-zżźćąśęłńó]+(?:\s+[A-ZŻŹĆĄŚĘŁŃÓ][a-zżźćąśęłńó]+){0,2})$/);
       if (instructorBeforeTypeMatch && instructorBeforeTypeMatch[2]) {
         // Check if matched part looks like name (2-3 words, all capitalized)
         const potentialName = instructorBeforeTypeMatch[2];
@@ -592,9 +625,9 @@ export class V3DatabaseAwareParser extends ScheduleParser {
           subjectText = instructorBeforeTypeMatch[1].trim();
           instructorText = potentialName;
         } else {
-          subjectText = leftPart;
+          subjectText = remainingLeft;
         }
-      } else if (!leftPart || leftPart.length === 0) {
+      } else if (!remainingLeft || remainingLeft.length === 0) {
         // Type keyword was at the beginning, or subject+type are together
         // Look at the full line containing the type
         const lines = cellContent.split(/\n/);
@@ -603,16 +636,20 @@ export class V3DatabaseAwareParser extends ScheduleParser {
         // Extract subject from first line (everything before type keyword)
         const typeInLineMatch = firstLine.match(new RegExp(`^(.+?)\\s*${typeKeyword}`, 'i'));
         if (typeInLineMatch) {
-          subjectText = typeInLineMatch[1].trim();
+          let extracted = typeInLineMatch[1].trim();
 
-          // Check for time in subject
-          const timeMatch = subjectText.match(/^(\d{1,2}:\d{2}-\d{1,2}:\d{2})\s+(.+)$/);
+          // Check for time at beginning
+          const timeMatch = extracted.match(/^(\d{1,2}:\d{2}-\d{1,2}:\d{2})\s+(.+)$/);
           if (timeMatch) {
             const parsedTime = parseTimeRange(timeMatch[1]);
             if (parsedTime) {
               overrideTime = parsedTime;
               subjectText = timeMatch[2].trim();
+            } else {
+              subjectText = extracted;
             }
+          } else {
+            subjectText = extracted;
           }
 
           // RightPart should be rest of lines after first
@@ -621,22 +658,11 @@ export class V3DatabaseAwareParser extends ScheduleParser {
             rightPart = rightPart.replace(/^[\.\s]+/, '').trim();
           }
         } else {
-          subjectText = leftPart;
+          subjectText = remainingLeft;
         }
       } else {
-        // Normal case: leftPart has content
-        const timeMatch = leftPart.match(/^(\d{1,2}:\d{2}-\d{1,2}:\d{2})\s+(.+)$/);
-        if (timeMatch) {
-          const parsedTime = parseTimeRange(timeMatch[1]);
-          if (parsedTime) {
-            overrideTime = parsedTime;
-            subjectText = timeMatch[2].trim();
-          } else {
-            subjectText = leftPart;
-          }
-        } else {
-          subjectText = leftPart;
-        }
+        // Normal case: remainingLeft has content (no instructor detected before type)
+        subjectText = remainingLeft;
       }
 
       // Parse RIGHT part: instructor and room
@@ -666,23 +692,30 @@ export class V3DatabaseAwareParser extends ScheduleParser {
       // Patterns like "Zajęcia dla..." "Uwaga:..." "(Xh)" etc indicate start of note
       const noteSplit = instructorsAndNote.split(/\s{4,}|(?=\s+(?:Zajęcia|Uwaga|Uwagi|Informacja|Info|Dla|\(\d+h?\))[\s:])/i);
 
-      instructorText = noteSplit[0]
-        .trim()
-        .replace(/\s+/g, ' ')
-        .replace(/,\s*,/g, ','); // Remove double commas
+      // Only extract instructor from rightPart if not already set from leftPart
+      if (!instructorText) {
+        instructorText = noteSplit[0]
+          .trim()
+          .replace(/\s+/g, ' ')
+          .replace(/,\s*,/g, ','); // Remove double commas
 
-      // Filter out group/level codes (B2, C1, A1, etc - single letter + number)
-      instructorText = instructorText
-        .split(',')
-        .map(part => {
-          // Remove patterns like "B2", "C1" that are not part of names
-          return part.replace(/\s+[A-Z]\d+\b/g, '').trim();
-        })
-        .filter(p => p.length > 0)
-        .join(', ');
+        // Filter out group/level codes (B2, C1, A1, etc - single letter + number)
+        instructorText = instructorText
+          .split(',')
+          .map(part => {
+            // Remove patterns like "B2", "C1" that are not part of names
+            return part.replace(/\s+[A-Z]\d+\b/g, '').trim();
+          })
+          .filter(p => p.length > 0)
+          .join(', ');
 
-      // Everything after instructor is a note
-      noteText = noteSplit.slice(1).join(' ').trim();
+        // Everything after instructor is a note
+        noteText = noteSplit.slice(1).join(' ').trim();
+      } else {
+        // Instructor was set from leftPart, all of rightPart (after removing rooms) is note
+        noteText = noteSplit.join(' ').trim();
+      }
+
       if (!noteText && instructorsAndNote.length > 50) {
         // If no split found but text is long, last part might be note
         // Check if there's text after last recognized instructor/room
