@@ -77,6 +77,7 @@ interface ParseResult {
 export function ParserTester() {
   const [parsers, setParsers] = useState<ParserMetadata[]>([]);
   const [selectedParser, setSelectedParser] = useState<string>('');
+  const [defaultParser, setDefaultParser] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<ParseResult | null>(null);
@@ -95,12 +96,30 @@ export function ParserTester() {
       if (data.success) {
         setParsers(data.parsers);
         if (data.parsers.length > 0) {
-          setSelectedParser(data.parsers[0].version);
+          // Try to load default parser from localStorage
+          const savedDefault = localStorage.getItem('defaultParserVersion');
+          const parserExists = savedDefault && data.parsers.some((p: ParserMetadata) => p.version === savedDefault);
+
+          if (parserExists) {
+            setSelectedParser(savedDefault);
+            setDefaultParser(savedDefault);
+          } else {
+            // Default to last parser (newest version)
+            const lastParser = data.parsers[data.parsers.length - 1].version;
+            setSelectedParser(lastParser);
+            setDefaultParser(lastParser);
+          }
         }
       }
     } catch (error) {
       toast.error('Błąd ładowania parserów');
     }
+  };
+
+  const setAsDefault = () => {
+    localStorage.setItem('defaultParserVersion', selectedParser);
+    setDefaultParser(selectedParser);
+    toast.success('Ustawiono jako domyślny parser');
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -195,17 +214,34 @@ export function ParserTester() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Wybierz parser
             </label>
-            <select
-              value={selectedParser}
-              onChange={(e) => setSelectedParser(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 text-gray-900 focus:outline-none focus:border-blue-500"
-            >
-              {parsers.map(parser => (
-                <option key={parser.version} value={parser.version}>
-                  {parser.name} (v{parser.version})
-                </option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <select
+                value={selectedParser}
+                onChange={(e) => setSelectedParser(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 text-gray-900 focus:outline-none focus:border-blue-500"
+              >
+                {parsers.map(parser => (
+                  <option key={parser.version} value={parser.version}>
+                    {parser.name} (v{parser.version}){parser.version === defaultParser ? ' ★ Domyślny' : ''}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={setAsDefault}
+                disabled={selectedParser === defaultParser}
+                className={`px-4 py-2 transition-colors flex items-center gap-1 ${
+                  selectedParser === defaultParser
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+                title={selectedParser === defaultParser ? 'Ten parser jest już domyślny' : 'Ustaw jako domyślny parser'}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                {selectedParser === defaultParser ? 'Domyślny' : 'Ustaw domyślny'}
+              </button>
+            </div>
             {parsers.find(p => p.version === selectedParser) && (
               <p className="text-xs text-gray-500 mt-1">
                 {parsers.find(p => p.version === selectedParser)?.description}
