@@ -585,7 +585,14 @@ export class V3DatabaseAwareParser extends ScheduleParser {
     }
 
     // Match instructors (can be multiple: "A, B" or "A / B")
-    const instructorParts = instructorText
+    // BUT: "dr X, prof. PK" is ONE person (prof. PK is a title)
+    // First, normalize titles that follow commas
+    let normalizedInstructorText = instructorText
+      .replace(/,\s*(prof\.?\s*PK)/gi, ' $1')  // "X, prof. PK" -> "X prof. PK"
+      .replace(/,\s*(dr\s+hab\.?)/gi, ' $1')   // "X, dr hab." -> "X dr hab."
+      .replace(/,\s*(prof\.?)/gi, ' $1');       // "X, prof." -> "X prof."
+
+    const instructorParts = normalizedInstructorText
       .split(/[,\/]/)
       .map(p => p.trim())
       .filter(p => p.length > 0);
