@@ -500,49 +500,150 @@ export class V3DatabaseAwareParser extends ScheduleParser {
       };
     }
 
-    // Split by TAB, 4+ spaces, or newline
-    const parts = cellContent
-      .split(/\t|\n|    +/)
-      .map(p => p.trim())
-      .filter(p => p.length > 0);
+    // Strategy: Find class type keyword as separator
+    // LEFT of type = subject (+ optional time)
+    // RIGHT of type = instructor and room
 
-    if (parts.length === 0) {
-      return {
-        classInfo: null,
-        debugInfo: {
-          interpretation: {
-            type: 'empty',
-            parsedValue: null,
-            confidence: 1.0,
-          },
-          warnings: [],
-          errors: [],
-        },
-      };
-    }
-
-    // Parse components
     let overrideTime: { start: string; end: string } | undefined;
     let subjectText = '';
     let typeText = '';
     let instructorText = '';
     let roomText = '';
 
-    // Check if first part is time (HH:MM-HH:MM)
-    let partIdx = 0;
-    if (parts[0].match(/^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/)) {
-      const timeMatch = parseTimeRange(parts[0]);
-      if (timeMatch) {
-        overrideTime = timeMatch;
-        partIdx = 1;
+    // Class type keywords to search for
+    const typeKeywords = [
+      'wykład',
+      'wykłady',
+      'ćwiczenia',
+      'ćwiczenie',
+      'laboratorium',
+      'lab',
+      'projekt',
+      'projekty',
+      'seminarium'
+    ];
+
+    // Try to find class type keyword in content
+    let typeKeyword: string | null = null;
+    let typeIndex = -1;
+
+    for (const keyword of typeKeywords) {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+      const match = cellContent.match(regex);
+      if (match && match.index !== undefined) {
+        typeKeyword = match[0];
+        typeIndex = match.index;
+        break;
       }
     }
 
-    // Assign remaining parts
-    if (partIdx < parts.length) subjectText = parts[partIdx++];
-    if (partIdx < parts.length) typeText = parts[partIdx++];
-    if (partIdx < parts.length) instructorText = parts[partIdx++];
-    if (partIdx < parts.length) roomText = parts[partIdx++];
+    if (typeKeyword && typeIndex >= 0) {
+      // Split by type keyword
+      const leftPart = cellContent.substring(0, typeIndex).trim();
+      const rightPart = cellContent.substring(typeIndex + typeKeyword.length).trim();
+
+      typeText = typeKeyword;
+
+      // Parse LEFT part: [optional time] subject
+      const timeMatch = leftPart.match(/^(\d{1,2}:\d{2}-\d{1,2}:\d{2})\s+(.+)$/);
+      if (timeMatch) {
+        const parsedTime = parseTimeRange(timeMatch[1]);
+        if (parsedTime) {
+          overrideTime = parsedTime;
+          subjectText = timeMatch[2].trim();
+        } else {
+          subjectText = leftPart;
+        }
+      } else {
+        subjectText = leftPart;
+      }
+
+      // Parse RIGHT part: instructor and room
+      // First split by TAB, 4+ spaces, or newline
+      let rightParts = rightPart
+        .split(/\t|\n|    +/)
+        .map(p => p.trim())
+        .filter(p => p.length > 0);
+
+      // If only one part, try to split by room pattern "s. XXX"
+      if (rightParts.length === 1) {
+        const roomSplit = rightParts[0].split(/(\s+s\.?\s*\S+)/i);
+        rightParts = roomSplit.map(p => p.trim()).filter(p => p.length > 0);
+      }
+
+      // Separate instructors from rooms
+      // Pattern: "s. XXX" or "s.XXX" = room
+      const instructorParts: string[] = [];
+      const roomParts: string[] = [];
+
+      rightParts.forEach(part => {
+        if (/^s\.?\s*\S+$/i.test(part) || /\bs\.?\s*\S+$/i.test(part)) {
+          // This is a room (contains "s. XXX" or "s.XXX" pattern)
+          roomParts.push(part.replace(/^.*\b(s\.?\s*\S+)$/i, '$1'));
+        } else {
+          // This is likely instructor
+          instructorParts.push(part);
+        }
+      });
+
+      instructorText = instructorParts.join(' ');
+      roomText = roomParts.join(', ');
+
+    } else {
+      // Fallback: no type keyword found
+      // Use old logic: split by TAB/4+ spaces/newline
+      const parts = cellContent
+        .split(/\t|\n|    +/)
+        .map(p => p.trim())
+        .filter(p => p.length > 0);
+
+      if (parts.length === 0) {
+        return {
+          classInfo: null,
+          debugInfo: {
+            interpretation: {
+              type: 'empty',
+              parsedValue: null,
+              confidence: 1.0,
+            },
+            warnings: [],
+            errors: [],
+          },
+        };
+      }
+
+      // Check if first part is time
+      let partIdx = 0;
+      if (parts[0].match(/^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/)) {
+        const timeMatch = parseTimeRange(parts[0]);
+        if (timeMatch) {
+          overrideTime = timeMatch;
+          partIdx = 1;
+        }
+      }
+
+      // Edge case: subject followed directly by instructors (no type)
+      // Example: "J. angielski mgr A. Zając B2, mgr A. Gunia-Tracz C1..."
+      if (partIdx < parts.length) {
+        subjectText = parts[partIdx++];
+        typeText = ''; // No type found
+
+        // Rest is instructors and rooms mixed
+        const remaining = parts.slice(partIdx).join(' ');
+
+        // Extract rooms first (pattern: s. XXX)
+        const roomMatches = remaining.match(/\bs\.?\s*\S+/gi) || [];
+        roomText = roomMatches.join(', ');
+
+        // Remove rooms from remaining to get instructors
+        let instructorsPart = remaining;
+        roomMatches.forEach(room => {
+          instructorsPart = instructorsPart.replace(room, '');
+        });
+
+        instructorText = instructorsPart.trim().replace(/\s+/g, ' ');
+      }
+    }
 
     // Match subject
     let matchedSubject: SubjectEntity | null = null;
