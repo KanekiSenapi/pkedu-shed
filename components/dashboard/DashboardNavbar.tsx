@@ -58,7 +58,7 @@ export function DashboardNavbar({ preferences }: DashboardNavbarProps) {
 
   const getPageTitle = (): string => {
     if (pathname === '/browse') return 'Widok ogólny';
-    return 'Moje zajęcia';
+    return 'Wirtualny Student';
   };
 
   return (

@@ -31,10 +31,20 @@ export function filterScheduleByPreferences(
 }
 
 /**
+ * Format date in local timezone (not UTC)
+ */
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * Get today's classes
  */
 export function getTodayClasses(entries: ScheduleEntry[]): ScheduleEntry[] {
-  const today = new Date().toISOString().split('T')[0];
+  const today = formatLocalDate(new Date());
   return entries
     .filter(e => e.date === today)
     .sort((a, b) => a.start_time.localeCompare(b.start_time));
@@ -48,8 +58,8 @@ export function getUpcomingClasses(entries: ScheduleEntry[]): ScheduleEntry[] {
   const nextWeek = new Date();
   nextWeek.setDate(today.getDate() + 7);
 
-  const todayStr = today.toISOString().split('T')[0];
-  const nextWeekStr = nextWeek.toISOString().split('T')[0];
+  const todayStr = formatLocalDate(today);
+  const nextWeekStr = formatLocalDate(nextWeek);
 
   return entries
     .filter(e => e.date >= todayStr && e.date <= nextWeekStr)
@@ -69,8 +79,8 @@ export function getPastClasses(entries: ScheduleEntry[]): ScheduleEntry[] {
   const weekAgo = new Date();
   weekAgo.setDate(today.getDate() - 7);
 
-  const todayStr = today.toISOString().split('T')[0];
-  const weekAgoStr = weekAgo.toISOString().split('T')[0];
+  const todayStr = formatLocalDate(today);
+  const weekAgoStr = formatLocalDate(weekAgo);
 
   return entries
     .filter(e => e.date >= weekAgoStr && e.date < todayStr)

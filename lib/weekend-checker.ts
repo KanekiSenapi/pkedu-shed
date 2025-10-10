@@ -16,13 +16,24 @@ export function checkUpcomingWeekend(entries: ScheduleEntry[]): WeekendInfo {
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
 
-  // Calculate next Saturday
-  let daysUntilSaturday = 6 - dayOfWeek;
-  if (daysUntilSaturday <= 0) daysUntilSaturday += 7; // If today is Saturday or Sunday, get next weekend
+  let nextSaturday: Date;
 
-  const nextSaturday = new Date(today);
-  nextSaturday.setDate(today.getDate() + daysUntilSaturday);
-  nextSaturday.setHours(0, 0, 0, 0);
+  if (dayOfWeek === 6) {
+    // Today is Saturday - show current weekend
+    nextSaturday = new Date(today);
+    nextSaturday.setHours(0, 0, 0, 0);
+  } else if (dayOfWeek === 0) {
+    // Today is Sunday - show current weekend (Saturday was yesterday)
+    nextSaturday = new Date(today);
+    nextSaturday.setDate(today.getDate() - 1);
+    nextSaturday.setHours(0, 0, 0, 0);
+  } else {
+    // Monday to Friday - calculate next Saturday
+    const daysUntilSaturday = 6 - dayOfWeek;
+    nextSaturday = new Date(today);
+    nextSaturday.setDate(today.getDate() + daysUntilSaturday);
+    nextSaturday.setHours(0, 0, 0, 0);
+  }
 
   const nextSunday = new Date(nextSaturday);
   nextSunday.setDate(nextSaturday.getDate() + 1);
