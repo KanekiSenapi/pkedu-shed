@@ -46,7 +46,7 @@ export function LandingNavbar() {
               className="object-contain"
             />
             <div>
-              <h1 className="text-lg font-bold text-gray-900">Plan Zajęć</h1>
+              <h1 className="text-lg font-bold text-gray-900">Wirtualny Student</h1>
               <p className="text-xs text-gray-600 hidden sm:block">Politechnika Krakowska</p>
             </div>
           </Link>
