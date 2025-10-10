@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 
 export function LandingNavbar() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -54,7 +54,9 @@ export function LandingNavbar() {
             </div>
           </div>
 
-          {session ? (
+          {status === 'loading' ? (
+            <div className="w-32 h-9"></div>
+          ) : session ? (
             <div className="flex items-center gap-3">
               <NotificationBell />
 
