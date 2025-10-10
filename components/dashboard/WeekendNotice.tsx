@@ -13,6 +13,13 @@ export function WeekendNotice({ entries }: WeekendNoticeProps) {
 
   const weekendDateStr = formatWeekendDate(weekendInfo.weekendStart, weekendInfo.weekendEnd);
 
+  // Check if we're currently in the weekend
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+  const isCurrentWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+  const weekendPrefix = isCurrentWeekend ? 'w ten weekend' : `w weekend ${weekendDateStr}`;
+
   if (!weekendInfo.hasClasses) {
     return (
       <div className="bg-green-50 border border-green-200 p-4">
@@ -21,7 +28,7 @@ export function WeekendNotice({ entries }: WeekendNoticeProps) {
           <div>
             <div className="font-medium text-green-900">Wolny weekend!</div>
             <div className="text-sm text-green-700">
-              Brak zajęć w weekend {weekendDateStr}
+              Brak zajęć {weekendPrefix}
             </div>
           </div>
         </div>
@@ -35,9 +42,9 @@ export function WeekendNotice({ entries }: WeekendNoticeProps) {
         <div className="flex items-center gap-3">
           <div className="text-2xl">💻</div>
           <div>
-            <div className="font-medium text-blue-900">Zajęcia zdalne w weekend</div>
+            <div className="font-medium text-blue-900">Zajęcia zdalne {isCurrentWeekend ? 'w ten weekend' : 'w weekend'}</div>
             <div className="text-sm text-blue-700">
-              Weekend {weekendDateStr} - wszystkie zajęcia zdalne
+              {isCurrentWeekend ? 'W ten weekend' : `Weekend ${weekendDateStr}`} - wszystkie zajęcia zdalne
             </div>
           </div>
         </div>
@@ -53,9 +60,11 @@ export function WeekendNotice({ entries }: WeekendNoticeProps) {
       <div className="flex items-center gap-3">
         <div className="text-2xl">🎓</div>
         <div className="flex-1">
-          <div className="font-medium text-orange-900">Zajęcia stacjonarne w weekend</div>
+          <div className="font-medium text-orange-900">
+            Zajęcia stacjonarne {isCurrentWeekend ? 'w ten weekend' : 'w weekend'}
+          </div>
           <div className="text-sm text-orange-700">
-            Weekend {weekendDateStr} - {weekendInfo.stationaryCount}{' '}
+            {isCurrentWeekend ? 'W ten weekend' : `Weekend ${weekendDateStr}`} - {weekendInfo.stationaryCount}{' '}
             {weekendInfo.stationaryCount === 1
               ? 'blok zajęć'
               : weekendInfo.stationaryCount < 5
