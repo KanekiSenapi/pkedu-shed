@@ -18,7 +18,6 @@ import { ScheduleEntry } from '@/types/schedule';
 import { UpcomingDaysCalendar } from '@/components/dashboard/UpcomingDaysCalendar';
 import { WeekendNotice } from '@/components/dashboard/WeekendNotice';
 import { NextClassCountdown } from '@/components/dashboard/NextClassCountdown';
-import { TodaysTimeline } from '@/components/dashboard/TodaysTimeline';
 import { SubjectProgress } from '@/components/dashboard/SubjectProgress';
 import { ScheduleCalendar } from '@/components/calendar/ScheduleCalendar';
 import { DashboardNavbar } from '@/components/dashboard/DashboardNavbar';
@@ -156,13 +155,6 @@ export default function DashboardPage() {
         <div className="mb-8">
           <NextClassCountdown todayClasses={todayClasses} />
         </div>
-
-        {/* Today's Timeline */}
-        {todayClasses.length > 0 && (
-          <div className="mb-8">
-            <TodaysTimeline todayClasses={todayClasses} />
-          </div>
-        )}
 
         {/* Grid layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
