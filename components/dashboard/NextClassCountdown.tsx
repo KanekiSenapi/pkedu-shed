@@ -9,20 +9,18 @@ interface NextClassCountdownProps {
   todayClasses: ScheduleEntry[];
 }
 
-type ClassState =
+type ClassCard =
   | { type: 'before'; entry: ScheduleEntry; minutesUntil: number }
-  | { type: 'during'; entry: ScheduleEntry; minutesRemaining: number }
-  | { type: 'finished' }
-  | { type: 'none' };
+  | { type: 'during'; entry: ScheduleEntry; minutesRemaining: number };
 
 export function NextClassCountdown({ todayClasses }: NextClassCountdownProps) {
-  const [state, setState] = useState<ClassState>({ type: 'none' });
+  const [cards, setCards] = useState<ClassCard[]>([]);
   const [mapModal, setMapModal] = useState<{ building: Building; roomNumber: string } | null>(null);
 
   useEffect(() => {
-    const calculateState = (): ClassState => {
+    const calculateCards = (): ClassCard[] => {
       if (todayClasses.length === 0) {
-        return { type: 'none' };
+        return [];
       }
 
       const now = new Date();
@@ -35,6 +33,8 @@ export function NextClassCountdown({ todayClasses }: NextClassCountdownProps) {
         a.start_time.localeCompare(b.start_time)
       );
 
+      const result: ClassCard[] = [];
+
       for (const entry of sortedClasses) {
         const [startHour, startMinute] = entry.start_time.split(':').map(Number);
         const [endHour, endMinute] = entry.end_time.split(':').map(Number);
@@ -45,26 +45,26 @@ export function NextClassCountdown({ todayClasses }: NextClassCountdownProps) {
         // Check if class is currently happening
         if (currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes < endTimeInMinutes) {
           const minutesRemaining = endTimeInMinutes - currentTimeInMinutes;
-          return { type: 'during', entry, minutesRemaining };
+          result.push({ type: 'during', entry, minutesRemaining });
         }
 
         // Check if class is in the future
         if (currentTimeInMinutes < startTimeInMinutes) {
           const minutesUntil = startTimeInMinutes - currentTimeInMinutes;
-          return { type: 'before', entry, minutesUntil };
+          result.push({ type: 'before', entry, minutesUntil });
         }
       }
 
-      // All classes are finished
-      return { type: 'finished' };
+      // Return max 3 cards
+      return result.slice(0, 3);
     };
 
     // Initial calculation
-    setState(calculateState());
+    setCards(calculateCards());
 
     // Update every minute
     const interval = setInterval(() => {
-      setState(calculateState());
+      setCards(calculateCards());
     }, 60000);
 
     return () => clearInterval(interval);
@@ -82,99 +82,96 @@ export function NextClassCountdown({ todayClasses }: NextClassCountdownProps) {
     return `${hours}h ${mins}min`;
   };
 
-  if (state.type === 'none') {
+  if (cards.length === 0) {
     return (
       <div className="bg-white border border-gray-200 p-6">
         <div className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-2">
           Następne zajęcia
         </div>
-        <div className="text-gray-500">Brak zajęć dzisiaj</div>
-      </div>
-    );
-  }
-
-  if (state.type === 'finished') {
-    return (
-      <div className="bg-white border border-gray-200 p-6">
-        <div className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-2">
-          Następne zajęcia
-        </div>
-        <div className="text-green-600 font-medium">Wszystkie zajęcia zakończone</div>
-      </div>
-    );
-  }
-
-  if (state.type === 'during') {
-    return (
-      <div className="bg-blue-50 border border-blue-200 p-6">
-        <div className="text-sm font-medium text-blue-600 uppercase tracking-wide mb-2">
-          Trwają zajęcia
-        </div>
-        <div className="text-xl font-bold text-blue-900 mb-1">
-          {state.entry.class_info.subject}
-        </div>
-        <div className="text-sm text-blue-700">
-          Koniec za {formatTime(state.minutesRemaining)}
-        </div>
-        <div className="text-xs text-blue-600 mt-2 flex items-center gap-2">
-          <span>
-            {state.entry.class_info.type}
-            {state.entry.class_info.instructor && ` • ${state.entry.class_info.instructor}`}
-            {state.entry.class_info.room && ` • ${state.entry.class_info.room}`}
-          </span>
-          {state.entry.class_info.room && (() => {
-            const roomNumber = parseRoomFromText(state.entry.class_info.room);
-            const building = roomNumber ? findBuildingForRoom(roomNumber) : null;
-            return building && roomNumber ? (
-              <button
-                onClick={() => setMapModal({ building, roomNumber })}
-                className="text-blue-700 hover:text-blue-800 transition-colors"
-                title="Pokaż na mapie"
-              >
-                🗺️
-              </button>
-            ) : null;
-          })()}
+        <div className="text-gray-500">
+          {todayClasses.length === 0 ? 'Brak zajęć dzisiaj' : 'Wszystkie zajęcia zakończone'}
         </div>
       </div>
     );
   }
 
-  // state.type === 'before'
   return (
-    <div className="bg-white border border-gray-200 p-6">
-      <div className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-2">
-        Następne zajęcia
-      </div>
-      <div className="text-xl font-bold text-gray-900 mb-1">
-        {state.entry.class_info.subject}
-      </div>
-      <div className="text-sm text-gray-600 mb-2">
-        {state.entry.start_time} - {state.entry.end_time}
-      </div>
-      <div className="text-2xl font-bold text-blue-600">
-        za {formatTime(state.minutesUntil)}
-      </div>
-      <div className="text-xs text-gray-500 mt-2 flex items-center gap-2">
-        <span>
-          {state.entry.class_info.type}
-          {state.entry.class_info.instructor && ` • ${state.entry.class_info.instructor}`}
-          {state.entry.class_info.room && ` • ${state.entry.class_info.room}`}
-        </span>
-        {state.entry.class_info.room && (() => {
-          const roomNumber = parseRoomFromText(state.entry.class_info.room);
-          const building = roomNumber ? findBuildingForRoom(roomNumber) : null;
-          return building && roomNumber ? (
-            <button
-              onClick={() => setMapModal({ building, roomNumber })}
-              className="text-blue-600 hover:text-blue-700 transition-colors"
-              title="Pokaż na mapie"
-            >
-              🗺️
-            </button>
-          ) : null;
-        })()}
-      </div>
+    <div className={`grid gap-4 ${cards.length === 1 ? 'grid-cols-1' : cards.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
+      {cards.map((card, index) => {
+        if (card.type === 'during') {
+          return (
+            <div key={index} className="bg-blue-50 border border-blue-200 p-6">
+              <div className="text-sm font-medium text-blue-600 uppercase tracking-wide mb-2">
+                Trwają zajęcia
+              </div>
+              <div className="text-xl font-bold text-blue-900 mb-1">
+                {card.entry.class_info.subject}
+              </div>
+              <div className="text-sm text-blue-700 mb-2">
+                Koniec za {formatTime(card.minutesRemaining)}
+              </div>
+              <div className="text-xs text-blue-600 mt-2 flex items-center gap-2">
+                <span>
+                  {card.entry.class_info.type}
+                  {card.entry.class_info.instructor && ` • ${card.entry.class_info.instructor}`}
+                  {card.entry.class_info.room && ` • ${card.entry.class_info.room}`}
+                </span>
+                {card.entry.class_info.room && (() => {
+                  const roomNumber = parseRoomFromText(card.entry.class_info.room);
+                  const building = roomNumber ? findBuildingForRoom(roomNumber) : null;
+                  return building && roomNumber ? (
+                    <button
+                      onClick={() => setMapModal({ building, roomNumber })}
+                      className="text-blue-700 hover:text-blue-800 transition-colors"
+                      title="Pokaż na mapie"
+                    >
+                      🗺️
+                    </button>
+                  ) : null;
+                })()}
+              </div>
+            </div>
+          );
+        }
+
+        // card.type === 'before'
+        return (
+          <div key={index} className="bg-white border border-gray-200 p-6">
+            <div className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-2">
+              Następne zajęcia
+            </div>
+            <div className="text-xl font-bold text-gray-900 mb-1">
+              {card.entry.class_info.subject}
+            </div>
+            <div className="text-sm text-gray-600 mb-2">
+              {card.entry.start_time} - {card.entry.end_time}
+            </div>
+            <div className="text-2xl font-bold text-blue-600">
+              za {formatTime(card.minutesUntil)}
+            </div>
+            <div className="text-xs text-gray-500 mt-2 flex items-center gap-2">
+              <span>
+                {card.entry.class_info.type}
+                {card.entry.class_info.instructor && ` • ${card.entry.class_info.instructor}`}
+                {card.entry.class_info.room && ` • ${card.entry.class_info.room}`}
+              </span>
+              {card.entry.class_info.room && (() => {
+                const roomNumber = parseRoomFromText(card.entry.class_info.room);
+                const building = roomNumber ? findBuildingForRoom(roomNumber) : null;
+                return building && roomNumber ? (
+                  <button
+                    onClick={() => setMapModal({ building, roomNumber })}
+                    className="text-blue-600 hover:text-blue-700 transition-colors"
+                    title="Pokaż na mapie"
+                  >
+                    🗺️
+                  </button>
+                ) : null;
+              })()}
+            </div>
+          </div>
+        );
+      })}
 
       {/* Map Modal */}
       {mapModal && (
