@@ -63,25 +63,34 @@ export default function DashboardPage() {
 
   const displayedClasses = classesView === 'upcoming' ? upcomingClasses : pastClasses;
 
+  const formatLocalDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const formatTime = (time: string) => {
     return time; // Already in HH:MM format
   };
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const dateOnly = dateStr.split('T')[0];
-    const todayStr = today.toISOString().split('T')[0];
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const todayStr = formatLocalDate(today);
+    const tomorrowStr = formatLocalDate(tomorrow);
 
-    if (dateOnly === todayStr) return 'Dziś';
-    if (dateOnly === tomorrowStr) return 'Jutro';
+    if (dateStr === todayStr) return 'Dziś';
+    if (dateStr === tomorrowStr) return 'Jutro';
+
+    // Parse the date string (YYYY-MM-DD)
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
 
     const days = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota'];
-    return `${days[date.getDay()]}, ${date.getDate()}.${date.getMonth() + 1}`;
+    return `${days[date.getDay()]}, ${day}.${month}`;
   };
 
   const timeToMinutes = (time: string): number => {
@@ -197,7 +206,7 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-3">
                 {displayedClasses.map((entry, index) => {
-                  const isToday = entry.date === new Date().toISOString().split('T')[0];
+                  const isToday = entry.date === formatLocalDate(new Date());
                   const freeTimeGap = hasFreeTimeGap(entry, index, displayedClasses);
                   const isPast = classesView === 'past';
 
