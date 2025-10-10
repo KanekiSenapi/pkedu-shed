@@ -1,16 +1,11 @@
-import Link from 'next/link';
-import type { Metadata } from 'next';
-import { LandingNavbar } from '@/components/landing/LandingNavbar';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Wirtualny Student - Plan Zajęć PK | Informatyka Niestacjonarne',
-  description: 'Portal planu zajęć Politechniki Krakowskiej dla studiów niestacjonarnych kierunku Informatyka (WIiT). Kalendarz zajęć, powiadomienia o zmianach, mapa kampusu i więcej.',
-  alternates: {
-    canonical: '/',
-  },
-};
+import Link from 'next/link';
+import { LandingNavbar } from '@/components/landing/LandingNavbar';
+import { useSession } from 'next-auth/react';
 
 export default function HomePage() {
+  const { data: session, status } = useSession();
   return (
     <div className="min-h-screen bg-white">
       <LandingNavbar />
@@ -35,20 +30,36 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="flex gap-3 justify-center flex-wrap">
-              <Link
-                href="/login?mode=guest"
-                className="px-5 py-2.5 bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
-              >
-                Wejdź jako Gość
-              </Link>
-              <Link
-                href="/login"
-                className="px-5 py-2.5 bg-white text-gray-900 text-sm font-medium border border-gray-300 hover:bg-gray-50 transition-colors"
-              >
-                Zaloguj się
-              </Link>
-            </div>
+            {status === 'loading' ? (
+              <div className="flex gap-3 justify-center flex-wrap">
+                <div className="w-32 h-10 bg-gray-200 animate-pulse"></div>
+                <div className="w-32 h-10 bg-gray-200 animate-pulse"></div>
+              </div>
+            ) : session ? (
+              <div className="flex gap-3 justify-center flex-wrap">
+                <Link
+                  href="/dashboard"
+                  className="px-5 py-2.5 bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
+                >
+                  Przejdź do Aplikacji
+                </Link>
+              </div>
+            ) : (
+              <div className="flex gap-3 justify-center flex-wrap">
+                <Link
+                  href="/login?mode=guest"
+                  className="px-5 py-2.5 bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
+                >
+                  Wejdź jako Gość
+                </Link>
+                <Link
+                  href="/login"
+                  className="px-5 py-2.5 bg-white text-gray-900 text-sm font-medium border border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  Zaloguj się
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -231,20 +242,36 @@ export default function HomePage() {
           <p className="text-base text-gray-400 mb-6 max-w-2xl mx-auto">
             Dołącz do studentów niestacjonarnej Informatyki, którzy używają portalu Wirtualny Student
           </p>
-          <div className="flex gap-3 justify-center flex-wrap">
-            <Link
-              href="/login?mode=guest"
-              className="px-5 py-2.5 bg-white text-gray-900 text-sm font-medium hover:bg-gray-100 transition-colors"
-            >
-              Wejdź jako Gość
-            </Link>
-            <Link
-              href="/login"
-              className="px-5 py-2.5 bg-gray-800 text-white text-sm font-medium hover:bg-gray-700 transition-colors border border-gray-700"
-            >
-              Zaloguj się / Zarejestruj
-            </Link>
-          </div>
+          {status === 'loading' ? (
+            <div className="flex gap-3 justify-center flex-wrap">
+              <div className="w-32 h-10 bg-gray-700 animate-pulse"></div>
+              <div className="w-32 h-10 bg-gray-700 animate-pulse"></div>
+            </div>
+          ) : session ? (
+            <div className="flex gap-3 justify-center flex-wrap">
+              <Link
+                href="/dashboard"
+                className="px-5 py-2.5 bg-white text-gray-900 text-sm font-medium hover:bg-gray-100 transition-colors"
+              >
+                Przejdź do Aplikacji
+              </Link>
+            </div>
+          ) : (
+            <div className="flex gap-3 justify-center flex-wrap">
+              <Link
+                href="/login?mode=guest"
+                className="px-5 py-2.5 bg-white text-gray-900 text-sm font-medium hover:bg-gray-100 transition-colors"
+              >
+                Wejdź jako Gość
+              </Link>
+              <Link
+                href="/login"
+                className="px-5 py-2.5 bg-gray-800 text-white text-sm font-medium hover:bg-gray-700 transition-colors border border-gray-700"
+              >
+                Zaloguj się / Zarejestruj
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 

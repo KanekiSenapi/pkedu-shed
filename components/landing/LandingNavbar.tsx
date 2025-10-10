@@ -37,7 +37,7 @@ export function LandingNavbar() {
     <header className="bg-white border-b border-gray-200">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14">
-          <div className="flex items-center space-x-4">
+          <Link href="/" className="flex items-center gap-3">
             <Image
               src="/images/logo.png"
               alt="Logo Plan Zajęć Politechnika Krakowska"
@@ -45,17 +45,17 @@ export function LandingNavbar() {
               height={32}
               className="object-contain"
             />
-            <h1 className="text-lg font-bold text-gray-900">Wirtualny Student</h1>
-            <div className="hidden md:flex items-center space-x-3">
-              <div className="h-3 w-px bg-gray-300"></div>
-              <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 border border-gray-200">
-                Politechnika Krakowska
-              </span>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">Plan Zajęć</h1>
+              <p className="text-xs text-gray-600 hidden sm:block">Politechnika Krakowska</p>
             </div>
-          </div>
+          </Link>
 
           {status === 'loading' ? (
-            <div className="w-32 h-9"></div>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-gray-200 animate-pulse"></div>
+              <div className="w-9 h-9 bg-gray-200 animate-pulse"></div>
+            </div>
           ) : session ? (
             <div className="flex items-center gap-3">
               <NotificationBell />
